@@ -53,15 +53,50 @@ set(BISON_OUTPUT
     ${BISON_GEN_DIR}/MiniCBison.cpp
     ${BISON_GEN_DIR}/MiniCBison.h
 )
+
+# windows系统下flex减小差异
+if(CMAKE_HOST_WIN32)
+    if(WINFLEX_FOUND)
+        set(FLEX_OPTION "--wincompat")
+    else()
+        set(FLEX_OPTION "--nounistd")
+    endif()
+else()
+    set(FLEX_OPTION "")
+endif()
 # 通过flex工具产生词法分析源代码
 add_custom_command(
     OUTPUT
-        ${FLEX_OUTPUT}
+    ${FLEX_OUTPUT}
     COMMAND
-        ${FLEX_EXECUTABLE} -o MiniCFlex.cpp --header-file=MiniCFlex.h ../MiniC.l
+    ${FLEX_EXECUTABLE} ${FLEX_OPTION} -o MiniCFlex.cpp --header-file=MiniCFlex.h ../MiniC.l
     DEPENDS
-        ${FLEX_INPUT}
+    ${FLEX_INPUT}
+    COMMENT #在构建时打印状态消息
+    "Unpacking C++ wrappers for BLAS/LAPACK"
     WORKING_DIRECTORY
-        ${FLEX_GEN_DIR}
+    ${FLEX_GEN_DIR}
 )
-# 通过Bison工具产生
+
+# 跨平台windows，linux设置bison选项名
+if(CMAKE_HOST_WIN32) #windows
+    if(WINBISON_FOUND)
+      set(BISON_HEADFILE_OPTION "--defines")
+    else()
+      set(BISON_HEADFILE_OPTION "--header")
+    endif()
+else()
+    set(BISON_HEADFILE_OPTION "--defines")  #linux
+endif()
+
+# 通过Bison工具产生语法分析源代码
+add_custom_command(
+    OUTPUT
+    ${BISON_OUTPUT}
+    COMMAND
+    ${BISON_EXECUTABLE} -d --debug -o MiniCBison.cpp ${BISON_HEADFILE_OPTION}=MiniCBison.h ../MiniC.y
+    DEPENDS
+    ${BISON_INPUT}
+    WORKING_DIRECTORY
+    ${BISON_GEN_DIR}
+)
