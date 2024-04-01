@@ -1,6 +1,12 @@
 /**
  * @file ValueType.cpp
- * @brief 变量值类型管理实现
+ * @author ZhengWenJie-mole (2732356616@qq.com)
+ * @brief 变量值类型管理
+ * @version 1.0
+ * @date 2024-03-30
+ *
+ * @copyright Copyright (c) 2024
+ *
  */
 
 #include <ValueType.h>
@@ -13,6 +19,22 @@ ValueType::ValueType() : type(BasicValueType::TYPE_NONE) {}
 ValueType::ValueType(BasicValueType _type)
 {
     type = _type;
+}
+
+/// @brief 拷贝构造
+/// @param _type ValueType类型
+ValueType::ValueType(const ValueType &_type)
+{
+    type = _type.type;
+}
+
+/// @brief 重载赋值符号
+/// @param _type 赋值符号右边的类型
+/// @return 返回本对象引用
+ValueType &ValueType::operator=(const ValueType &_type)
+{
+    this->type = _type.type;
+    return *this;
 }
 
 /// @brief 将变量值类型转化为相应的字符串
@@ -36,6 +58,9 @@ std::string ValueType::toString()
         break;
     case BasicValueType::TYPE_UINT:
         str = "ui32";
+        break;
+    case BasicValueType::TYPE_BOOL:
+        str = "i1";
         break;
     default:
         str = "unknown";

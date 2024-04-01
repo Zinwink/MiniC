@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.12)
 project(MiniC VERSION 1.0.0.0 LANGUAGES CXX)
 
 
+
+
 # ------------------ flex bison工具相关设置
 # 查找flex工具
 find_package(FLEX REQUIRED)
@@ -69,14 +71,17 @@ add_custom_command(
     OUTPUT
     ${FLEX_OUTPUT}
     COMMAND
-    ${FLEX_EXECUTABLE} ${FLEX_OPTION} -o MiniCFlex.cpp --header-file=MiniCFlex.h ../MiniC.l
+    ${FLEX_EXECUTABLE} ${FLEX_OPTION} -o MiniCFlex.cpp --header-file=MiniCFlex.h ${FLEX_INPUT}
     DEPENDS
     ${FLEX_INPUT}
-    COMMENT #在构建时打印状态消息
-    "Unpacking C++ wrappers for BLAS/LAPACK"
     WORKING_DIRECTORY
     ${FLEX_GEN_DIR}
 )
+
+# message(
+#     ${FLEX_EXECUTABLE} ${FLEX_OPTION} -o MiniCFlex.cpp --header-file=MiniCFlex.h ${FLEX_INPUT}
+# )
+
 
 # 跨平台windows，linux设置bison选项名
 if(CMAKE_HOST_WIN32) #windows
@@ -94,7 +99,7 @@ add_custom_command(
     OUTPUT
     ${BISON_OUTPUT}
     COMMAND
-    ${BISON_EXECUTABLE} -d --debug -o MiniCBison.cpp ${BISON_HEADFILE_OPTION}=MiniCBison.h ../MiniC.y
+    ${BISON_EXECUTABLE} -d --debug -o MiniCBison.cpp ${BISON_HEADFILE_OPTION}=MiniCBison.h ${BISON_INPUT}
     DEPENDS
     ${BISON_INPUT}
     WORKING_DIRECTORY
