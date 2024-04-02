@@ -83,7 +83,7 @@ enum class ast_node_type : int
     AST_OP_FUNC_REAL_PARAMS,
 
     /// @brief 非法运算符
-    AST_OP_ILLEGAL,
+    AST_ILLEGAL,
 
 };
 
@@ -103,7 +103,7 @@ public: // 属性
     /// @brief 节点值类型
     ValueType val_type;
 
-    /// @brief 节点的字面量值  包含,(标识符名，uint，int,float等字面量)以及所在的行号line_no
+    /// @brief 节点的字面量值  包含,(标识符名,函数名,参数名，uint，int,float等字面量)以及所在的行号line_no
     Literal_Val literal_val;
 
 public: // 构造函数
@@ -119,3 +119,53 @@ public: // 构造函数
     /// @param literal 字面量
     ast_node(const Literal_Val &literal);
 };
+
+// 下面是一些工具函数**************************************
+
+/// @brief 抽象语法树根节点
+extern ast_node *ast_root;
+
+/// @brief 判断是否是叶子节点
+/// @param node AST节点 指针类型
+/// @return true：是叶子节点 false：内部节点
+bool isLeafNode(const ast_node *node);
+
+/// @brief 创建指定节点类型的节点
+/// @param type 节点类型
+/// @param sons_num 子节点的数目
+/// @param  可变参数，支持插入若干孩子节点,
+/// @return 创建节点的指针
+ast_node *new_ast_node(ast_node_type type, int sons_num, ...);
+
+/// @brief 向父节点插入一个节点
+/// @param parent 父节点
+/// @param node 插入节点
+/// @return 父节点指针
+ast_node *insert_ast_node(ast_node *parent, ast_node *node);
+
+/// @brief 根据字面量(将在bison语法分析中读取数据)创建叶子节点(字面量：如uint,int,float等)
+/// @param literal 字面量
+/// @return 创建的节点指针
+ast_node *new_ast_leaf_node(const Literal_Val &literal);
+
+/// @brief 清理抽象语法树节点 node为root时清楚整个AST
+/// @param node 抽象语法树节点
+void free_ast_node(ast_node *node);
+
+/// @brief 创建函数定义节点  中间节点
+/// @param literal 字面量 包含行号,函数名信息
+/// @param block 函数体语句块节点
+/// @param params 函数形参列表节点,可以为空
+/// @return 创建函数定义节点指针
+ast_node *create_fun_def(const Literal_Val &literal, ast_node *block, ast_node *params);
+
+/// @brief 创建函数形参节点
+/// @param literal 字面量 包含行号 形参名
+/// @return 创建的节点指针
+ast_node *create_fun_formal_param(const Literal_Val &literal);
+
+/// @brief 创建函数调用节点
+/// @param literal 字面量 包含行号，函数名
+/// @param params 形参列表
+/// @return 创建的节点指针
+ast_node *create_fun_call(const Literal_Val &literal, ast_node *params);
