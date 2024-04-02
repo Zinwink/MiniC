@@ -14,14 +14,15 @@
 
 /// @brief 基本类型枚举类
 enum class BasicValueType : int
-{               // 基本值类型
-    TYPE_NONE,  // 类型不存在
-    TYPE_INT,   // 有符号整型
-    TYPE_UINT,  // 无符号整型
-    TYPE_FLOAT, // float型
-    TYPE_VOID,  // void型 函数返回
-    TYPE_BOOL,  // 布尔类型
-    TYPE_MAX,   // 其他未知类型
+{                // 基本值类型
+    TYPE_NONE,   // 类型不存在
+    TYPE_INT32,  // 有符号整型
+    TYPE_UINT32, // 无符号整型
+    TYPE_FLOAT,  // float型
+    TYPE_VOID,   // void型 函数返回
+    TYPE_BOOL,   // 布尔类型
+    TYPE_STR,    //字符串类型
+    TYPE_MAX,    // 其他未知类型
 };
 
 /// @brief 变量类型管理类

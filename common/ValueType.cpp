@@ -9,7 +9,7 @@
  *
  */
 
-#include <ValueType.h>
+#include "ValueType.h"
 
 /// @brief 构造函数 变量值类型不存在
 ValueType::ValueType() : type(BasicValueType::TYPE_NONE) {}
@@ -37,14 +37,14 @@ ValueType &ValueType::operator=(const ValueType &_type)
     return *this;
 }
 
-/// @brief 将变量值类型转化为相应的字符串
+/// @brief 将变量值类型转化为相应的字符串  IR指令需要
 /// @return string
 std::string ValueType::toString()
 {
     std::string str;
     switch (type)
     {
-    case BasicValueType::TYPE_INT:
+    case BasicValueType::TYPE_INT32:
         str = "i32";
         break;
     case BasicValueType::TYPE_FLOAT:
@@ -56,11 +56,14 @@ std::string ValueType::toString()
     case BasicValueType::TYPE_VOID:
         str = "void";
         break;
-    case BasicValueType::TYPE_UINT:
+    case BasicValueType::TYPE_UINT32:
         str = "ui32";
         break;
     case BasicValueType::TYPE_BOOL:
         str = "i1";
+        break;
+    case BasicValueType::TYPE_STR:
+        str = "const char*";
         break;
     default:
         str = "unknown";
