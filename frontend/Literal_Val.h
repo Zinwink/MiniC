@@ -39,6 +39,9 @@ public:
     /// @brief 所在行号
     uint32_t line_no;
 
+    /// @brief 字面量类型 确定字面量的类型
+    ValueType type;
+
     /// @brief 默认无参构造
     Literal_Val();
 
