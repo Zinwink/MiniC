@@ -103,27 +103,34 @@ public: // 属性
     /// @brief 节点值类型
     ValueType val_type;
 
-    /// @brief 节点的字面量值  包含,(标识符名,函数名,参数名，uint，int,float等字面量)以及所在的行号line_no
+    /// @brief 节点的字面量值  包含,(标识符名,函数名,参数名，uint，int,float等字面量之一)以及所在的行号line_no
     Literal_Val literal_val;
 
 public: // 构造函数
-    /// @brief 根据 节点值类型以及所在行号构造  叶子节点
+    /// @brief 根据 节点值类型以及所在行号构造,若ValueType能确定顶节点类型则指定，否则按照_node_type指定
     /// @param _type 节点值类型
-    ast_node(const ValueType &_type);
+    /// @param _node_type 节点类型,若_type值类型无法确定节点类型，则由该参数指定
+    ast_node(const ValueType &_type, ast_node_type _node_type = ast_node_type::AST_ILLEGAL);
 
-    /// @brief 根据抽象语法树节点类型以及行号构造  中间节点
+    /// @brief 根据抽象语法树节点类型构造,若节点类型能确定节点的值类型则指定，否则默认为TYPE_NONE
     /// @param _node_type AST节点类型
     ast_node(const ast_node_type &_node_type);
 
-    /// @brief 通过字面量创建
+    /// @brief 通过字面量创建,若字面量类型能确定节点的值类型，则指定，否则默认初始化为TYPE_NONE
     /// @param literal 字面量
-    ast_node(const Literal_Val &literal);
+    /// @param _node_type 节点类型，默认为非法类型；若literal 无法确定节点类型，将由该参数指定
+    ast_node(const Literal_Val &literal, ast_node_type _node_type = ast_node_type::AST_ILLEGAL);
 };
 
 // 下面是一些工具函数**************************************
 
 /// @brief 抽象语法树根节点
 extern ast_node *ast_root;
+
+/// @brief 判断是否是叶子节点类型
+/// @param _node_type AST节点类型
+/// @return true：是叶子节点 false：内部节点
+bool isLeafNodeType(ast_node_type _node_type);
 
 /// @brief 判断是否是叶子节点
 /// @param node AST节点 指针类型
@@ -145,8 +152,9 @@ ast_node *insert_ast_node(ast_node *parent, ast_node *node);
 
 /// @brief 根据字面量(将在bison语法分析中读取数据)创建叶子节点(字面量：如uint,int,float等)
 /// @param literal 字面量
+/// @param _node_type 节点类型,默认为AST_LEAF_TYPE
 /// @return 创建的节点指针
-ast_node *new_ast_leaf_node(const Literal_Val &literal);
+ast_node *new_ast_leaf_node(const Literal_Val &literal, ast_node_type _node_type = ast_node_type::AST_LEAF_TYPE);
 
 /// @brief 清理抽象语法树节点 node为root时清楚整个AST
 /// @param node 抽象语法树节点
@@ -155,14 +163,16 @@ void free_ast_node(ast_node *node);
 /// @brief 创建函数定义节点  中间节点
 /// @param literal 字面量 包含行号,函数名信息
 /// @param block 函数体语句块节点
-/// @param params 函数形参列表节点,可以为空
+/// @param params 函数形参列表节点,可以为空(未指定则默认参数为nullptr)
+/// @param ret_type 函数定义节点的值类型(返回类型) 未指定则默认为TYPE__VOID
 /// @return 创建函数定义节点指针
-ast_node *create_fun_def(const Literal_Val &literal, ast_node *block, ast_node *params);
+ast_node *create_fun_def(const Literal_Val &literal, ast_node *block, ast_node *params = nullptr, const ValueType &ret_type = BasicValueType::TYPE_VOID);
 
 /// @brief 创建函数形参节点
 /// @param literal 字面量 包含行号 形参名
+/// @param _type 参数的值类型
 /// @return 创建的节点指针
-ast_node *create_fun_formal_param(const Literal_Val &literal);
+ast_node *create_fun_formal_param(const Literal_Val &literal, const ValueType _type);
 
 /// @brief 创建函数调用节点
 /// @param literal 字面量 包含行号，函数名
