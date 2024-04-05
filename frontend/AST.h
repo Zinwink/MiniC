@@ -55,8 +55,38 @@ enum class ast_node_type : int
     /// @brief 二元运算符/
     AST_OP_DIV,
 
+    /// @brief 二元运算 %
+    AST_OP_MOD,
+
     /// @brief 赋值语句运算符 =
     AST_OP_ASSIGN,
+
+    /// @brief 条件与 &&
+    AST_OP_COND_AND,
+
+    /// @brief 条件或 ||
+    AST_OP_COND_OR,
+
+    /// @brief 条件非 ！
+    AST_OP_COND_NOT,
+
+    /// @brief 条件相等 ==
+    AST_OP_COND_EQU,
+
+    /// @brief 条件不等 !=
+    AST_OP_COND_NOTEQU,
+
+    /// @brief 条件小于 <
+    AST_OP_COND_LESS,
+
+    /// @brief 条件大于 >
+    AST_OP_COND_GREATER,
+
+    /// @brief 小于等于 <=
+    AST_OP_COND_LESSEQU,
+
+    /// @brief 大于等于 >=
+    AST_OP_COND_GREATEREQU,
 
     /// @brief 多个语句组成的块运算符
     AST_OP_BLOCK,
@@ -82,8 +112,17 @@ enum class ast_node_type : int
     /// @brief 实参列表运算符， 可包含AST_OP_EXPR,字面量，标识符变量等
     AST_OP_FUNC_REAL_PARAMS,
 
+    /// @brief 多个声明
+    AST_OP_DECL_ITEMS,
+
+    /// @brief 单项声明节点
+    AST_OP_DECL_ITEM,
+
     /// @brief 非法运算符
     AST_ILLEGAL,
+
+    /// @brief 未知类型
+    AST_UNKONN,
 
 };
 
@@ -153,8 +192,9 @@ ast_node *insert_ast_node(ast_node *parent, ast_node *node);
 /// @brief 根据字面量(将在bison语法分析中读取数据)创建叶子节点(字面量：如uint,int,float等)
 /// @param literal 字面量
 /// @param _node_type 节点类型,默认为AST_LEAF_TYPE
+/// @param _type 节点值类型,默认为非法类型
 /// @return 创建的节点指针
-ast_node *new_ast_leaf_node(const Literal_Val &literal, ast_node_type _node_type = ast_node_type::AST_LEAF_TYPE);
+ast_node *new_ast_leaf_node(const Literal_Val &literal, ast_node_type _node_type = ast_node_type::AST_LEAF_TYPE, const ValueType &_type = BasicValueType::TYPE_MAX);
 
 /// @brief 清理抽象语法树节点 node为root时清楚整个AST
 /// @param node 抽象语法树节点

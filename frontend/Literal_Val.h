@@ -69,4 +69,24 @@ public:
     /// @param literal = 右边的字面量值
     /// @return 返回本对象引用
     Literal_Val &operator=(const Literal_Val &literal);
+
+    /// @brief 重载等于号 等于有符号整型
+    /// @param int32_digit 
+    /// @return 本对象
+    Literal_Val &operator=(int32_t int32_digit);
+
+    /// @brief 重载= 赋值，无符号整型
+    /// @param uint32_digit 
+    /// @return 本对象
+    Literal_Val &operator=(uint32_t uint32_digit);
+
+    /// @brief 重载 =赋值 浮点数
+    /// @param float_digit 
+    /// @return 本对象
+    Literal_Val &operator=(float float_digit);
+
+    /// @brief 重载 = 赋值， 字符串
+    /// @param id 
+    /// @return 本对象
+    Literal_Val &operator=(const char *id);
 };

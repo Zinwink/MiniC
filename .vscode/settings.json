@@ -1,0 +1,7 @@
+{
+    "doxdocgen.file.fileTemplate": "@file {name}",
+    "doxdocgen.file.versionTag": "@version 1.0",
+    "doxdocgen.generic.authorEmail": "2732356616@qq.com",
+    "doxdocgen.generic.authorName": "ZhengWenJie-mole",
+    "doxdocgen.generic.authorTag": "@author {author} ({email})",
+}

@@ -19,7 +19,7 @@ ast_node *ast_root = nullptr;
 /// @brief 根据 节点值类型以及所在行号构造,若ValueType能确定顶节点类型则指定，否则按照_node_type指定
 /// @param _type 节点值类型
 /// @param _node_type 节点类型,若_type值类型无法确定节点类型，则由该参数指定
-ast_node::ast_node(const ValueType &_type, ast_node_type _node_type = ast_node_type::AST_ILLEGAL)
+ast_node::ast_node(const ValueType &_type, ast_node_type _node_type)
 {
     // 除以下switch情况外采用参数指定默认节点类型
     node_type = _node_type; // 默认先初始化为非法类型，需要之后赋值确定
@@ -34,6 +34,8 @@ ast_node::ast_node(const ValueType &_type, ast_node_type _node_type = ast_node_t
         break;
     case BasicValueType::TYPE_FLOAT:
         node_type = ast_node_type::AST_LEAF_LITERAL_FLOAT;
+        break;
+    default:
         break;
     }
     parent = nullptr;
@@ -61,6 +63,8 @@ ast_node::ast_node(const ast_node_type &_node_type)
     case ast_node_type::AST_LEAF_VAR_ID:
         val_type = BasicValueType::TYPE_STR;
         break;
+    default:
+        break;
     }
     parent = nullptr;
 }
@@ -68,7 +72,7 @@ ast_node::ast_node(const ast_node_type &_node_type)
 /// @brief 通过字面量创建,若字面量类型能确定节点的值类型，则指定，否则默认初始化为TYPE_NONE
 /// @param literal 字面量
 /// @param _node_type 节点类型，默认为非法类型；若literal 无法确定节点类型，将由该参数指定
-ast_node::ast_node(const Literal_Val &literal, ast_node_type _node_type = ast_node_type::AST_ILLEGAL)
+ast_node::ast_node(const Literal_Val &literal, ast_node_type _node_type)
 {
     literal_val = literal;
     parent = nullptr;
@@ -89,6 +93,8 @@ ast_node::ast_node(const Literal_Val &literal, ast_node_type _node_type = ast_no
         node_type = ast_node_type::AST_LEAF_LITERAL_FLOAT;
         val_type = literal.type; // 默认设置和字面量类型一样
         break;
+    default:
+        break;
     }
 }
 
@@ -107,6 +113,8 @@ bool isLeafNodeType(ast_node_type _node_type)
     case ast_node_type::AST_LEAF_FUNC_FORMAL_PARAM:
     case ast_node_type::AST_LEAF_TYPE:
         isleaf = true;
+        break;
+    default:
         break;
     }
     return isleaf;
@@ -155,11 +163,12 @@ ast_node *insert_ast_node(ast_node *parent, ast_node *node)
 /// @param literal 字面量 包含行号以及字面量
 /// @param _node_type 节点类型
 /// @return 创建的节点指针
-ast_node *new_ast_leaf_node(const Literal_Val &literal, ast_node_type _node_type = ast_node_type::AST_LEAF_TYPE)
+ast_node *new_ast_leaf_node(const Literal_Val &literal, ast_node_type _node_type, const ValueType &_type)
 {
     // 断言确保输入节点类型_node_type为叶子类型
     assert(isLeafNodeType(_node_type) && "Error:the _node_type input is not leaf type!");
     ast_node *node = new ast_node(literal, _node_type);
+    node->val_type = _type;
     return node;
 }
 
@@ -184,7 +193,7 @@ void free_ast_node(ast_node *node)
 /// @param params 函数形参列表节点,可以为空
 /// @param ret_type 函数定义节点的值类型(返回类型) 未指定则默认为TYPE__VOID
 /// @return 创建函数定义节点指针
-ast_node *create_fun_def(const Literal_Val &literal, ast_node *block, ast_node *params = nullptr, const ValueType &ret_type = BasicValueType::TYPE_VOID)
+ast_node *create_fun_def(const Literal_Val &literal, ast_node *block, ast_node *params, const ValueType &ret_type)
 {
     ast_node *fun_def_node = new ast_node(literal, ast_node_type::AST_OP_FUNC_DEF);
     fun_def_node->val_type = ret_type;

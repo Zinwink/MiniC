@@ -37,6 +37,15 @@ ValueType &ValueType::operator=(const ValueType &_type)
     return *this;
 }
 
+/// @brief 赋值
+/// @param _basic_type 基本类型
+/// @return 本对象
+ValueType &ValueType::operator=(BasicValueType _basic_type)
+{
+    this->type = _basic_type;
+    return *this;
+}
+
 /// @brief 将变量值类型转化为相应的字符串  IR指令需要
 /// @return string
 std::string ValueType::toString()

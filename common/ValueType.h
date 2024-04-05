@@ -21,7 +21,7 @@ enum class BasicValueType : int
     TYPE_FLOAT,  // float型
     TYPE_VOID,   // void型 函数返回
     TYPE_BOOL,   // 布尔类型
-    TYPE_STR,    //字符串类型
+    TYPE_STR,    // 字符串类型
     TYPE_MAX,    // 其他未知类型
 };
 
@@ -52,4 +52,9 @@ public:
     /// @param _type 等号右边的变量值类型
     /// @return 本对象引用
     ValueType &operator=(const ValueType &_type);
+
+    /// @brief 赋值
+    /// @param _basic_type 基本类型
+    /// @return 本对象
+    ValueType &operator=(BasicValueType _basic_type);
 };
