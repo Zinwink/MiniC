@@ -200,7 +200,7 @@ ast_node *create_fun_def(const Literal_Val &literal, ast_node *block, ast_node *
     // 若没有参数，则创建参数节点
     if (params == nullptr)
     {
-        params = new ast_node(ast_node_type::AST_OP_FUNC_REAL_PARAMS);
+        params = new ast_node(ast_node_type::AST_OP_FUNC_FORMAL_PARAMS);
     }
     // 若没有函数体，则创建函数体
     if (block == nullptr)

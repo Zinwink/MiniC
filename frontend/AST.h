@@ -118,6 +118,15 @@ enum class ast_node_type : int
     /// @brief 单项声明节点
     AST_OP_DECL_ITEM,
 
+    /// @brief if语句 ifstatement
+    AST_OP_IFSTMT,
+
+    /// @brief while循环
+    AST_OP_WHILESTMT,
+
+    /// @brief do_while循环
+    AST_OP_DOWHILESTMT,
+
     /// @brief 非法运算符
     AST_ILLEGAL,
 
