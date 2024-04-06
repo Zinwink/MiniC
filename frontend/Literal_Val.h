@@ -16,7 +16,7 @@
 /// @brief 联合体存储各类型字面量数据
 union Literal_digit
 {
-    /// @brief 标识符名称字面量
+    /// @brief 标识符名称字面量  常量指针
     const char *id;
 
     /// @brief 无符号32位整型字面量
@@ -71,22 +71,22 @@ public:
     Literal_Val &operator=(const Literal_Val &literal);
 
     /// @brief 重载等于号 等于有符号整型
-    /// @param int32_digit 
+    /// @param int32_digit
     /// @return 本对象
     Literal_Val &operator=(int32_t int32_digit);
 
     /// @brief 重载= 赋值，无符号整型
-    /// @param uint32_digit 
+    /// @param uint32_digit
     /// @return 本对象
     Literal_Val &operator=(uint32_t uint32_digit);
 
     /// @brief 重载 =赋值 浮点数
-    /// @param float_digit 
+    /// @param float_digit
     /// @return 本对象
     Literal_Val &operator=(float float_digit);
 
     /// @brief 重载 = 赋值， 字符串
-    /// @param id 
+    /// @param id
     /// @return 本对象
     Literal_Val &operator=(const char *id);
 };
