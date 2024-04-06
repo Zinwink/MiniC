@@ -69,15 +69,25 @@ extern int yydebug;
     T_IF = 270,                    /* "if"  */
     T_ELSE = 271,                  /* "else"  */
     T_RETURN = 272,                /* "return"  */
-    T_EQUAL = 273,                 /* "=="  */
-    T_NOT_EQU = 274,               /* "!="  */
-    T_LESS = 275,                  /* "<"  */
-    T_GREATER = 276,               /* ">"  */
-    T_LESS_EQU = 277,              /* "<="  */
-    T_GREATER_EQU = 278,           /* ">="  */
-    T_NOT = 279,                   /* "!"  */
-    T_AND = 280,                   /* "&&"  */
-    T_OR = 281                     /* "||"  */
+    T_WHILE = 273,                 /* "while"  */
+    T_DO = 274,                    /* "do"  */
+    T_EQUAL = 275,                 /* "=="  */
+    T_NOT_EQU = 276,               /* "!="  */
+    T_LESS = 277,                  /* "<"  */
+    T_GREATER = 278,               /* ">"  */
+    T_LESS_EQU = 279,              /* "<="  */
+    T_GREATER_EQU = 280,           /* ">="  */
+    T_NOT = 281,                   /* "!"  */
+    T_AND = 282,                   /* "&&"  */
+    T_OR = 283,                    /* "||"  */
+    T_LBRACE = 284,                /* "{"  */
+    T_RBRACE = 285,                /* "}"  */
+    T_LPAREN = 286,                /* "("  */
+    T_RPAREN = 287,                /* ")"  */
+    T_LSQU = 288,                  /* "["  */
+    T_RSQU = 289,                  /* "]"  */
+    T_COMMA = 290,                 /* ","  */
+    T_SEMICOLON = 291              /* ";"  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -89,9 +99,9 @@ union YYSTYPE
 #line 15 "/home/mole/Program/compile_principle/MiniC/frontend/MiniC.y"
 
     class ast_node * node;
-    class Literal_Val *literal;
+    class Literal_Val* literal;
 
-#line 95 "MiniCBison.h"
+#line 105 "MiniCBison.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

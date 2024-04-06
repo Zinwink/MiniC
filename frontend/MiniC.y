@@ -14,7 +14,7 @@ void yyerror(const char* msg);
 // 联合体声明 接待你类型  字面量读取
 %union{
     class ast_node * node;
-    class Literal_Val *literal;
+    class Literal_Val* literal;
 };
 
 // 文法开始符号
@@ -25,10 +25,13 @@ void yyerror(const char* msg);
 // 运算符
 %token T_ADD "+" T_SUB "-" T_DIV "/" T_MUL "*" T_ASSIGN "=" T_MOD "%"
 // 关键字
-%token T_INT "int" T_FLOAT "float" T_VOID "void" T_IF "if" T_ELSE "else" T_RETURN "return" 
+%token T_INT "int" T_FLOAT "float" T_VOID "void" T_IF "if" T_ELSE "else" T_RETURN "return" T_WHILE "while" T_DO "do"
 // 条件运算
 %token T_EQUAL "==" T_NOT_EQU "!=" T_LESS "<" T_GREATER ">" T_LESS_EQU "<=" T_GREATER_EQU ">=" T_NOT "!" T_AND "&&" T_OR "||"
-
+// 括弧
+%token T_LBRACE "{" T_RBRACE "}" T_LPAREN "(" T_RPAREN ")" T_LSQU "[" T_RSQU "]"
+// 标点
+%token T_COMMA "," T_SEMICOLON ";"
 // 结合性与优先级
 %left T_ADD T_SUB 
 %left T_MUL T_DIV T_MOD
@@ -44,6 +47,8 @@ void yyerror(const char* msg);
 %type <node> BlockItemList
 %type <node> Statement
 %type <node> IfStmt
+%type <node> WhileStmt
+%type <node> DowhileStmt
 %type <node> Condition
 %type <node> OrCond
 %type <node> AndCond
@@ -80,23 +85,35 @@ CompileUnit : FuncDef{
 ;
 
 /* 函数定义 */
-FuncDef : "int" DIGIT_ID '(' ')' Block{
+FuncDef : "int" DIGIT_ID "(" ")" Block{
     $$=create_fun_def(*$2,$5,nullptr,BasicValueType::TYPE_INT32);
+    delete $2; //释放内存
+    $2=nullptr;
 }
-| "int" DIGIT_ID '(' FuncFormalParams ')' Block{
+| "int" DIGIT_ID "(" FuncFormalParams ")" Block{
     $$=create_fun_def(*$2,$6,$4,BasicValueType::TYPE_INT32);
+    delete $2; //释放内存
+    $2=nullptr;
 }
-| "void" DIGIT_ID '(' ')' Block{
+| "void" DIGIT_ID "(" ")" Block{
     $$=create_fun_def(*$2,$5,nullptr,BasicValueType::TYPE_VOID);
+    delete $2; //释放内存
+    $2=nullptr;
 }
-| "void" DIGIT_ID '(' FuncFormalParams ')' Block{
+| "void" DIGIT_ID "(" FuncFormalParams ")" Block{
     $$=create_fun_def(*$2,$6,$4,BasicValueType::TYPE_VOID);
+    delete $2; //释放内存
+    $2=nullptr;
 }
-| "float" DIGIT_ID '(' ')' Block{
+| "float" DIGIT_ID "(" ")" Block{
     $$=create_fun_def(*$2,$5,nullptr,BasicValueType::TYPE_FLOAT);
+    delete $2; //释放内存
+    $2=nullptr;
 }
-| "float" DIGIT_ID '(' FuncFormalParams ')' Block{
+| "float" DIGIT_ID "(" FuncFormalParams ")" Block{
     $$=create_fun_def(*$2,$6,$4,BasicValueType::TYPE_FLOAT);
+    delete $2; //释放内存
+    $2=nullptr;
 }
 ;
 
@@ -104,7 +121,7 @@ FuncDef : "int" DIGIT_ID '(' ')' Block{
 FuncFormalParams : FuncFormalParam {
     $$ = new_ast_node(ast_node_type::AST_OP_FUNC_FORMAL_PARAMS,1,$1);
 }
-| FuncFormalParams ',' FuncFormalParam {
+| FuncFormalParams "," FuncFormalParam {
     $$ =insert_ast_node($1,$3);
 }
 ;
@@ -112,17 +129,21 @@ FuncFormalParams : FuncFormalParam {
 /* 函数参数 */
 FuncFormalParam : "int" DIGIT_ID{
     $$=create_fun_formal_param(*$2,BasicValueType::TYPE_INT32);
+    delete $2; //释放内存
+    $2=nullptr;
 }
 | "float" DIGIT_ID{
     $$=create_fun_formal_param(*$2,BasicValueType::TYPE_FLOAT);
+    delete $2; //释放内存
+    $2=nullptr;
 }
 ;
 
 /* 语句块 */
-Block : '{' '}'{
+Block : "{" "}"{
     $$=nullptr; //无语句
 }
-| '{' BlockItemList '}' {
+| "{" BlockItemList "}" {
     // 语句块中的语句列表 语句块指针指向语句列表
     $$ = $2;
 }
@@ -138,7 +159,7 @@ BlockItemList : Statement {
 ;
 
 /* 语句 *****************************************************/
-Statement : "return" Expr ';' {
+Statement : "return" Expr ";" {
     //返回语句
     $$ = new_ast_node(ast_node_type::AST_OP_RETURN_STATEMENT,1,$2);
 }
@@ -148,22 +169,44 @@ Statement : "return" Expr ';' {
 | IfStmt {
     $$=$1;
 }
+| WhileStmt {
+    $$=$1;
+}
+| DowhileStmt {
+    $$=$1;
+}
 | Declare {
     $$=$1;
 }
-| var "=" Expr {
+| var "=" Expr ";" {
     $$ = new_ast_node(ast_node_type::AST_OP_ASSIGN,2,$1,$3);
+}
+| Expr ";"{
+    ; // 仅仅有一个表达式(可能是一个函数调用，也可能是a+b表达式)  目前先设定无动作
 }
 ;
 
 /* 条件if else *************** */
-IfStmt : "if" '(' Condition ')' Statement ';' {
-
+IfStmt : "if" "(" Condition ")" Statement {
+    $$=new_ast_node(ast_node_type::AST_OP_IFSTMT,2,$3,$5);
 }
-| "if" '(' Condition ')' Statement "else" Statement ';'{
-
+| "if" "(" Condition ")" Statement "else" Statement {
+    $$=new_ast_node(ast_node_type::AST_OP_IFSTMT,3,$3,$5,$7);
 }
 ;
+
+/* 循环 while */
+WhileStmt : "while" "(" Condition ")" Statement {
+    $$=new_ast_node(ast_node_type::AST_OP_WHILESTMT,2,$3,$5);
+}
+;
+
+/* do-while循环 */
+DowhileStmt : "do" Statement "while" "(" Condition ")" ";" {
+    $$=new_ast_node(ast_node_type::AST_OP_DOWHILESTMT,2,$2,$5);
+}
+;
+
 
 /* 复合条件 */
 Condition : OrCond {
@@ -189,6 +232,9 @@ AndCond : NotCond {
 
 NotCond : "!" EquCondTerm {
   $$=new_ast_node(ast_node_type::AST_OP_COND_NOT,1,$2);
+}
+| EquCondTerm {
+  $$=$1;
 }
 ;
 
@@ -219,18 +265,18 @@ LessCondTerm : Expr {
 | LessCondTerm ">=" Expr {
   $$=new_ast_node(ast_node_type::AST_OP_COND_GREATEREQU,2,$1,$3);
 }
-| '(' Condition ')' {
+| "(" Condition ")" {
   $$=$2;
 }
 ;
 
 /* 变量声明定义******************************* */
-Declare : "int" DeclareItems ';'{
+Declare : "int" DeclareItems ";"{
     // 先指明DeclareItems下的值类型 ValueType  
     $2->val_type=BasicValueType::TYPE_INT32;
     $$=$2;
 }
-| "float" DeclareItems ';'{
+| "float" DeclareItems ";"{
     $2->val_type=BasicValueType::TYPE_FLOAT;
     $$=$2;
 }
@@ -240,25 +286,23 @@ Declare : "int" DeclareItems ';'{
 DeclareItems : DeclareItem{
     $$=new_ast_node(ast_node_type::AST_OP_DECL_ITEMS,1,$1);
 }
-| DeclareItems ',' DeclareItem{
+| DeclareItems "," DeclareItem{
     $$=insert_ast_node($1,$3);
 }
 ;
 // 单项声明
 DeclareItem : var{
-    $$=new_ast_node(ast_node_type::AST_OP_DECL_ITEM,1,$1);
+    // 无动作
+    // $$=new_ast_node(ast_node_type::AST_OP_DECL_ITEM,1,$1);
 }
 | var "=" Expr {
     ast_node* node=new_ast_node(ast_node_type::AST_OP_ASSIGN,2,$1,$3);
-    $$ = new_ast_node(ast_node_type::AST_OP_DECL_ITEM,1,node);
+    $$=node;
+    // $$ = new_ast_node(ast_node_type::AST_OP_DECL_ITEM,1,node);
 }
 ;
 
-/* 变量 暂时无数组类型 */
-var : DIGIT_ID {
-    $$ = new_ast_leaf_node(*$1,ast_node_type::AST_LEAF_VAR_ID);
-}
-;
+
 
 /* 表达式 *********************************************************/
 Expr : AddExpr {
@@ -298,13 +342,17 @@ MulExpr : UnaryExpr {
 UnaryExpr : Term {
     $$=$1;
 }
-| DIGIT_ID '(' FuncRealParams ')' {
+| DIGIT_ID "(" FuncRealParams ")" {
     // 有参函数调用的值
     $$=create_fun_call(*$1,$3);
+    delete $1; //释放内存
+    $1=nullptr;
 }
-| DIGIT_ID '(' ')' {
+| DIGIT_ID "(" ")" {
     //无参函数调用的值
     $$=create_fun_call(*$1,nullptr);
+    delete $1; //释放内存
+    $1=nullptr;
 }
 ;
 
@@ -312,15 +360,27 @@ UnaryExpr : Term {
 /* 只含单个字面量或者变量的表达式 */
 Term :  DIGIT_INT{
     $$=new_ast_leaf_node(*$1,ast_node_type::AST_LEAF_LITERAL_INT,BasicValueType::TYPE_INT32);
+    delete $1; //释放内存
+    $1=nullptr;
 }
 | DIGIT_FLOAT {
     $$=new_ast_leaf_node(*$1,ast_node_type::AST_LEAF_LITERAL_FLOAT,BasicValueType::TYPE_FLOAT);
+    delete $1; //释放内存
+    $1=nullptr;
 }
 | var {
     $$=$1;
 }
-| '(' Expr ')' {
+| "(" Expr ")" {
     $$=$2;
+}
+;
+
+/* 变量 暂时无数组类型 */
+var : DIGIT_ID {
+    $$ = new_ast_leaf_node(*$1,ast_node_type::AST_LEAF_VAR_ID);
+    delete $1; //释放内存
+    $1=nullptr;
 }
 ;
 
@@ -328,7 +388,7 @@ Term :  DIGIT_INT{
 FuncRealParams : Expr {
     $$=new_ast_node(ast_node_type::AST_OP_FUNC_REAL_PARAMS,1,$1);
 }
-| FuncRealParams ',' Expr {
+| FuncRealParams "," Expr {
     $$=insert_ast_node($1,$3);
 }
 ;

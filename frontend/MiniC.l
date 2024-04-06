@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstring>
 #include "BisonParser.h"
+#include "Literal_Val.h"
 %}
 
 /* 不添加默认规则, 当给定规则无法匹配时，抛出错误 */
@@ -58,9 +59,13 @@ white_line  [\r\n]
 "int"       {return T_INT;}
 "float"     {return T_FLOAT;}
 "void"      {return T_VOID;}
+
 "if"        {return T_IF;}
 "else"      {return T_ELSE;}
 "return"    {return T_RETURN;}
+
+"while"     {return T_WHILE;}
+"do"        {return T_DO;}
 
 "+"         {return T_ADD;}
 "/"         {return T_DIV;}
@@ -79,25 +84,31 @@ white_line  [\r\n]
 "&&"        {return T_AND;}
 "||"        {return T_OR;}
 
+"{"         {return T_LBRACE;}
+"}"         {return T_RBRACE;}
+"("         {return T_LPAREN;}
+")"         {return T_RPAREN;}
+"["         {return T_LSQU;}
+"]"         {return T_RSQU;}
+
+","         {return T_COMMA;}
+";"         {return T_SEMICOLON;}
 
 {int_digit} {
     //识别整数
-    *(yylval.literal)=std::stoi(yytext); 
-    yylval.literal->line_no=yylineno;
+    yylval.literal=new Literal_Val(std::stoi(yytext),yylineno);
     return DIGIT_INT;
 }
 
 {identifer}   {
     // 识别标识符
-    *(yylval.literal)=yytext;
-    yylval.literal->line_no=yylineno;
+    yylval.literal=new Literal_Val(strdup(yytext),yylineno);
     return DIGIT_ID;
 }
 
 {decimal}  {
     //识别小数
-    *(yylval.literal)=std::stof(yytext);
-    yylval.literal->line_no=yylineno;
+    yylval.literal=new Literal_Val(std::stof(yytext),yylineno);
     return DIGIT_FLOAT;
 }
 
