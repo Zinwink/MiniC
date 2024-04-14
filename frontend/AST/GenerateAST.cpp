@@ -1,7 +1,7 @@
 /**
- * @file FrontEndExcutor.cpp
+ * @file GenerateAST.cpp
  * @author ZhengWenJie-mole (2732356616@qq.com)
- * @brief 前端词法语法分析执行
+ * @brief 执行词法语法分析得到ASt
  * @version 1.0
  * @date 2024-04-05
  *
@@ -9,13 +9,13 @@
  *
  */
 
-#include "FrontEndExcutor.h"
+#include "GenerateAST.h"
 #include "BisonParser.h"
 #include "FlexLexer.h"
 
 /// @brief 执行前端分析
 /// @return 执行成功 true 失败false
-bool FrontEndExcutor::run(bool showInfo)
+bool GenerateAST::run(bool showInfo)
 {
     yyin = fopen(filepath.c_str(), "r");
     if (yyin == nullptr)

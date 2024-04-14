@@ -1,0 +1,10 @@
+/**
+ * @file Var.cpp
+ * @author ZhengWenJie-mole (2732356616@qq.com)
+ * @brief
+ * @version 1.0
+ * @date 2024-04-07
+ *
+ * @copyright Copyright (c) 2024
+ *
+ */

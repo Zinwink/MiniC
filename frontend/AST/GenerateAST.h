@@ -1,5 +1,5 @@
 /**
- * @file FrontEndExcutor.h
+ * @file GenerateAST.h
  * @author ZhengWenJie-mole (2732356616@qq.com)
  * @brief 执行词法语法分析得到抽象语法树
  * @version 1.0
@@ -13,7 +13,7 @@
 
 #include <string>
 
-class FrontEndExcutor
+class GenerateAST
 {
 private:
     /// @brief 要解析的文件路径
@@ -22,10 +22,10 @@ private:
 public:
     /// @brief 构造函数
     /// @param _filepath 要解析的文件路径
-    FrontEndExcutor(std::string _filepath) : filepath(_filepath) {}
+    GenerateAST(std::string _filepath) : filepath(_filepath) {}
 
     /// @brief 析构函数
-    ~FrontEndExcutor() {}
+    ~GenerateAST() {}
 
     /// @brief 执行前端分析
     /// @return 执行成功 true 失败false

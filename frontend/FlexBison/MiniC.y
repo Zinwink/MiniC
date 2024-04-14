@@ -26,6 +26,7 @@ void yyerror(const char* msg);
 %token T_ADD "+" T_SUB "-" T_DIV "/" T_MUL "*" T_ASSIGN "=" T_MOD "%"
 // 关键字
 %token T_INT "int" T_FLOAT "float" T_VOID "void" T_IF "if" T_ELSE "else" T_RETURN "return" T_WHILE "while" T_DO "do"
+%token T_BREAK "break" T_CONTINUE "continue"
 // 条件运算
 %token T_EQUAL "==" T_NOT_EQU "!=" T_LESS "<" T_GREATER ">" T_LESS_EQU "<=" T_GREATER_EQU ">=" T_NOT "!" T_AND "&&" T_OR "||"
 // 括弧
@@ -183,6 +184,12 @@ Statement : "return" Expr ";" {
 }
 | Expr ";"{
     ; // 仅仅有一个表达式(可能是一个函数调用，也可能是a+b表达式)  目前先设定无动作
+}
+| "break" ";" {
+    ; // break语句
+}
+| "continue" ";" {
+    ;  //continue语句
 }
 ;
 

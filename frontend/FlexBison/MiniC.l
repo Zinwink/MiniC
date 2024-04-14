@@ -66,6 +66,8 @@ white_line  [\r\n]
 
 "while"     {return T_WHILE;}
 "do"        {return T_DO;}
+"break"     {return T_BREAK;}
+"continue"  {return T_CONTINUE;}
 
 "+"         {return T_ADD;}
 "/"         {return T_DIV;}

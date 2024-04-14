@@ -4,4 +4,5 @@
     "doxdocgen.generic.authorEmail": "2732356616@qq.com",
     "doxdocgen.generic.authorName": "ZhengWenJie-mole",
     "doxdocgen.generic.authorTag": "@author {author} ({email})",
+    "debug.allowBreakpointsEverywhere": true
 }

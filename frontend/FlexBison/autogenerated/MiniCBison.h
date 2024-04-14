@@ -71,23 +71,25 @@ extern int yydebug;
     T_RETURN = 272,                /* "return"  */
     T_WHILE = 273,                 /* "while"  */
     T_DO = 274,                    /* "do"  */
-    T_EQUAL = 275,                 /* "=="  */
-    T_NOT_EQU = 276,               /* "!="  */
-    T_LESS = 277,                  /* "<"  */
-    T_GREATER = 278,               /* ">"  */
-    T_LESS_EQU = 279,              /* "<="  */
-    T_GREATER_EQU = 280,           /* ">="  */
-    T_NOT = 281,                   /* "!"  */
-    T_AND = 282,                   /* "&&"  */
-    T_OR = 283,                    /* "||"  */
-    T_LBRACE = 284,                /* "{"  */
-    T_RBRACE = 285,                /* "}"  */
-    T_LPAREN = 286,                /* "("  */
-    T_RPAREN = 287,                /* ")"  */
-    T_LSQU = 288,                  /* "["  */
-    T_RSQU = 289,                  /* "]"  */
-    T_COMMA = 290,                 /* ","  */
-    T_SEMICOLON = 291              /* ";"  */
+    T_BREAK = 275,                 /* "break"  */
+    T_CONTINUE = 276,              /* "continue"  */
+    T_EQUAL = 277,                 /* "=="  */
+    T_NOT_EQU = 278,               /* "!="  */
+    T_LESS = 279,                  /* "<"  */
+    T_GREATER = 280,               /* ">"  */
+    T_LESS_EQU = 281,              /* "<="  */
+    T_GREATER_EQU = 282,           /* ">="  */
+    T_NOT = 283,                   /* "!"  */
+    T_AND = 284,                   /* "&&"  */
+    T_OR = 285,                    /* "||"  */
+    T_LBRACE = 286,                /* "{"  */
+    T_RBRACE = 287,                /* "}"  */
+    T_LPAREN = 288,                /* "("  */
+    T_RPAREN = 289,                /* ")"  */
+    T_LSQU = 290,                  /* "["  */
+    T_RSQU = 291,                  /* "]"  */
+    T_COMMA = 292,                 /* ","  */
+    T_SEMICOLON = 293              /* ";"  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -96,12 +98,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 15 "/home/mole/Program/compile_principle/MiniC/frontend/MiniC.y"
+#line 15 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
 
     class ast_node * node;
     class Literal_Val* literal;
 
-#line 105 "MiniCBison.h"
+#line 107 "MiniCBison.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
