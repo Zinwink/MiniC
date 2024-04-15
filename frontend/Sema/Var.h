@@ -45,6 +45,19 @@ private:
     VarLoc loc;          // 变量存在的位置
 
 public:
+    /// @brief 析构函数
+    ~Var() {}
+    /// @brief 无参构造
+    Var() {}
+
+    /// @brief 有参构造
+    /// @param name 变量名
+    /// @param _vtype 变量值类型
+    /// @param _tag 变量标签 常量 自定义变量 生成的临时变量
+    /// @param _loc 变脸的的寻址方式 寄存器，内存，立即数
+    Var(std::string &name, const ValueType &_vtype, VarTag _tag = VarTag::DEL_VAR, VarLoc _loc = VarLoc::MEMORY);
+
+public:
     /// @brief 获取变脸值类型
     /// @return 返回变量值类型引用
     ValueType &getValType()
