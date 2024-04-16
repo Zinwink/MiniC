@@ -11,16 +11,16 @@
 #include "Symtab.h"
 #include "Var.h"
 
-/// @brief 根据变量名查找变量
+/// @brief 根据变量名查找变量 查找声明的变量
 /// @param varName 变量名
 /// @return 变量指针 未找到则nullptr
-Var *SymTab::findVar(std::string &varName)
+Var *SymTab::FindDeclVar(std::string &varName)
 {
     SymTab *tab = this;
     while (tab != nullptr)
     {
-        auto iter = tab->varMap.find(varName);
-        if (iter == tab->varMap.end())
+        auto iter = tab->DeclvarMap.find(varName);
+        if (iter == tab->DeclvarMap.end())
         {
             // 未找到 继续
             tab = tab->parent;
@@ -37,12 +37,12 @@ Var *SymTab::findVar(std::string &varName)
 /// @brief 添加变量(声明 添加到散列表)
 /// @param var
 /// @return 添加是否成功
-bool SymTab::AddVar(Var *var)
+bool SymTab::AddDeclVar(Var *var)
 {
-    if (varMap.find(var->getVarName()) == varMap.end()) // 未查找到该变量
+    if (DeclvarMap.find(var->getVarName()) == DeclvarMap.end()) // 未查找到该变量
     {
         // 使用 emplace插入，如果存在该变量名 则不会插入成功
-        varMap.emplace(var->getVarName(), var);
+        DeclvarMap.emplace(var->getVarName(), var);
         return true;
     }
     else
@@ -53,13 +53,13 @@ bool SymTab::AddVar(Var *var)
 /// @param name
 /// @param _type
 /// @return 变量指针  本作用域符号表中已经存在 返回nullptr 表明redifined错误
-Var *SymTab::AddVar(std::string &name, const ValueType &_type)
+Var *SymTab::DeclAddVar(std::string &name, const ValueType &_type)
 {
-    if (varMap.find(name) == varMap.end())
+    if (DeclvarMap.find(name) == DeclvarMap.end())
     {
         // 未查找到该符号
         Var *var = new Var(name, _type);
-        AddVar(var);
+        DeclvarMap.emplace(var->getVarName(), var);
         return var;
     } // 以及存在 则返回null
     else
@@ -69,29 +69,29 @@ Var *SymTab::AddVar(std::string &name, const ValueType &_type)
 /// @brief 添加 整型字面常量
 /// @param int32_digit
 /// @return 常量指针
-Var *SymTab::AddConstVar(int32_t int32_digit)
-{
-    std::string name = std::to_string(int32_digit);
-    Var *var = new Var(name, BasicValueType::TYPE_INT32, VarTag::CONST_VAR, VarLoc::IMIDIATE);
-    bool flag = AddVar(var);
-    if (flag)
-    {
-        return var;
-    }
-    else
-    {
-        delete var;
-        return nullptr;
-    }
-}
+// Var *SymTab::AddConstVar(int32_t int32_digit)
+// {
+//     std::string name = std::to_string(int32_digit);
+//     Var *var = new Var(name, BasicValueType::TYPE_INT32, VarTag::CONST_VAR, VarLoc::IMIDIATE);
+//     bool flag = AddVar(var);
+//     if (flag)
+//     {
+//         return var;
+//     }
+//     else
+//     {
+//         delete var;
+//         return nullptr;
+//     }
+// }
 
 /// @brief 根据函数名查找函数
 /// @param funName 函数名
 /// @return 函数指针
-Function *SymTab::findFunction(std::string &funName)
+Function *SymTab::findDeclFun(std::string &funName)
 {
-    auto funIter = funMap.find(funName);
-    if (funIter == funMap.end())
+    auto funIter = DeclfunMap.find(funName);
+    if (funIter == DeclfunMap.end())
     {
         // 未找到
         return nullptr;
@@ -106,12 +106,12 @@ Function *SymTab::findFunction(std::string &funName)
 /// @param funName 函数名
 /// @param retType 返回类型
 /// @return 函数指针
-Function *SymTab::AddFun(std::string &funName, const ValueType &retType)
+Function *SymTab::AddDeclFun(std::string &funName, const ValueType &retType)
 {
-    if (findFunction(funName) == nullptr)
-    {
+    if (findDeclFun(funName) == nullptr)
+    { // 全局符号表中无法找到
         Function *fun = new Function(funName, retType);
-        funMap.emplace(funName, fun);
+        DeclfunMap.emplace(funName, fun);
         return fun;
     }
     else
