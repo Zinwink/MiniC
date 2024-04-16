@@ -14,10 +14,11 @@
 /// @brief IR指令操作类型
 enum class IROperator : int
 {
-    IR_ADD_INT, // 整数相加
-    IR_RETURN,  // 返回指令
-    IR_ASSIGN,  // 赋值操作
-    IR_UNKNOWN  // 未知类型
+    IR_VAR_DECLAR, // 变量声明
+    IR_ADD_INT,    // 整数相加
+    IR_RETURN,     // 返回指令
+    IR_ASSIGN,     // 赋值操作
+    IR_UNKNOWN     // 未知类型
 };
 
 /// @brief LLVM IR指令基类

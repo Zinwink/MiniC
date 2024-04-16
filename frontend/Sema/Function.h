@@ -12,6 +12,7 @@
 #pragma once
 #include "ValueType.h"
 #include <vector>
+#include "Symtab.h"
 
 /// @brief 函数形参类
 class FunFormalParam
@@ -56,6 +57,9 @@ private:
     ValueType retType;                             // 函数返回类型
     std::vector<FunFormalParam *> FormalParamList; // 形参列表
 public:
+    /// @brief 符号表
+    SymTab *sym;
+
     /// @brief 无参构造函数
     Function() : retType(BasicValueType::TYPE_MAX){};
 

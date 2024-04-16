@@ -66,7 +66,7 @@ std::string ValueType::toString()
         str = "void";
         break;
     case BasicValueType::TYPE_UINT32:
-        str = "ui32";
+        str = "i32";
         break;
     case BasicValueType::TYPE_BOOL:
         str = "i1";

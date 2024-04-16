@@ -13,21 +13,25 @@
 #include "Var.h"
 #include "Function.h"
 
-/// @brief 符号表管理类
+/// @brief 符号表管理基类
 class SymTab
 {
 private:
-    /// @brief 变量名  变量指针 散列表
+    /// @brief 变量名  变量指针 散列表  用于查找已经声明的变量 语义分析
     std::unordered_map<std::string, Var *> varMap;
-
-    /// @brief 函数名 函数指针散列表
-    std::unordered_map<std::string, Function *> FuncMap;
+    /// @brief 查找函数，用于调用时查找进行检查
+    std::unordered_map<std::string, Function *> funMap;
 
 public:
+    /// @brief 变量列表 对于全局符号表以及函数的整体符号表有用
+    std::vector<Var *> VarList;
+    /// @brief 函数列表 对于全局符号表有用
+    std::vector<Function *> FunList;
+
     /// @brief 无参构造
     SymTab(){};
-    /// @brief 析构函数
-    ~SymTab(){};
+    /// @brief 父 符号表
+    SymTab *parent;
 
 public:
     /// @brief 获取变量名 变量散列表
@@ -37,17 +41,10 @@ public:
         return varMap;
     }
 
-    /// @brief 获取函数名 函数 散列表
-    /// @return
-    std::unordered_map<std::string, Function *> &getFuncMap()
-    {
-        return FuncMap;
-    }
-
     /// @brief 根据变量名查找变量
     /// @param varName 变量名
     /// @return 变量指针
-    Var *findVar(std::string &varName);
+    virtual Var *findVar(std::string &varName);
 
     /// @brief 添加变量
     /// @param var 变量指针
@@ -64,11 +61,6 @@ public:
     /// @param int32_digit
     /// @return 常量指针
     Var *AddConstVar(int32_t int32_digit);
-
-    /// @brief 添加 float字面量常量
-    /// @param float_digit
-    /// @return 常量指针
-    Var *AddConstVar(float float_digit);
 
     /// @brief 根据函数名查找函数
     /// @param funName 函数名

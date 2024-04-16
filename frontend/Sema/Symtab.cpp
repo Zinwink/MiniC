@@ -13,22 +13,28 @@
 
 /// @brief 根据变量名查找变量
 /// @param varName 变量名
-/// @return 变量指针
+/// @return 变量指针 未找到则nullptr
 Var *SymTab::findVar(std::string &varName)
 {
-    auto varIter = varMap.find(varName);
-    if (varIter == varMap.end())
+    SymTab *tab = this;
+    while (tab != nullptr)
     {
-        // 未找到
-        return nullptr;
+        auto iter = tab->varMap.find(varName);
+        if (iter == tab->varMap.end())
+        {
+            // 未找到 继续
+            tab = tab->parent;
+        }
+        else
+        {
+            // 找到
+            return iter->second;
+        }
     }
-    else
-    {
-        return varIter->second;
-    }
+    return nullptr;
 }
 
-/// @brief 添加变量
+/// @brief 添加变量(声明 添加到散列表)
 /// @param var
 /// @return 添加是否成功
 bool SymTab::AddVar(Var *var)
@@ -46,7 +52,7 @@ bool SymTab::AddVar(Var *var)
 /// @brief 根据变量名，变量值类型进行构造 用户自定义变量
 /// @param name
 /// @param _type
-/// @return 变量指针
+/// @return 变量指针  本作用域符号表中已经存在 返回nullptr 表明redifined错误
 Var *SymTab::AddVar(std::string &name, const ValueType &_type)
 {
     if (varMap.find(name) == varMap.end())
@@ -84,8 +90,8 @@ Var *SymTab::AddConstVar(int32_t int32_digit)
 /// @return 函数指针
 Function *SymTab::findFunction(std::string &funName)
 {
-    auto funIter = FuncMap.find(funName);
-    if (funIter == FuncMap.end())
+    auto funIter = funMap.find(funName);
+    if (funIter == funMap.end())
     {
         // 未找到
         return nullptr;
@@ -105,7 +111,7 @@ Function *SymTab::AddFun(std::string &funName, const ValueType &retType)
     if (findFunction(funName) == nullptr)
     {
         Function *fun = new Function(funName, retType);
-        FuncMap.emplace(funName, fun);
+        funMap.emplace(funName, fun);
         return fun;
     }
     else
