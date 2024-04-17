@@ -43,6 +43,7 @@ private:
     std::string varName; // 变量名
     VarTag tag;          // 变量标签，指定类型 常量,临时量，变量
     VarLoc loc;          // 变量存在的位置
+    int32_t regId = -1;  // 所在寄存器编号,-1表示未分配
 
 public:
     /// @brief 析构函数
@@ -58,6 +59,10 @@ public:
     Var(std::string &name, const ValueType &_vtype, VarTag _tag = VarTag::DEL_VAR, VarLoc _loc = VarLoc::MEMORY);
 
 public:
+    /// @brief 获取寄存器编号
+    /// @return
+    int32_t &getregId() { return regId; }
+
     /// @brief 获取变脸值类型
     /// @return 返回变量值类型引用
     ValueType &getValType()

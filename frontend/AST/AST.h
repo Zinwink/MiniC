@@ -16,6 +16,7 @@
 #include <cstdint>
 #include "ValueType.h"
 #include "Literal_Val.h"
+#include "Var.h"
 
 /// @brief AST节点类型 枚举
 enum class ast_node_type : int
@@ -153,6 +154,9 @@ public: // 属性
 
     /// @brief 节点的字面量值  包含,(标识符名,函数名,参数名，uint，int,float等字面量之一)以及所在的行号line_no
     Literal_Val literal_val;
+
+    /// @brief 对应的变量
+    Var *vari;
 
 public: // 构造函数
     /// @brief 根据 节点值类型以及所在行号构造,若ValueType能确定顶节点类型则指定，否则按照_node_type指定
