@@ -53,8 +53,9 @@ Var *BlockTempTab::newDeclVar(Var *var)
     {
         // 当前表中不存在该变量
         DeclVars.emplace(var->getVarName(), var); // 加入
-        /// @TODO 插入funtab中的varList
+        ///  插入funtab中的varList
         originFunTab->getVarList().push_back(var);
+        return var;
     }
     else
     { // 存在该变量

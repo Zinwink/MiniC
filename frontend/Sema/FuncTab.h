@@ -16,7 +16,7 @@
 class FuncTab : public BaseSymTab
 {
 private:
-    /// @brief 全域声明的变量列表(包括其下的Block中声明的变量),生成IR时使用，用于事先分配地址
+    /// @brief 全域声明的变量列表(包括其下的Block中声明的变量),生成IR时使用，用于事先分配内存(alloca)
     std::vector<Var *> varList;
 
 public:

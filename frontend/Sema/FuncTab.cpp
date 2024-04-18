@@ -24,6 +24,7 @@ FuncTab::~FuncTab()
         val = nullptr;
     }
     varList.clear();
+    DeclVars.clear();
 }
 
 /// @brief 纯虚函数 查找声明变脸的引用(包含当前以及所有父作用域)
@@ -55,6 +56,7 @@ Var *FuncTab::newDeclVar(Var *var)
         // 未找到
         DeclVars.emplace(var->getVarName(), var); // 声明哈希查找表需要插入
         varList.push_back(var);                   // 使用到的变量列表也要插入
+        return var;
     }
     else
         return nullptr; // 找到 插入失败

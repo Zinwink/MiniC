@@ -41,19 +41,23 @@ public:
     /// @brief 新增声明变量(DeclVar和varList均进行加入操作)
     /// @param  变量指针
     /// @return nullptr表示插入失败，说明已经存在
-    Var *newDeclVar(Var *) override;
+    Var *newDeclVar(Var *var) override;
 
     /// @brief 获取全局变量列表
     /// @return 全局变量列表引用
-    std::vector<Var *> &getVarList();
+    std::vector<Var *> &getVarList() { return varList; }
 
     /// @brief 获取函数列表
     /// @return 函数列表引用
-    std::vector<Function *> &getFunList();
+    std::vector<Function *> &getFunList() { return funList; }
+
+    /// @brief 获取函数名-函数 查找哈希表
+    /// @return 哈希表引用
+    std::unordered_map<string, Function *> &getDeclFuns() { return DeclFuns; }
 
     /// @brief 根据函数名查找声明的函数
     /// @param funname
-    /// @return
+    /// @return nullptr表示未找到
     Function *findDeclFun(string &funname);
 
     /// @brief 新增声明定义的函数 (DeclFuns,funList均进行加入)

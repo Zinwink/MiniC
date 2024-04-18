@@ -12,6 +12,10 @@
 //
 #include "BaseSymTab.h"
 
+BaseSymTab::~BaseSymTab()
+{
+}
+
 /// @brief 从当前符号表中查找变量(搜搜域只限于当前符号表)
 /// @return
 Var *BaseSymTab::findDeclVarOfCurTab(string &name)

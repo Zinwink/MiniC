@@ -12,6 +12,8 @@
 #pragma once
 #include "ValueType.h"
 #include <vector>
+#include "FuncTab.h"
+#include "IRBlock.h"
 
 /// @brief 函数形参类
 class FunFormalParam
@@ -52,6 +54,8 @@ public:
 class Function
 {
 private:
+    FuncTab *funTab;                               // 本函数的全局符号表
+    IRBlock *IRCodes;                              // 本函数的IR块
     std::string name;                              // 函数名
     ValueType retType;                             // 函数返回类型
     std::vector<FunFormalParam *> FormalParamList; // 形参列表
@@ -103,4 +107,12 @@ public:
         FormalParamList.push_back(formalParam);
         return *this;
     }
+
+    /// @brief 获取本函数的IR指令块
+    /// @return
+    IRBlock *getIRBlock() { return IRCodes; }
+
+    /// @brief 获取本函数的符号表
+    /// @return
+    FuncTab *getFuncTab() { return funTab; }
 };

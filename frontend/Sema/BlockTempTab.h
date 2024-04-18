@@ -11,8 +11,8 @@
 
 #pragma once
 #include "BaseSymTab.h"
+#include "FuncTab.h"
 
-class FuncTab; // 前置声明 FuncTab
 
 /// @brief 函数全局域中出现的block表，block代码块可以嵌套或者并列
 class BlockTempTab : public BaseSymTab
