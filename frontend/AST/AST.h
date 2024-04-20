@@ -17,6 +17,7 @@
 #include "ValueType.h"
 #include "Literal_Val.h"
 #include "Var.h"
+#include "IRBlock.h"
 
 /// @brief AST节点类型 枚举
 enum class ast_node_type : int
@@ -157,6 +158,9 @@ public: // 属性
 
     /// @brief 对应的变量
     Var *vari;
+
+    /// @brief IRBlock指针，翻译IR时使用
+    IRBlock *CodesIr;
 
 public: // 构造函数
     /// @brief 根据 节点值类型以及所在行号构造,若ValueType能确定顶节点类型则指定，否则按照_node_type指定

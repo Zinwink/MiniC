@@ -10,3 +10,13 @@
  */
 
 #include "IRGenerate.h"
+
+/// @brief 构造函数
+/// @param _scop 作用域符号表管理
+/// @param _root 抽象语法树指针
+IRGenerate::IRGenerate(ScopeMg *_scop, ast_node *_root)
+{
+    scoper = _scop;
+    root = _root;
+}
+

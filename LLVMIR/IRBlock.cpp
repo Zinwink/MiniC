@@ -14,22 +14,20 @@
 /// @brief 析构函数
 IRBlock::~IRBlock()
 {
-    for (auto inst : IRList)
-    {
-        delete inst;
-    }
-    IRList.clear();
+    // 暂时不实现
 }
 
-/// @brief 添加一个指令块 用于遍历AST向上合并时使用，并释放原指令块
+
+/// @brief 向IRBack添加一个指令块 用于遍历AST向上合并时使用，并释放原指令块
 /// @param block  指令块
-void IRBlock::extend(IRBlock &block)
+void IRBlock::extendIRBack(IRBlock &block)
 {
     // 先将原block加入
-    for (auto inst : block.IRList)
+    for (auto inst : block.IRBack)
     {
-        IRList.push_back(inst);
+        IRBack.push_back(inst);
     }
-    // 清空原block 只清空指针 不删除对象(还需使用)
-    block.IRList.clear();
+    // 清空原block, 只清空指针不删除对象
+    block.IRBack.clear();
+    block.IRFront.clear();
 }

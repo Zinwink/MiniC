@@ -11,6 +11,7 @@
 
 #pragma once
 #include "BaseSymTab.h"
+#include "IDCounter.h"
 
 /// @brief 函数整体符号表
 class FuncTab : public BaseSymTab
@@ -30,6 +31,7 @@ public:
 
     /// @brief 析构函数
     ~FuncTab() override;
+
 
     /// @brief 纯虚函数 查找声明变脸的引用 (包含当前以及所有父作用域)
     /// @param 查找变量名

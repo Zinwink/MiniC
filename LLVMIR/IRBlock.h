@@ -11,14 +11,17 @@
 #pragma once
 
 #include "IRInst.h"
-#include <vector>
+#include <deque>
 
 /// @brief IR指令序列 管理
 class IRBlock
 {
 private:
-    /// @brief IR指令序列
-    std::vector<IRInst *> IRList;
+    /// @brief IR指令序列前部分 (在函数中如alloca分配指令)
+    std::deque<IRInst *> IRFront;
+
+    /// @brief IR指令序列 后部分
+    std::deque<IRInst *> IRBack;
 
 public:
     /// @brief 构造函数 默认构造
@@ -27,15 +30,15 @@ public:
     /// @brief 析构函数
     ~IRBlock();
 
-    /// @brief 添加一个指令块 用于遍历AST向上合并时使用，并释放原指令块
-    /// @param block  指令块
-    void extend(IRBlock &block);
+    /// @brief 返回IRFront 前部分IR指令
+    /// @return IRFront引用
+    std::deque<IRInst *> &irfront() { return IRFront; }
 
-    /// @brief 追加一条指令
-    /// @param inst
-    void append(IRInst *inst) { IRList.push_back(inst); }
-
-    /// @brief 获取指令序列
+    /// @brief 返会IRBack引用
     /// @return
-    std::vector<IRInst *> &getIRList() { return IRList; }
+    std::deque<IRInst *> &irback() { return IRBack; }
+
+    /// @brief 向IRBack添加一个指令块 用于遍历AST向上合并时使用，并释放原指令块
+    /// @param block  指令块
+    void extendIRBack(IRBlock &block);
 };

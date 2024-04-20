@@ -154,10 +154,14 @@ set(FRONTEND_SRCS
     frontend/Sema/FuncTab.cpp
     frontend/Sema/GlobalSymTab.h
     frontend/Sema/GlobalSymTab.cpp
+    frontend/Sema/ScopeMg.h
+    frontend/Sema/ScopeMg.cpp
 )
 
 
 set(LLVMIR_SRCS
+    LLVMIR/IDCounter.h
+    LLVMIR/IDCounter.cpp
     LLVMIR/IRInst.h
     LLVMIR/IRInst.cpp
     LLVMIR/IRBlock.h

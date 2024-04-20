@@ -55,6 +55,7 @@ class Function
 {
 private:
     FuncTab *funTab;                               // 本函数的全局符号表
+    Counter *cnter;                                // 计数器对象，供本函数翻译llvmir 分配相关编号时使用
     IRBlock *IRCodes;                              // 本函数的IR块
     std::string name;                              // 函数名
     ValueType retType;                             // 函数返回类型
@@ -91,6 +92,10 @@ public:
     {
         return retType;
     }
+
+    /// @brief 获取本函数符号表的计数器
+    /// @return 获取本函数符号表计数器
+    Counter *counter() { return cnter; }
 
     /// @brief 获取函数形参列表
     /// @return
