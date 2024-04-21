@@ -49,6 +49,11 @@ public:
     {
         return type;
     }
+
+    /// @brief 获取对应的IR字符串表示
+    /// @param cnt 使用的计数器指针
+    /// @return
+    string toString(Counter *cnt);
 };
 
 class Function
@@ -56,7 +61,7 @@ class Function
 private:
     FuncTab *funTab;                               // 本函数的全局符号表
     Counter *cnter;                                // 计数器对象，供本函数翻译llvmir 分配相关编号时使用
-    IRBlock *IRCodes;                              // 本函数的IR块
+    IRBlock *IRCodes;                              // 本函数的IR块(block中的iR指令)
     std::string name;                              // 函数名
     ValueType retType;                             // 函数返回类型
     std::vector<FunFormalParam *> FormalParamList; // 形参列表
@@ -64,16 +69,12 @@ public:
     /// @brief 符号表
     // SymTab *sym;
     /// @brief 无参构造函数
-    Function() : retType(BasicValueType::TYPE_MAX){};
+    Function();
 
     /// @brief 根据名字以及返回类型进行构造
     /// @param _name
     /// @param retTy
-    Function(std::string &_name, const ValueType &retTy = BasicValueType::TYPE_VOID)
-    {
-        name = _name;
-        retType = retTy;
-    }
+    Function(std::string &_name, const ValueType &retTy = BasicValueType::TYPE_VOID);
 
     /// @brief 析构函数
     ~Function();
@@ -120,4 +121,9 @@ public:
     /// @brief 获取本函数的符号表
     /// @return
     FuncTab *getFuncTab() { return funTab; }
+
+    /// @brief 将函数转化为IR string表示
+    /// @param str 用于存储字符串
+    /// @return 字符串
+    string &toString(string &str);
 };

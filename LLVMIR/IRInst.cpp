@@ -162,6 +162,15 @@ ReturnIRInst::ReturnIRInst(Var *_dstvar)
 /// @return
 std::string &ReturnIRInst::toString(std::string &str, Counter *counter)
 {
-    str = string("ret ") + dstVar->llvmVarTypeStr() + string(" ") + dstVar->llvmVarIDStr();
+    if (dstVar != nullptr)
+    { // 目的操作数不为空
+        str = string("ret ") + dstVar->llvmVarTypeStr() + string(" ") + dstVar->llvmVarIDStr();
+    }
+    else
+    {
+        // dstVar为空  表示无返回值 void
+        str = string("ret void");
+    }
+
     return str;
 }

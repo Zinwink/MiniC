@@ -26,7 +26,7 @@ private:
     typedef bool (IRGenerate::*ast2ir_handler_t)(ast_node *);
 
     /// @brief 节点类型--函数操作的对应哈希表
-    std::unordered_map<ast_node_type, ast2ir_handler_t> ast2ir_hander;
+    std::unordered_map<ast_node_type, ast2ir_handler_t> ast2ir_handers;
 
 private: // 一些抽象语法树节点对应的操作函数
     /// @brief 对AST compileUnit的翻译函数
@@ -69,6 +69,13 @@ private: // 一些抽象语法树节点对应的操作函数
     /// @return
     bool ir_add(ast_node *node);
 
+    /// @brief 
+    /// @param node 
+    /// @return 
+    // bool ir_leafNode_int(ast_node *node);
+
+    
+
 public:
     /// @brief 构造函数
     /// @param _scop 作用域符号表管理
@@ -77,6 +84,10 @@ public:
 
     /// @brief 析构函数
     ~IRGenerate() = default;
+
+    /// @brief 根据AST节点的类型查找相应的函数操作并执行
+    /// @return nullptr表示运行失败，否则返回node指针
+    ast_node *ir_visit_astnode(ast_node *node);
 
     /// @brief 运行产生线性IR指令
     /// @return 产生成功true,产生失败false

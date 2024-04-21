@@ -142,7 +142,8 @@ FuncFormalParam : "int" DIGIT_ID{
 
 /* 语句块 */
 Block : "{" "}"{
-    $$=nullptr; //无语句
+    $$= new ast_node(ast_node_type::AST_OP_BLOCK);
+    // 无操作
 }
 | "{" BlockItemList "}" {
     // 语句块中的语句列表 语句块指针指向语句列表
@@ -163,6 +164,10 @@ BlockItemList : Statement {
 Statement : "return" Expr ";" {
     //返回语句
     $$ = new_ast_node(ast_node_type::AST_OP_RETURN_STATEMENT,1,$2);
+}
+| "return" ";"{
+    //无返回值
+    $$=new ast_node(ast_node_type::AST_OP_RETURN_STATEMENT);
 }
 | Block {
     $$=$1;

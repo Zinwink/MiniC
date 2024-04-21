@@ -22,6 +22,12 @@ private:
     /// @brief 符号表管理栈
     std::stack<BaseSymTab *> stk;
 
+    /// @brief 符号管理栈的全局符号表
+    GlobalSymTab *curGlobalTab;
+
+    /// @brief 指向当前函数
+    Function *curfunc = nullptr;
+
 public:
     /// @brief 构造函数
     ScopeMg();
@@ -32,15 +38,28 @@ public:
     /// @return 管理栈
     std::stack<BaseSymTab *> &StkMg() { return stk; }
 
+    /// @brief 获取当前管理栈的全局符号表
+    /// @return 全局符号表指针(使用基类指针转型得到)
+    GlobalSymTab *globalTab();
+
     /// @brief 获取当前符号表
     /// @return 当前符号表
     BaseSymTab *curTab() { return stk.top(); }
+
+    /// @brief 获得当前指向的函数指针
+    /// @return
+    Function *curFun() { return curfunc; }
+
+    /// @brief 设置当前指向的函数指针
+    /// @param fun
+    void setCurFun(Function *fun) { curfunc = fun; }
 
     /// @brief 压入符号表
     /// @param  压入符号表
     /// @return
     BaseSymTab *pushTab(BaseSymTab *tab)
     {
+        tab->setParent(this->curTab()); // 设置要压栈的符号表的父表为当前栈顶表
         stk.push(tab);
         return tab;
     }
@@ -50,6 +69,7 @@ public:
     BaseSymTab *popTab()
     {
         BaseSymTab *cur = stk.top();
+        cur->setParent(nullptr);
         stk.pop();
         return cur;
     }
