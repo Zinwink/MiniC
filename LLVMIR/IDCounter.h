@@ -26,6 +26,10 @@ public:
     /// @brief 构造函数
     Counter() { count = 0; };
 
+    /// @brief 重置编号为指定数值
+    /// @param num
+    void reset(int32_t num) { count = num; };
+
     /// @brief 获取计数器
     /// @return 计数器值
     int32_t getCount();

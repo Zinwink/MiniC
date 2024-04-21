@@ -48,6 +48,7 @@ Function::Function(std::string &_name, const ValueType &retTy)
 string &Function::toString(string &str)
 {
     str = string("\ndefine dso_local ") + retType.toString() + string(" @") + name + string("(");
+    // 翻译函数形参 并编号
     for (uint32_t i = 0; i < FormalParamList.size(); i++)
     {
         string paramStr = FormalParamList[i]->toString(cnter);
@@ -57,6 +58,8 @@ string &Function::toString(string &str)
             str += string(", ");
         }
     }
+    // 根据形参数目重新初始编号  规定初始编号为  形参列表参数数目+1
+    cnter->reset(FormalParamList.size() + 1);
     str += string(") {\n");
     // 先翻译加上函数中的alloca指令字符串
     for (auto &frontir : IRCodes->irfront())
