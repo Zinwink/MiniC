@@ -90,6 +90,7 @@ bool IRGenerate::ir_CompileUnit(ast_node *node)
 /// @return
 bool IRGenerate::ir_func_define(ast_node *node)
 {
+    node->CodesIr = new IRBlock();
     string funcname = node->literal_val.digit.id;
     Function *fun = new Function(funcname, node->val_type);
     scoper->globalTab()->newDeclFun(fun); // 全局符号表添加相关函数
@@ -102,6 +103,8 @@ bool IRGenerate::ir_func_define(ast_node *node)
         {
             return false;
         }
+        if (son->node_type == ast_node_type::AST_OP_BLOCK)
+            node->CodesIr->extendIRBack(*(son->CodesIr)); // 当前node节点加入子节点上传的IR
     }
     fun->getIRBlock()->extendIRBack(*(node->CodesIr)); // 将block中的IR指令加入当前函数中
     scoper->setCurFun(nullptr);                        // 该函数定义翻译完后 设置为null
@@ -129,6 +132,7 @@ bool IRGenerate::ir_block(ast_node *node)
 {
     // 每次遇见一个block时会向scoper管理栈中压入相关的符号表，模拟作用域
     // 根据block的父节点进行判断block是函数的全体block 还是函数内部的小型作用域
+    node->CodesIr = new IRBlock();
     if (node->parent->node_type == ast_node_type::AST_OP_FUNC_DEF && scoper->curFun() != nullptr)
     {
         // 是函数定义的大block
@@ -161,6 +165,7 @@ bool IRGenerate::ir_block(ast_node *node)
 bool IRGenerate::ir_return(ast_node *node)
 {
     // 检查返回类型是否和当前函数匹配  TODO
+    node->CodesIr = new IRBlock();
 
     if (node->sons.size() == 0)
     {
@@ -172,7 +177,7 @@ bool IRGenerate::ir_return(ast_node *node)
     else
     { // 有孩子 有返回值
         ast_node *sonNode = node->sons[0];
-        if (sonNode->node_type == ast_node_type::AST_LEAF_VAR_ID || sonNode->node_type == ast_node_type::AST_LEAF_LITERAL_INT)
+        if (sonNode->node_type == ast_node_type::AST_LEAF_VAR_ID)
         {
             // 返回值为一个变量类型
             string vname = sonNode->literal_val.digit.id;
@@ -221,12 +226,14 @@ bool IRGenerate::ir_return(ast_node *node)
 /// @return
 bool IRGenerate::ir_declItems(ast_node *node)
 {
+    node->CodesIr = new IRBlock();
     // 是否是全局声明
     bool isglobalDecl = node->parent->node_type == ast_node_type::AST_OP_COMPILE_UNIT;
     for (auto son : node->sons)
     {
         if (son->node_type == ast_node_type::AST_LEAF_VAR_ID)
         {
+            son->val_type = node->val_type;
             // 子节点是变量
             string vname = son->literal_val.digit.id;
             Var *var = scoper->curTab()->findDeclVarOfCurTab(vname); // 查找本作用域表，踊跃确定是否重定义
