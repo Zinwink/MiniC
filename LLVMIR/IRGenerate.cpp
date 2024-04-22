@@ -31,6 +31,11 @@ IRGenerate::IRGenerate(ScopeMg *_scop, ast_node *_root)
     ast2ir_handers[ast_node_type::AST_OP_FUNC_FORMAL_PARAMS] = &IRGenerate::ir_func_formal_params;
     ast2ir_handers[ast_node_type::AST_OP_RETURN_STATEMENT] = &IRGenerate::ir_return;
 
+    // 一些变量节点 varid  int float
+    ast2ir_handers[ast_node_type::AST_LEAF_LITERAL_INT] = &IRGenerate::ir_leafNode_int;
+    ast2ir_handers[ast_node_type::AST_LEAF_LITERAL_FLOAT] = &IRGenerate::ir_leafNode_float;
+    ast2ir_handers[ast_node_type::AST_LEAF_VAR_ID] = &IRGenerate::ir_leafNode_var;
+
     // AST中的block节点
     ast2ir_handers[ast_node_type::AST_OP_BLOCK] = &IRGenerate::IRGenerate::ir_block;
 
@@ -67,6 +72,8 @@ ast_node *IRGenerate::ir_visit_astnode(ast_node *node)
         node = nullptr;
     return node;
 }
+
+//****************** 下面是一些AST节点对应的操作函数 ***********
 
 /// @brief 对AST compileUnit的翻译函数
 /// @param node 抽象书节点
@@ -121,6 +128,9 @@ bool IRGenerate::ir_func_formal_params(ast_node *node)
         string formalName = node->literal_val.digit.id;
         FunFormalParam *formalp = new FunFormalParam(formalName, son->val_type);
         scoper->curFun()->addFormalParam(formalp); // 加入当前函数的形参列表
+        // 根据形参创建相应名字的变量 放入声明查询哈希表中
+        Var *formalVar = new Var(formalName, son->val_type);
+        scoper->curFun()->getFuncTab()->newDeclVar(formalVar);
     }
     return true;
 }
@@ -300,28 +310,29 @@ bool IRGenerate::ir_declItems(ast_node *node)
 /// @return
 bool IRGenerate::ir_assign(ast_node *node)
 {
-    ast_node *left = node->sons[0];
-    ast_node *right = node->sons[1];
-    string leftname = left->literal_val.digit.id;
-    Var *var = scoper->curTab()->findDeclVar(leftname);
-    if (var == nullptr)
-    { // 未找到
-        std::cout << "undefined variable, line: " << left->literal_val.line_no << std::endl;
-        return false;
-    }
-    else
-    {
-        // 找到
-        ast_node *tmp = ir_visit_astnode(right);
-        if (tmp == nullptr)
-        {
-            return false;
-        }
-        Var *dstv = right->CodesIr->irback().back()->getDst(); // 获取最后一条指令的目的操作数
-        node->CodesIr->extendIRBack(*(right->CodesIr));
-        IRInst *inst = new AssignIRInst(var, dstv);
-        node->CodesIr->irback().push_back(inst);
-    }
+    ast_node *left = ir_visit_astnode(node->sons[0]);
+    ast_node *right = ir_visit_astnode(node->sons[1]);
+
+    // string leftname = left->literal_val.digit.id;
+    // Var *var = scoper->curTab()->findDeclVar(leftname);
+    // if (var == nullptr)
+    // { // 未找到
+    //     std::cout <<"'"<<leftname<<"'"<<"undeclared, line number: " << left->literal_val.line_no << std::endl;
+    //     return false;
+    // }
+    // else
+    // {
+    //     // 找到
+    //     ast_node *tmp = ir_visit_astnode(right);
+    //     if (tmp == nullptr)
+    //     {
+    //         return false;
+    //     }
+    //     Var *dstv = right->CodesIr->irback().back()->getDst(); // 获取最后一条指令的目的操作数
+    //     node->CodesIr->extendIRBack(*(right->CodesIr));
+    //     IRInst *inst = new AssignIRInst(var, dstv);
+    //     node->CodesIr->irback().push_back(inst);
+    // }
     return true;
 }
 
@@ -330,8 +341,83 @@ bool IRGenerate::ir_assign(ast_node *node)
 /// @return
 bool IRGenerate::ir_add(ast_node *node)
 {
+    // @todo
     return true;
 }
+
+/// @brief 对于int字面量AST节点的操作 AST_LEAF_LITERAL_INT,
+/// @param node AST int字面量节点
+/// @return true成功 false失败
+bool IRGenerate::ir_leafNode_int(ast_node *node)
+{
+    int32_t intdigit = node->literal_val.digit.int32_digit;
+    Var *leafint = new Var(intdigit);
+    node->vari = leafint;
+    if (node->vari == nullptr)
+        return false;
+    return true;
+}
+
+/// @brief 对于float字面量AST节点的操作 AST_LEAF_LITERAL_FLOAT
+/// @param node AST float字面量节点
+/// @return
+bool IRGenerate::ir_leafNode_float(ast_node *node)
+{
+    float floatdigit = node->literal_val.digit.float_digit;
+    Var *leaffloat = new Var(floatdigit);
+    node->vari = leaffloat;
+    if (node->vari == nullptr)
+        return false;
+    return true;
+}
+
+/// @brief 对于AST_LEAF_VAR_ID(变量)的函数操作
+/// @param node
+/// @return
+bool IRGenerate::ir_leafNode_var(ast_node *node)
+{
+    // 对于 用户定义的变量 对于此节点的访问需要看父节点的相关性质
+    // var的产生只能在DeclarationItems节点管理下产生。其他情况下只是进行查找
+    ast_node_type paretType = node->parent->node_type;
+    string varName = node->literal_val.digit.id; // 获取变量名
+    if (paretType == ast_node_type::AST_OP_DECL_ITEMS)
+    {
+        Var *result = scoper->curTab()->findDeclVarOfCurTab(varName); // 查找
+        // 父节点为DeclareItems声明节点
+        if (result == nullptr)
+        {
+            // 未找到 表示可以定义
+            Var *declvar = new Var(varName, node->parent->val_type); // 生成该变量
+            node->vari = declvar;                                    // AST指向该变量供之后访问
+            // 下面将该声明变量加入到当前作用域表中
+            scoper->curTab()->newDeclVar(declvar);
+        }
+        else
+        { // 在本作用域中找到已经声明该变量 打印错误
+            std::cout << "[error] redeclaration of '" << varName
+                      << "' ,line number:" << node->literal_val.line_no << std::endl;
+            return false; // 失败
+        }
+    }
+    else
+    {
+        // 父节点不是DeclItems节点，表示该变量被使用，只需进行查找(查找将包括当前作用域以及父作用域)即可
+        Var *result = scoper->curTab()->findDeclVar(varName);
+        if (result != nullptr)
+        {
+            // 表示找到，使用的变量已经声明
+            node->vari = result; // AST节点指向该变量，供后继使用
+        }
+        else
+        { // 未找到 ，未声明
+            std::cout << "[error] '" << varName << "' undeclared,line number:" << node->literal_val.line_no << std::endl;
+            return false;
+        }
+    }
+    return true;
+}
+
+//****************** 下面是一运行产生线性IR的一些函数 ***********
 
 /// @brief 运行产生线性IR指令
 /// @return 产生成功true,产生失败false

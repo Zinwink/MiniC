@@ -32,7 +32,7 @@ GlobalSymTab::~GlobalSymTab()
     funList.clear(); // 防止重复清理
 }
 
-/// @brief 查找声明的全局变脸
+/// @brief 查找声明的全局变量
 /// @param name 全局变量名
 /// @return 变量指针
 Var *GlobalSymTab::findDeclVar(string &name)
@@ -49,6 +49,7 @@ Var *GlobalSymTab::newDeclVar(Var *var)
     if (findDeclVarOfCurTab(var->getVarName()) == nullptr)
     {
         // 未找到 加入varList, DeclVars
+        var->getIsGloabl() = true; // 设置为全局变量
         varList.push_back(var);
         DeclVars.emplace(var->getVarName(), var);
         return var;
