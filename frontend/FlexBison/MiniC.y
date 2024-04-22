@@ -296,16 +296,31 @@ Declare : "int" DeclareItems ";"{
 
 //包含多项声明
 DeclareItems : DeclareItem{
-    $$=new_ast_node(ast_node_type::AST_OP_DECL_ITEMS,1,$1);
+    if($1->node_type==ast_node_type::AST_LEAF_VAR_ID){
+        $$=new_ast_node(ast_node_type::AST_OP_DECL_ITEMS,1,$1);
+    }else{
+        // 是assign赋值形式,为了后继方便翻译这里将声明和赋值区分
+        ast_node* left=$1->sons[0];  //左边的声明变量
+        $$=new_ast_node(ast_node_type::AST_OP_DECL_ITEMS,2,left,$1);
+    }
 }
 | DeclareItems "," DeclareItem{
-    $$=insert_ast_node($1,$3);
+    if($3->node_type==ast_node_type::AST_LEAF_VAR_ID){
+        $$=insert_ast_node($1,$3);  // DeclareItem是变量类型
+    }else{
+        // DeclareItem是赋值类型
+        ast_node* left=$3->sons[0]; //左边的声明变量
+        $$=insert_ast_node($1,left);  //插入left 声明变量
+        $$=insert_ast_node($1,$3);  //插入 后继操作:赋值节点
+    }
+    
 }
 ;
 // 单项声明
 DeclareItem : var{
     // 无动作
     // $$=new_ast_node(ast_node_type::AST_OP_DECL_ITEM,1,$1);
+    $$=$1;
 }
 | var "=" Expr {
     ast_node* node=new_ast_node(ast_node_type::AST_OP_ASSIGN,2,$1,$3);
