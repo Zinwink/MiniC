@@ -237,71 +237,97 @@ bool IRGenerate::ir_return(ast_node *node)
 bool IRGenerate::ir_declItems(ast_node *node)
 {
     node->CodesIr = new IRBlock();
-    // 是否是全局声明
-    bool isglobalDecl = node->parent->node_type == ast_node_type::AST_OP_COMPILE_UNIT;
-    for (auto son : node->sons)
+    for (auto &son : node->sons)
     {
-        if (son->node_type == ast_node_type::AST_LEAF_VAR_ID)
+        ast_node *result = ir_visit_astnode(son);
+        if (result == nullptr)
         {
-            son->val_type = node->val_type;
-            // 子节点是变量
-            string vname = son->literal_val.digit.id;
-            Var *var = scoper->curTab()->findDeclVarOfCurTab(vname); // 查找本作用域表，踊跃确定是否重定义
-            if (var != nullptr)
-            {
-                // 本作用域查找到了该变量的声明  重定义错误
-                std::cout << "redefined variable,line: " << son->literal_val.line_no << std::endl;
-                return false;
+            return false;
+        }
+        if (result->node_type == ast_node_type::AST_LEAF_VAR_ID)
+        {
+            // 变量节点
+            if (result->vari->getIsGloabl())
+            { // 是全局变量的声明
+              // 暂时不做处理 TODO
             }
             else
-            {
-                // 未找到 未重定义声明
-                var = new Var(vname, son->val_type, isglobalDecl);
-                if (isglobalDecl)
-                    scoper->globalTab()->getVarList().push_back(var);
-                else
-                {
-                    // 非全局 在函数中
-                    scoper->curFun()->getFuncTab()->newDeclVar(var);
-                    IRInst *inst = new AllocaIRInst(var);
-                    scoper->curFun()->getIRBlock()->irfront().push_back(inst); // 加入到当前函数的irfront部分中
-                }
+            { // 函数中的局部变量
+                IRInst *inst = new AllocaIRInst(result->vari);
+                scoper->curFun()->getIRBlock()->irfront().push_back(inst);
             }
         }
         else
         {
-            // 子节点是赋值类型
-            ast_node *tmp = ir_visit_astnode(son);
-            if (tmp == nullptr)
-            {
-                return false;
-            }
-            // 全局
-            string vname = son->sons[0]->literal_val.digit.id;
-            Var *var = scoper->curTab()->findDeclVarOfCurTab(vname); // 查找本作用域表，踊跃确定是否重定义
-            if (var != nullptr)
-            {
-                // 本作用域查找到了该变量的声明  重定义错误
-                std::cout << "redefined variable,line: " << son->literal_val.line_no << std::endl;
-                return false;
-            }
-            else
-            {
-                var = new Var(vname, son->sons[0]->val_type, isglobalDecl);
-                if (isglobalDecl)
-                {
-                    scoper->globalTab()->getVarList().push_back(var);
-                }
-                else
-                {
-                    scoper->curFun()->getFuncTab()->newDeclVar(var);
-                    IRInst *inst = new AllocaIRInst(var);
-                    scoper->curFun()->getIRBlock()->irfront().push_back(inst);
-                }
-            }
-            node->CodesIr->extendIRBack(*(son->CodesIr)); // 子节点IR上传
+            // 赋值节点  将子节点IR上传
+            node->CodesIr->extendIRBack(*(result->CodesIr));
         }
     }
+    // 是否是全局声明
+    // bool isglobalDecl = node->parent->node_type == ast_node_type::AST_OP_COMPILE_UNIT;
+    // for (auto son : node->sons)
+    // {
+    //     if (son->node_type == ast_node_type::AST_LEAF_VAR_ID)
+    //     {
+    //         son->val_type = node->val_type;
+    //         // 子节点是变量
+    //         string vname = son->literal_val.digit.id;
+    //         Var *var = scoper->curTab()->findDeclVarOfCurTab(vname); // 查找本作用域表，踊跃确定是否重定义
+    //         if (var != nullptr)
+    //         {
+    //             // 本作用域查找到了该变量的声明  重定义错误
+    //             std::cout << "redefined variable,line: " << son->literal_val.line_no << std::endl;
+    //             return false;
+    //         }
+    //         else
+    //         {
+    //             // 未找到 未重定义声明
+    //             var = new Var(vname, son->val_type, isglobalDecl);
+    //             if (isglobalDecl)
+    //                 scoper->globalTab()->getVarList().push_back(var);
+    //             else
+    //             {
+    //                 // 非全局 在函数中
+    //                 scoper->curFun()->getFuncTab()->newDeclVar(var);
+    //                 IRInst *inst = new AllocaIRInst(var);
+    //                 scoper->curFun()->getIRBlock()->irfront().push_back(inst); // 加入到当前函数的irfront部分中
+    //             }
+    //         }
+    //     }
+    //     else
+    //     {
+    //         // 子节点是赋值类型
+    //         ast_node *tmp = ir_visit_astnode(son);
+    //         if (tmp == nullptr)
+    //         {
+    //             return false;
+    //         }
+    //         // 全局
+    //         string vname = son->sons[0]->literal_val.digit.id;
+    //         Var *var = scoper->curTab()->findDeclVarOfCurTab(vname); // 查找本作用域表，踊跃确定是否重定义
+    //         if (var != nullptr)
+    //         {
+    //             // 本作用域查找到了该变量的声明  重定义错误
+    //             std::cout << "redefined variable,line: " << son->literal_val.line_no << std::endl;
+    //             return false;
+    //         }
+    //         else
+    //         {
+    //             var = new Var(vname, son->sons[0]->val_type, isglobalDecl);
+    //             if (isglobalDecl)
+    //             {
+    //                 scoper->globalTab()->getVarList().push_back(var);
+    //             }
+    //             else
+    //             {
+    //                 scoper->curFun()->getFuncTab()->newDeclVar(var);
+    //                 IRInst *inst = new AllocaIRInst(var);
+    //                 scoper->curFun()->getIRBlock()->irfront().push_back(inst);
+    //             }
+    //         }
+    //         node->CodesIr->extendIRBack(*(son->CodesIr)); // 子节点IR上传
+    //     }
+    // }
     return true;
 }
 
@@ -311,8 +337,15 @@ bool IRGenerate::ir_declItems(ast_node *node)
 bool IRGenerate::ir_assign(ast_node *node)
 {
     ast_node *left = ir_visit_astnode(node->sons[0]);
+    if (left == nullptr)
+        return false;
     ast_node *right = ir_visit_astnode(node->sons[1]);
-
+    if (right == nullptr)
+        return false;
+    IRInst *inst = new AssignIRInst(left->vari, right->vari);
+    node->CodesIr = new IRBlock();
+    node->CodesIr->extendIRBack(*(right->CodesIr));
+    node->CodesIr->irback().push_back(inst);
     // string leftname = left->literal_val.digit.id;
     // Var *var = scoper->curTab()->findDeclVar(leftname);
     // if (var == nullptr)
