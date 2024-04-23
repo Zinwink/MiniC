@@ -14,6 +14,8 @@
 #include <cstdint>
 #include "Var.h"
 
+class FunFormalParam;  //前置声明
+
 class Counter
 {
 private:
@@ -38,4 +40,9 @@ public:
     /// @param var 变量指针
     /// @return 编号
     int32_t setCount(Var *var);
+
+    /// @brief 为函数形参分配llvmiR编号
+    /// @param formal
+    /// @return
+    int32_t setCount(FunFormalParam *formal);
 };

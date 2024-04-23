@@ -10,6 +10,7 @@
  */
 
 #include "IDCounter.h"
+#include "Function.h"
 
 /// @brief 获取计数器
 /// @return 计数器值
@@ -34,4 +35,18 @@ int32_t Counter::setCount(Var *var)
     // 变量已经分配编号时，计数器不给编号，保持原状态
     // 返回变量分配的LLVMIR编号(一定不为-1)
     return var->getllvmId();
+}
+
+/// @brief 为函数形参分配llvmiR编号
+/// @param formal
+/// @return
+int32_t Counter::setCount(FunFormalParam *formal)
+{
+    if (formal->getllvmId() == -1)
+    {
+        // 未分配编号
+        formal->getllvmId() = count; // 分配
+        count++;                     // 自增
+    }
+    return formal->getllvmId();
 }
