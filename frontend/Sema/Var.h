@@ -22,6 +22,8 @@ enum class VarTag : int
     CONST_VAR,
     /// @brief  编译器产生的临时变量
     TEMP_VAR,
+    /// @brief 形参
+    FORMAL_PARAM
 };
 
 enum class VarLoc : int
@@ -53,7 +55,7 @@ protected:
 public:
     /// @brief 析构函数
     ~Var() {}
-    /// @brief 无参构造
+    /// @brief 无参构造,
     Var() {}
 
     /// @brief 常量 根据字面量值构造
@@ -130,3 +132,6 @@ public:
     /// @return 字符串
     virtual std::string llvmVarIDStr();
 };
+
+/// @brief 创建临时变量
+Var *newTempVar(ValueType &_valType, const VarLoc &_loc = VarLoc::MEMORY);

@@ -79,3 +79,12 @@ std::string Var::llvmVarIDStr()
         return std::string("%") + std::to_string(llvmId);
     }
 }
+
+// ***************** 一些函数 ************************‘
+/// @brief 创建临时变量
+Var *newTempVar(ValueType &_valType, const VarLoc &_loc)
+{
+    std::string name = "tmpvar";
+    Var *tmp = new Var(name, _valType, false, VarTag::TEMP_VAR, _loc);
+    return tmp;
+}
