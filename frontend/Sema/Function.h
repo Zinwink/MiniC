@@ -16,39 +16,36 @@
 #include "IRBlock.h"
 
 /// @brief 函数形参类
-class FunFormalParam
+class FunFormalParam : public Var // 形参是一类特殊的变量
 {
 private:
-    std::string name; // 参数名
-    ValueType type;   // 形参类型
+    // std::string name;    // 参数名
+    // ValueType type;      // 形参类型
+    // int32_t llvmid = -1; // 函数形参分配的编号
+    Var *_value; // 形参对应的变量(可以认为是函数中传参时的拷贝)
+
 public:
     /// @brief 析构函数
     ~FunFormalParam() {}
     /// @brief 构造函数
-    FunFormalParam() : type(BasicValueType::TYPE_MAX) {}
+    FunFormalParam()
+    {
+        val_type = BasicValueType::TYPE_MAX;
+    }
 
     /// @brief 根据字符串名构造函数形参
     /// @param _name
     FunFormalParam(std::string &_name, const ValueType &_type = BasicValueType::TYPE_MAX)
     {
-        name = _name;
-        type = _type;
+        varName = _name;
+        val_type = _type;
+        _value = new Var(_name, _type); // 构造对应的形参拷贝变量
     }
 
 public:
-    /// @brief 获取形参名字
-    /// @return 形参名
-    std::string &getName()
-    {
-        return name;
-    }
-
-    /// @brief 获取形参类型
-    /// @return 形参类型
-    ValueType &getValType()
-    {
-        return type;
-    }
+    /// @brief 返回对应的拷贝变量
+    /// @return
+    Var *Value() { return _value; };
 
     /// @brief 获取对应的IR字符串表示
     /// @param cnt 使用的计数器指针

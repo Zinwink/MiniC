@@ -4,7 +4,7 @@
 /// @return
 string FunFormalParam::toString(Counter *cnt)
 {
-    string str = type.toString() + string(" noundef %") + std::to_string(cnt->getCount());
+    string str = val_type.toString() + string(" noundef %") + std::to_string(cnt->setCount(this)); // 为形参分配编号
     return str;
 }
 
