@@ -101,8 +101,24 @@ std::string &BinaryIRInst::toString(std::string &str, Counter *counter)
     // 暂且只实验加法
     switch (OpType)
     {
-    case IROperator::IR_ADD_INT:
+    case IROperator::IR_ADD_INT: // 有符号加法
         str = dstVar->llvmVarIDStr() + string(" = add nsw ") + srcVars[0]->llvmVarTypeStr() + string(" ") + srcVars[0]->llvmVarIDStr() + string(", ") + srcVars[1]->llvmVarIDStr();
+        break;
+
+    case IROperator::IR_SUB_INT: // 有符号减法
+        str = dstVar->llvmVarIDStr() + string(" = sub nsw ") + srcVars[0]->llvmVarTypeStr() + string(" ") + srcVars[0]->llvmVarIDStr() + string(", ") + srcVars[1]->llvmVarIDStr();
+        break;
+
+    case IROperator::IR_MUL_INT: // 有符号乘法
+        str = dstVar->llvmVarIDStr() + string(" = mul nsw ") + srcVars[0]->llvmVarTypeStr() + string(" ") + srcVars[0]->llvmVarIDStr() + string(", ") + srcVars[1]->llvmVarIDStr();
+        break;
+
+    case IROperator::IR_DIV_INT: // 有符号除法
+        str = dstVar->llvmVarIDStr() + string(" = sdiv ") + srcVars[0]->llvmVarTypeStr() + string(" ") + srcVars[0]->llvmVarIDStr() + string(", ") + srcVars[1]->llvmVarIDStr();
+        break;
+
+    case IROperator::IR_MOD_INT:
+        str = dstVar->llvmVarIDStr() + string(" = srem ") + srcVars[0]->llvmVarTypeStr() + string(" ") + srcVars[0]->llvmVarIDStr() + string(", ") + srcVars[1]->llvmVarIDStr();
         break;
 
     default:

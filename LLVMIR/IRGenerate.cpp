@@ -52,6 +52,7 @@ IRGenerate::IRGenerate(ScopeMg *_scop, ast_node *_root)
     ast2ir_handers[ast_node_type::AST_OP_SUB] = &IRGenerate::ir_sub;
     ast2ir_handers[ast_node_type::AST_OP_MUL] = &IRGenerate::ir_mul;
     ast2ir_handers[ast_node_type::AST_OP_DIV] = &IRGenerate::ir_div;
+    ast2ir_handers[ast_node_type::AST_OP_MOD] = &IRGenerate::ir_mod;
 }
 
 /// @brief 根据AST节点的类型查找相应的函数操作并执行
@@ -344,6 +345,21 @@ bool IRGenerate::ir_add(ast_node *node)
 /// @return
 bool IRGenerate::ir_sub(ast_node *node)
 { //  TODO
+    ast_node *left = ir_visit_astnode(node->sons[0]);
+    if (left == nullptr)
+        return false;
+    ast_node *right = ir_visit_astnode(node->sons[1]);
+    if (left == nullptr)
+        return false;
+    // 产生的临时变量结果暂时设置为int，存放地址暂时为MEMORY 还未实现类型转换 @todo
+    ValueType temp_valType(BasicValueType::TYPE_INT32);
+    Var *tmp = newTempVar(temp_valType);
+    node->vari = tmp;
+    node->CodesIr->extendIRBack(*(left->CodesIr));
+    node->CodesIr->extendIRBack(*(right->CodesIr));
+    // 暂时为 int 加法，后继类型未实现 @todo
+    IRInst *sub = new BinaryIRInst(IROperator::IR_SUB_INT, tmp, left->vari, right->vari);
+    node->CodesIr->irback().push_back(sub); // 加入指令
     return true;
 }
 
@@ -352,7 +368,21 @@ bool IRGenerate::ir_sub(ast_node *node)
 /// @return
 bool IRGenerate::ir_mul(ast_node *node)
 {
-    // TODO
+    ast_node *left = ir_visit_astnode(node->sons[0]);
+    if (left == nullptr)
+        return false;
+    ast_node *right = ir_visit_astnode(node->sons[1]);
+    if (left == nullptr)
+        return false;
+    // 产生的临时变量结果暂时设置为int，存放地址暂时为MEMORY 还未实现类型转换 @todo
+    ValueType temp_valType(BasicValueType::TYPE_INT32);
+    Var *tmp = newTempVar(temp_valType);
+    node->vari = tmp;
+    node->CodesIr->extendIRBack(*(left->CodesIr));
+    node->CodesIr->extendIRBack(*(right->CodesIr));
+    // 暂时为 int 加法，后继类型未实现 @todo
+    IRInst *mul = new BinaryIRInst(IROperator::IR_MUL_INT, tmp, left->vari, right->vari);
+    node->CodesIr->irback().push_back(mul); // 加入指令
     return true;
 }
 
@@ -361,7 +391,44 @@ bool IRGenerate::ir_mul(ast_node *node)
 /// @return
 bool IRGenerate::ir_div(ast_node *node)
 {
-    // TODO
+    ast_node *left = ir_visit_astnode(node->sons[0]);
+    if (left == nullptr)
+        return false;
+    ast_node *right = ir_visit_astnode(node->sons[1]);
+    if (left == nullptr)
+        return false;
+    // 产生的临时变量结果暂时设置为int，存放地址暂时为MEMORY 还未实现类型转换 @todo
+    ValueType temp_valType(BasicValueType::TYPE_INT32);
+    Var *tmp = newTempVar(temp_valType);
+    node->vari = tmp;
+    node->CodesIr->extendIRBack(*(left->CodesIr));
+    node->CodesIr->extendIRBack(*(right->CodesIr));
+    // 暂时为 int 加法，后继类型未实现 @todo
+    IRInst *div = new BinaryIRInst(IROperator::IR_DIV_INT, tmp, left->vari, right->vari);
+    node->CodesIr->irback().push_back(div); // 加入指令
+    return true;
+}
+
+/// @brief AST 取余节点对应的操作
+/// @param node
+/// @return
+bool IRGenerate::ir_mod(ast_node *node)
+{
+    ast_node *left = ir_visit_astnode(node->sons[0]);
+    if (left == nullptr)
+        return false;
+    ast_node *right = ir_visit_astnode(node->sons[1]);
+    if (left == nullptr)
+        return false;
+    // 产生的临时变量结果暂时设置为int，存放地址暂时为MEMORY 还未实现类型转换 @todo
+    ValueType temp_valType(BasicValueType::TYPE_INT32);
+    Var *tmp = newTempVar(temp_valType);
+    node->vari = tmp;
+    node->CodesIr->extendIRBack(*(left->CodesIr));
+    node->CodesIr->extendIRBack(*(right->CodesIr));
+    // 暂时为 int 加法，后继类型未实现 @todo
+    IRInst *mod = new BinaryIRInst(IROperator::IR_MOD_INT, tmp, left->vari, right->vari);
+    node->CodesIr->irback().push_back(mod); // 加入指令
     return true;
 }
 

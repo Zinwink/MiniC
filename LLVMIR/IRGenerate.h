@@ -89,6 +89,11 @@ private: // 一些抽象语法树节点对应的操作函数
     /// @return
     bool ir_div(ast_node *node);
 
+    /// @brief AST 取余节点对应的操作
+    /// @param node 
+    /// @return 
+    bool ir_mod(ast_node *node);
+
     /// @brief 对于int字面量AST节点的操作 AST_LEAF_LITERAL_INT,
     /// @param node AST int字面量节点
     /// @return true成功 false失败
