@@ -300,7 +300,7 @@ DeclareItems : DeclareItem{
         $$=new_ast_node(ast_node_type::AST_OP_DECL_ITEMS,1,$1);
     }else{
         // 是assign赋值形式,为了后继方便翻译这里将声明和赋值区分
-        ast_node* left=$1->sons[0];  //左边的声明变量
+        ast_node* left=new ast_node(*($1->sons[0]));  //左边的声明变量(拷贝构造产生新的节点)
         $$=new_ast_node(ast_node_type::AST_OP_DECL_ITEMS,2,left,$1);
     }
 }
@@ -309,7 +309,7 @@ DeclareItems : DeclareItem{
         $$=insert_ast_node($1,$3);  // DeclareItem是变量类型
     }else{
         // DeclareItem是赋值类型
-        ast_node* left=$3->sons[0]; //左边的声明变量
+        ast_node* left=new ast_node(*($3->sons[0])); //左边的声明变量
         $$=insert_ast_node($1,left);  //插入left 声明变量
         $$=insert_ast_node($1,$3);  //插入 后继操作:赋值节点
     }

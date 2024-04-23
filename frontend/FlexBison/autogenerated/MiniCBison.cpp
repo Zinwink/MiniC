@@ -1686,7 +1686,7 @@ yyreduce:
         (yyval.node)=new_ast_node(ast_node_type::AST_OP_DECL_ITEMS,1,(yyvsp[0].node));
     }else{
         // 是assign赋值形式,为了后继方便翻译这里将声明和赋值区分
-        ast_node* left=(yyvsp[0].node)->sons[0];  //左边的声明变量
+        ast_node* left=new ast_node(*((yyvsp[0].node)->sons[0]));  //左边的声明变量(拷贝构造产生新的节点)
         (yyval.node)=new_ast_node(ast_node_type::AST_OP_DECL_ITEMS,2,left,(yyvsp[0].node));
     }
 }
@@ -1700,7 +1700,7 @@ yyreduce:
         (yyval.node)=insert_ast_node((yyvsp[-2].node),(yyvsp[0].node));  // DeclareItem是变量类型
     }else{
         // DeclareItem是赋值类型
-        ast_node* left=(yyvsp[0].node)->sons[0]; //左边的声明变量
+        ast_node* left=new ast_node(*((yyvsp[0].node)->sons[0])); //左边的声明变量
         (yyval.node)=insert_ast_node((yyvsp[-2].node),left);  //插入left 声明变量
         (yyval.node)=insert_ast_node((yyvsp[-2].node),(yyvsp[0].node));  //插入 后继操作:赋值节点
     }
