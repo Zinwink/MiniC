@@ -27,10 +27,11 @@ IRGenerate::IRGenerate(ScopeMg *_scop, ast_node *_root)
     // 编译单元
     ast2ir_handers[ast_node_type::AST_OP_COMPILE_UNIT] = &IRGenerate::ir_CompileUnit;
 
-    // 函数定义， 函数形参, return
+    // 函数定义， 函数形参, return, call函数调用
     ast2ir_handers[ast_node_type::AST_OP_FUNC_DEF] = &IRGenerate::ir_func_define;
     ast2ir_handers[ast_node_type::AST_OP_FUNC_FORMAL_PARAMS] = &IRGenerate::ir_func_formal_params;
     ast2ir_handers[ast_node_type::AST_OP_RETURN_STATEMENT] = &IRGenerate::ir_return;
+    ast2ir_handers[ast_node_type::AST_OP_FUNC_CALL] = &IRGenerate::ir_funcall;
 
     // 一些变量节点 varid  int float
     ast2ir_handers[ast_node_type::AST_LEAF_LITERAL_INT] = &IRGenerate::ir_leafNode_int;
@@ -48,6 +49,9 @@ IRGenerate::IRGenerate(ScopeMg *_scop, ast_node *_root)
 
     // AST中的运算节点 + - *  / % 等等
     ast2ir_handers[ast_node_type::AST_OP_ADD] = &IRGenerate::ir_add;
+    ast2ir_handers[ast_node_type::AST_OP_SUB] = &IRGenerate::ir_sub;
+    ast2ir_handers[ast_node_type::AST_OP_MUL] = &IRGenerate::ir_mul;
+    ast2ir_handers[ast_node_type::AST_OP_DIV] = &IRGenerate::ir_div;
 }
 
 /// @brief 根据AST节点的类型查找相应的函数操作并执行
@@ -172,6 +176,60 @@ bool IRGenerate::ir_block(ast_node *node)
     return true;
 }
 
+/// @brief AST函数调用节点对应的操作
+/// @param node
+/// @return
+bool IRGenerate::ir_funcall(ast_node *node)
+{
+    // 先从全局符号表中查找该函数
+    string funname = node->literal_val.digit.id; // 函数名
+    Function *fun = scoper->globalTab()->findDeclFun(funname);
+    if (fun == nullptr)
+    { // 未找到该函数
+        std::cout << funname << "undeclared in this scope, line number:" << node->literal_val.line_no << std::endl;
+        return false;
+    }
+    else // 找到了该函数
+    {
+        ast_node *realparams = node->sons[0];                                // 实参列表节点
+        std::vector<FunFormalParam *> &formalparms = fun->getFormalParams(); // 形参列表
+        if (formalparms.size() != realparams->sons.size())
+        {
+            // 形参列表长度和实参列表长度不等  失败
+            std::cout << "the arguments' num is not equal to function:" << funname << ", line number:" << node->literal_val.line_no << std::endl;
+            return false;
+        }
+        // 下面进行遍历参数，目前只完成int 不考虑转型
+        std::vector<Var *> srcVars;
+        for (uint32_t i = 0; i < realparams->sons.size(); i++)
+        {
+            ast_node *result = ir_visit_astnode(realparams->sons[i]);
+            if (result == nullptr)
+                return false;
+            if (result->vari->getValType() != formalparms[i]->getValType()) // 形参类型和实参类型不同
+            {
+                std::cout << "warning: the real param is not match the formal param type, line number:" << node->literal_val.line_no << std::endl;
+                return false;
+            }
+            srcVars.push_back(result->vari);
+            node->CodesIr->extendIRBack(*(result->CodesIr)); // 上传形参节点的IR指令
+        }
+        if (fun->getRetType().type == BasicValueType::TYPE_VOID)
+        {
+            IRInst *inst = new CallIRInst(fun, nullptr, srcVars);
+            node->CodesIr->irback().push_back(inst);
+        }
+        else
+        {
+            Var *tmp = newTempVar(fun->getRetType()); // 调用函数后得到的结果变量
+            node->vari = tmp;                         // 该节点的产生的临时结果
+            IRInst *inst = new CallIRInst(fun, tmp, srcVars);
+            node->CodesIr->irback().push_back(inst);
+        }
+    }
+    return true;
+}
+
 /// @brief AST中 return 节点对应的函数操作
 /// @param node
 /// @return
@@ -181,6 +239,12 @@ bool IRGenerate::ir_return(ast_node *node)
     if (node->sons.size() == 0)
     {
         // 无孩子  void类型
+        if (scoper->curFun()->getRetType().type != BasicValueType::TYPE_VOID)
+        {
+            std::cout << "the return type void doesn't match the function: '"
+                      << scoper->curFun()->getName() << "' return type:" << scoper->curFun()->getRetType().toString() << std::endl;
+            return false;
+        }
         IRInst *ret = new ReturnIRInst(nullptr);
         node->CodesIr->irback().push_back(ret); // 加入指令
         return true;
@@ -272,6 +336,32 @@ bool IRGenerate::ir_add(ast_node *node)
     // 暂时为 int 加法，后继类型未实现 @todo
     IRInst *add = new BinaryIRInst(IROperator::IR_ADD_INT, tmp, left->vari, right->vari);
     node->CodesIr->irback().push_back(add); // 加入指令
+    return true;
+}
+
+/// @brief AST 减法节点对应的操作
+/// @param node
+/// @return
+bool IRGenerate::ir_sub(ast_node *node)
+{ //  TODO
+    return true;
+}
+
+/// @brief AST 乘法节点对应的操作
+/// @param node
+/// @return
+bool IRGenerate::ir_mul(ast_node *node)
+{
+    // TODO
+    return true;
+}
+
+/// @brief AST 除法节点对应的操作
+/// @param node
+/// @return
+bool IRGenerate::ir_div(ast_node *node)
+{
+    // TODO
     return true;
 }
 

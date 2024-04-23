@@ -13,6 +13,9 @@
 #include "Var.h"
 #include "IDCounter.h"
 #include <vector>
+using string = std::string;
+
+class Function; // 前置声明
 
 /// @brief IR指令操作类型
 enum class IROperator : int
@@ -27,6 +30,7 @@ enum class IROperator : int
     IR_BREAK,      // break
     IR_CONTINUE,   // continue
     IR_RETURN,     // 返回指令
+    IR_FUNCALL,    // 函数调用指令
     IR_ASSIGN,     // 赋值操作
     IR_UNKNOWN     // 未知类型
 };
@@ -129,12 +133,18 @@ public:
     /// @param srcVal 源操作数
     AssignIRInst(Var *result, Var *srcVal);
 
+    /// @brief 拷贝形参
+    /// @param result
+    /// @param param
+    AssignIRInst(Var *result, FunFormalParam *param);
+
     /// @brief 获取指令的IR字符串
     /// @param str 存取字符串
     /// @return
     std::string &toString(std::string &str, Counter *counter) override;
 };
 
+/// @brief return 指令()
 class ReturnIRInst : public IRInst
 {
 public:
@@ -146,6 +156,34 @@ public:
     ReturnIRInst(Var *_dstvar);
 
     /// @brief 获取指令的IR字符串
+    /// @param str 存取字符串
+    /// @param counter 计数器
+    /// @return
+    std::string &toString(std::string &str, Counter *counter) override;
+};
+
+/// @brief  函数调用IR指令
+class CallIRInst : public IRInst
+{
+private:
+    Function *fun; // 调用的函数
+
+public:
+    /// @brief 析构函数
+    ~CallIRInst() override;
+
+    /// @brief 无参函数调用
+    /// @param  _fun 调用的函数
+    /// @param _dstvar 函数调用结果
+    CallIRInst(Function *_fun, Var *_dstvar);
+
+    /// @brief 构造函数
+    /// @param  _fun 调用的函数
+    /// @param _dstvar 目的操作数 函数调用结果(无返回值，直接写nullptr)
+    /// @param params 函数实参列表
+    CallIRInst(Function *_fun, Var *_dstvar, std::vector<Var *> &params);
+
+    // @brief 获取指令的IR字符串
     /// @param str 存取字符串
     /// @param counter 计数器
     /// @return

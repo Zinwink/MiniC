@@ -10,6 +10,7 @@
  */
 
 #include "IRInst.h"
+#include "Function.h"
 using string = std::string;
 
 //********************** AllocaIRInst ********************
@@ -129,6 +130,17 @@ AssignIRInst::AssignIRInst(Var *result, Var *srcVal)
     dstVar = result;
 }
 
+/// @brief 拷贝形参
+/// @param result
+/// @param param
+AssignIRInst::AssignIRInst(Var *result, FunFormalParam *param)
+{
+    OpType = IROperator::IR_ASSIGN;
+    dstVar = result;
+    Var *srcVar = param;
+    srcVars.push_back(srcVar);
+}
+
 /// @brief 获取指令的IR字符串
 /// @param str 存取字符串
 /// @return
@@ -172,5 +184,67 @@ std::string &ReturnIRInst::toString(std::string &str, Counter *counter)
         str = string("ret void");
     }
 
+    return str;
+}
+
+//****************** CallIRInst ********************
+/// @brief 析构函数
+CallIRInst::~CallIRInst()
+{
+    dstVar = nullptr;
+    srcVars.clear();
+}
+
+/// @brief 无参函数调用
+/// @param  _fun 调用的函数
+/// @param _dstvar 函数调用结果
+CallIRInst::CallIRInst(Function *_fun, Var *_dstvar)
+{
+    fun = _fun;
+    dstVar = _dstvar;
+}
+
+/// @brief 构造函数
+/// @param  _fun 调用的函数
+/// @param _dstvar 目的操作数 函数调用结果(无返回值，直接写nullptr)
+/// @param params 函数实参列表
+CallIRInst::CallIRInst(Function *_fun, Var *_dstvar, std::vector<Var *> &params)
+{
+    fun = _fun;
+    dstVar = _dstvar;
+    for (auto param : params)
+    {
+        srcVars.push_back(param);
+    }
+}
+
+// @brief 获取指令的IR字符串
+/// @param str 存取字符串
+/// @param counter 计数器
+/// @return
+std::string &CallIRInst::toString(std::string &str, Counter *counter)
+{
+    if (dstVar == nullptr)
+    { // 无返回值 为void
+        str = string("call ") + fun->getRetType().toString() + string(" @") + fun->getName() + string("(");
+    }
+    else
+    {
+        // 有返回值
+        counter->setCount(dstVar); // 对目的操作数编号，即产生的临时变量
+        str = dstVar->llvmVarIDStr() + string(" = call ") + fun->getRetType().toString() + string(" @") + fun->getName() + string("(");
+    }
+    if (srcVars.size() == 0)
+        str += string(")");
+    else
+    {
+        std::vector<FunFormalParam *> &formalparams = fun->getFormalParams();
+        for (uint32_t i = 0; i < formalparams.size(); i++)
+        {
+            str += formalparams[i]->llvmVarTypeStr() + string(" noundef ") + srcVars[i]->llvmVarIDStr() + string(",");
+        }
+        str.pop_back();
+        str += string(")");
+    }
     return str;
 }

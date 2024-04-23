@@ -54,6 +54,11 @@ private: // 一些抽象语法树节点对应的操作函数
     /// @return
     bool ir_return(ast_node *node);
 
+    /// @brief AST函数调用节点对应的操作
+    /// @param node
+    /// @return
+    bool ir_funcall(ast_node *node);
+
     /// @brief AST   DeclarationItems节点对应的操作函数
     /// @param node
     /// @return
@@ -69,6 +74,21 @@ private: // 一些抽象语法树节点对应的操作函数
     /// @return
     bool ir_add(ast_node *node);
 
+    /// @brief AST 减法节点对应的操作
+    /// @param node
+    /// @return
+    bool ir_sub(ast_node *node);
+
+    /// @brief AST 乘法节点对应的操作
+    /// @param node
+    /// @return
+    bool ir_mul(ast_node *node);
+
+    /// @brief AST 除法节点对应的操作
+    /// @param node
+    /// @return
+    bool ir_div(ast_node *node);
+
     /// @brief 对于int字面量AST节点的操作 AST_LEAF_LITERAL_INT,
     /// @param node AST int字面量节点
     /// @return true成功 false失败
@@ -81,10 +101,8 @@ private: // 一些抽象语法树节点对应的操作函数
 
     /// @brief 对于AST_LEAF_VAR_ID(变量)的函数操作
     /// @param node
-    /// @return 
+    /// @return
     bool ir_leafNode_var(ast_node *node);
-
-    
 
 public:
     /// @brief 构造函数

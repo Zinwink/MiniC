@@ -57,4 +57,14 @@ public:
     /// @param _basic_type 基本类型
     /// @return 本对象
     ValueType &operator=(BasicValueType _basic_type);
+
+    /// @brief 重载 ==
+    /// @param _type
+    /// @return
+    bool operator==(const ValueType &_type);
+
+    /// @brief 重载 !=
+    /// @param _type 
+    /// @return 
+    bool operator!=(const ValueType &_type);
 };

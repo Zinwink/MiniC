@@ -80,3 +80,19 @@ std::string ValueType::toString()
     }
     return str;
 }
+
+/// @brief 重载 ==
+/// @param _type
+/// @return
+bool ValueType::operator==(const ValueType &_type)
+{
+    return this->type == _type.type;
+}
+
+/// @brief 重载 !=
+/// @param _type
+/// @return
+bool ValueType::operator!=(const ValueType &_type)
+{
+    return this->type != _type.type;
+}
