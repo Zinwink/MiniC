@@ -15,7 +15,6 @@
 /// @brief 析构函数
 BlockTempTab::~BlockTempTab()
 {
-    originFunTab = nullptr;
     parent = nullptr;
     DeclVars.clear(); // 由于originFunTab表中varList也会存放相关声明变量，为避免重复释放，先暂且只清空哈希表
 }
@@ -52,21 +51,11 @@ Var *BlockTempTab::newDeclVar(Var *var)
     if (findDeclVarOfCurTab(var->getVarName()) == nullptr)
     {
         // 当前表中不存在该变量
-        DeclVars.emplace(var->getVarName(), var); // 加入
-        ///  插入funtab中的varList
-        originFunTab->getVarList().push_back(var);
+        DeclVars.emplace(var->getVarName(), var); // 加入至查询哈希表
         return var;
     }
     else
     { // 存在该变量
         return nullptr;
     }
-}
-
-/// @brief 设置block对应的函数全局表
-/// @param funtab
-void BlockTempTab::setOriginFunTab(FuncTab *funtab)
-{
-    assert(funtab != nullptr);
-    originFunTab = funtab;
 }

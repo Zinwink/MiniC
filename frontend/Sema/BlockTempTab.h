@@ -13,14 +13,9 @@
 #include "BaseSymTab.h"
 #include "FuncTab.h"
 
-
 /// @brief 函数全局域中出现的block表，block代码块可以嵌套或者并列
 class BlockTempTab : public BaseSymTab
 {
-private:
-    /// @brief BlockTemp属于的函数全局表
-    FuncTab *originFunTab;
-
 public:
     /// @brief 构造函数
     BlockTempTab(BaseSymTab *_parent = nullptr)
@@ -41,8 +36,4 @@ public:
     /// @param  变量
     /// @return 变量
     Var *newDeclVar(Var *var) override;
-
-    /// @brief 设置block对应的函数全局表
-    /// @param funtab
-    void setOriginFunTab(FuncTab *funtab);
 };
