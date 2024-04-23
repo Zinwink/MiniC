@@ -157,12 +157,16 @@ public: // 属性
     Literal_Val literal_val;
 
     /// @brief 对应的变量
-    Var *vari;
+    Var *vari = nullptr;
 
     /// @brief IRBlock指针，翻译IR时使用
     IRBlock *CodesIr;
 
 public: // 构造函数
+    /// @brief 拷贝构造
+    /// @param node
+    ast_node(const ast_node &node);
+
     /// @brief 根据 节点值类型以及所在行号构造,若ValueType能确定顶节点类型则指定，否则按照_node_type指定
     /// @param _type 节点值类型
     /// @param _node_type 节点类型,若_type值类型无法确定节点类型，则由该参数指定

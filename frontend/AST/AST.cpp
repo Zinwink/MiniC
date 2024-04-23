@@ -16,6 +16,19 @@
 /// @brief 整个AST的叶子节点
 ast_node *ast_root = nullptr;
 
+/// @brief 拷贝构造
+/// @param node
+ast_node::ast_node(const ast_node &node)
+{
+    this->parent = node.parent;
+    this->sons = node.sons;
+    this->node_type = node.node_type;
+    this->val_type = node.val_type;
+    this->literal_val = node.literal_val;
+    this->vari = node.vari;
+    this->CodesIr = node.CodesIr;
+}
+
 /// @brief 根据 节点值类型以及所在行号构造,若ValueType能确定顶节点类型则指定，否则按照_node_type指定
 /// @param _type 节点值类型
 /// @param _node_type 节点类型,若_type值类型无法确定节点类型，则由该参数指定
@@ -40,6 +53,7 @@ ast_node::ast_node(const ValueType &_type, ast_node_type _node_type)
     }
     parent = nullptr;
     val_type = _type;
+    CodesIr = new IRBlock();
 }
 
 /// @brief 根据抽象语法树节点类型构造,若节点类型能确定节点的值类型则指定，否则默认为TYPE_NONE
@@ -67,6 +81,7 @@ ast_node::ast_node(const ast_node_type &_node_type)
         break;
     }
     parent = nullptr;
+    CodesIr = new IRBlock();
 }
 
 /// @brief 通过字面量创建,若字面量类型能确定节点的值类型，则指定，否则默认初始化为TYPE_NONE
@@ -96,6 +111,7 @@ ast_node::ast_node(const Literal_Val &literal, ast_node_type _node_type)
     default:
         break;
     }
+    CodesIr = new IRBlock();
 }
 
 /// @brief 判断是否是叶子节点类型
