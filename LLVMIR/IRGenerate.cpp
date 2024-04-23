@@ -11,6 +11,7 @@
 
 #include "IRGenerate.h"
 #include "BlockTempTab.h"
+#include "Var.h"
 #include <iostream>
 #include <fstream>
 
@@ -97,7 +98,6 @@ bool IRGenerate::ir_CompileUnit(ast_node *node)
 /// @return
 bool IRGenerate::ir_func_define(ast_node *node)
 {
-    node->CodesIr = new IRBlock();
     string funcname = node->literal_val.digit.id;
     Function *fun = new Function(funcname, node->val_type);
     scoper->globalTab()->newDeclFun(fun); // 全局符号表添加相关函数
@@ -125,12 +125,16 @@ bool IRGenerate::ir_func_formal_params(ast_node *node)
 {
     for (auto son : node->sons)
     {
-        string formalName = node->literal_val.digit.id;
+        string formalName = son->literal_val.digit.id;
         FunFormalParam *formalp = new FunFormalParam(formalName, son->val_type);
         scoper->curFun()->addFormalParam(formalp); // 加入当前函数的形参列表
         // 根据形参创建相应名字的变量 放入声明查询哈希表中
-        Var *formalVar = new Var(formalName, son->val_type);
-        scoper->curFun()->getFuncTab()->newDeclVar(formalVar);
+        scoper->curFun()->getFuncTab()->newDeclVar(formalp->Value());
+        // 如果有参数，则按照C语言函数规则，应该有拷贝操作
+        IRInst *alloc = new AllocaIRInst(formalp->Value());         // 声明用于存储形参拷贝的变量指令
+        scoper->curFun()->getIRBlock()->irfront().push_back(alloc); // 加入该alloc指令
+        IRInst *asgn = new AssignIRInst(formalp->Value(), formalp);
+        scoper->curFun()->getIRBlock()->irback().push_back(asgn);
     }
     return true;
 }
@@ -142,7 +146,6 @@ bool IRGenerate::ir_block(ast_node *node)
 {
     // 每次遇见一个block时会向scoper管理栈中压入相关的符号表，模拟作用域
     // 根据block的父节点进行判断block是函数的全体block 还是函数内部的小型作用域
-    node->CodesIr = new IRBlock();
     if (node->parent->node_type == ast_node_type::AST_OP_FUNC_DEF && scoper->curFun() != nullptr)
     {
         // 是函数定义的大block
@@ -174,9 +177,7 @@ bool IRGenerate::ir_block(ast_node *node)
 /// @return
 bool IRGenerate::ir_return(ast_node *node)
 {
-    // 检查返回类型是否和当前函数匹配  TODO
-    node->CodesIr = new IRBlock();
-
+    // 检查返回类型是否和当前函数匹配
     if (node->sons.size() == 0)
     {
         // 无孩子  void类型
@@ -187,46 +188,15 @@ bool IRGenerate::ir_return(ast_node *node)
     else
     { // 有孩子 有返回值
         ast_node *sonNode = node->sons[0];
-        if (sonNode->node_type == ast_node_type::AST_LEAF_VAR_ID)
+        ast_node *result = ir_visit_astnode(sonNode);
+        if (result == nullptr)
         {
-            // 返回值为一个变量类型
-            string vname = sonNode->literal_val.digit.id;
-            Var *var = scoper->curTab()->findDeclVar(vname);
-            if (var == nullptr)
-            {
-                // 从符号表中没有找到相关声明 定义
-                std::cout << "undifined variable, line:" << sonNode->literal_val.line_no << std::endl;
-                return false;
-            }
-            else
-            {
-                // 能查找到
-                IRInst *inst = new ReturnIRInst(var);
-                node->CodesIr->irback().push_back(inst);
-                return true;
-            }
+            return false;
         }
-        else if (sonNode->node_type == ast_node_type::AST_LEAF_LITERAL_INT)
-        {
-            // 字面常量类型
-            Var *var = new Var(sonNode->literal_val.digit.int32_digit);
-            IRInst *inst = new ReturnIRInst(var);
-            node->CodesIr->irback().push_back(inst);
-            return true;
-        }
-        else
-        {
-            // 表达式类型
-            ast_node *visitN = ir_visit_astnode(sonNode);
-            if (visitN == nullptr)
-            {
-                return false;
-            }
-            node->CodesIr->extendIRBack(*(sonNode->CodesIr));          // 加入表达式指令
-            Var *vartmp = sonNode->CodesIr->irback().back()->getDst(); // 获取最后一条指令的目的操作数
-            IRInst *inst = new ReturnIRInst(vartmp);
-            node->CodesIr->irback().push_back(inst); // 加入ret指令
-        }
+
+        node->CodesIr->extendIRBack(*(sonNode->CodesIr)); // 加入子节点的IR
+        IRInst *ret = new ReturnIRInst(sonNode->vari);    // 子节点对应的 ret指令
+        node->CodesIr->irback().push_back(ret);           // 加入ret 指令
     }
     return true;
 }
@@ -236,7 +206,6 @@ bool IRGenerate::ir_return(ast_node *node)
 /// @return
 bool IRGenerate::ir_declItems(ast_node *node)
 {
-    node->CodesIr = new IRBlock();
     for (auto &son : node->sons)
     {
         ast_node *result = ir_visit_astnode(son);
@@ -263,71 +232,6 @@ bool IRGenerate::ir_declItems(ast_node *node)
             node->CodesIr->extendIRBack(*(result->CodesIr));
         }
     }
-    // 是否是全局声明
-    // bool isglobalDecl = node->parent->node_type == ast_node_type::AST_OP_COMPILE_UNIT;
-    // for (auto son : node->sons)
-    // {
-    //     if (son->node_type == ast_node_type::AST_LEAF_VAR_ID)
-    //     {
-    //         son->val_type = node->val_type;
-    //         // 子节点是变量
-    //         string vname = son->literal_val.digit.id;
-    //         Var *var = scoper->curTab()->findDeclVarOfCurTab(vname); // 查找本作用域表，踊跃确定是否重定义
-    //         if (var != nullptr)
-    //         {
-    //             // 本作用域查找到了该变量的声明  重定义错误
-    //             std::cout << "redefined variable,line: " << son->literal_val.line_no << std::endl;
-    //             return false;
-    //         }
-    //         else
-    //         {
-    //             // 未找到 未重定义声明
-    //             var = new Var(vname, son->val_type, isglobalDecl);
-    //             if (isglobalDecl)
-    //                 scoper->globalTab()->getVarList().push_back(var);
-    //             else
-    //             {
-    //                 // 非全局 在函数中
-    //                 scoper->curFun()->getFuncTab()->newDeclVar(var);
-    //                 IRInst *inst = new AllocaIRInst(var);
-    //                 scoper->curFun()->getIRBlock()->irfront().push_back(inst); // 加入到当前函数的irfront部分中
-    //             }
-    //         }
-    //     }
-    //     else
-    //     {
-    //         // 子节点是赋值类型
-    //         ast_node *tmp = ir_visit_astnode(son);
-    //         if (tmp == nullptr)
-    //         {
-    //             return false;
-    //         }
-    //         // 全局
-    //         string vname = son->sons[0]->literal_val.digit.id;
-    //         Var *var = scoper->curTab()->findDeclVarOfCurTab(vname); // 查找本作用域表，踊跃确定是否重定义
-    //         if (var != nullptr)
-    //         {
-    //             // 本作用域查找到了该变量的声明  重定义错误
-    //             std::cout << "redefined variable,line: " << son->literal_val.line_no << std::endl;
-    //             return false;
-    //         }
-    //         else
-    //         {
-    //             var = new Var(vname, son->sons[0]->val_type, isglobalDecl);
-    //             if (isglobalDecl)
-    //             {
-    //                 scoper->globalTab()->getVarList().push_back(var);
-    //             }
-    //             else
-    //             {
-    //                 scoper->curFun()->getFuncTab()->newDeclVar(var);
-    //                 IRInst *inst = new AllocaIRInst(var);
-    //                 scoper->curFun()->getIRBlock()->irfront().push_back(inst);
-    //             }
-    //         }
-    //         node->CodesIr->extendIRBack(*(son->CodesIr)); // 子节点IR上传
-    //     }
-    // }
     return true;
 }
 
@@ -343,29 +247,8 @@ bool IRGenerate::ir_assign(ast_node *node)
     if (right == nullptr)
         return false;
     IRInst *inst = new AssignIRInst(left->vari, right->vari);
-    node->CodesIr = new IRBlock();
     node->CodesIr->extendIRBack(*(right->CodesIr));
     node->CodesIr->irback().push_back(inst);
-    // string leftname = left->literal_val.digit.id;
-    // Var *var = scoper->curTab()->findDeclVar(leftname);
-    // if (var == nullptr)
-    // { // 未找到
-    //     std::cout <<"'"<<leftname<<"'"<<"undeclared, line number: " << left->literal_val.line_no << std::endl;
-    //     return false;
-    // }
-    // else
-    // {
-    //     // 找到
-    //     ast_node *tmp = ir_visit_astnode(right);
-    //     if (tmp == nullptr)
-    //     {
-    //         return false;
-    //     }
-    //     Var *dstv = right->CodesIr->irback().back()->getDst(); // 获取最后一条指令的目的操作数
-    //     node->CodesIr->extendIRBack(*(right->CodesIr));
-    //     IRInst *inst = new AssignIRInst(var, dstv);
-    //     node->CodesIr->irback().push_back(inst);
-    // }
     return true;
 }
 
@@ -374,7 +257,21 @@ bool IRGenerate::ir_assign(ast_node *node)
 /// @return
 bool IRGenerate::ir_add(ast_node *node)
 {
-    // @todo
+    ast_node *left = ir_visit_astnode(node->sons[0]);
+    if (left == nullptr)
+        return false;
+    ast_node *right = ir_visit_astnode(node->sons[1]);
+    if (left == nullptr)
+        return false;
+    // 产生的临时变量结果暂时设置为int，存放地址暂时为MEMORY 还未实现类型转换 @todo
+    ValueType temp_valType(BasicValueType::TYPE_INT32);
+    Var *tmp = newTempVar(temp_valType);
+    node->vari = tmp;
+    node->CodesIr->extendIRBack(*(left->CodesIr));
+    node->CodesIr->extendIRBack(*(right->CodesIr));
+    // 暂时为 int 加法，后继类型未实现 @todo
+    IRInst *add = new BinaryIRInst(IROperator::IR_ADD_INT, tmp, left->vari, right->vari);
+    node->CodesIr->irback().push_back(add); // 加入指令
     return true;
 }
 
@@ -440,6 +337,14 @@ bool IRGenerate::ir_leafNode_var(ast_node *node)
         {
             // 表示找到，使用的变量已经声明
             node->vari = result; // AST节点指向该变量，供后继使用
+            // 由于是被使用，除了赋值操作外，其他的运算如 +- * /以及return 等都需要使用load取出该数
+            if (paretType != ast_node_type::AST_OP_ASSIGN)
+            {
+                Var *tmp = newTempVar(result->getValType()); // 创建临时变量 类型为搜索到的该变量的类型
+                node->vari = tmp;                            // 更新为临时变量
+                IRInst *load = new LoadIRInst(result, tmp);
+                node->CodesIr->irback().push_back(load);
+            }
         }
         else
         { // 未找到 ，未声明
