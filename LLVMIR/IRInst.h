@@ -20,6 +20,7 @@ class Function; // 前置声明
 /// @brief IR指令操作类型
 enum class IROperator : int
 {
+    IR_GLOBAL_VAR, // 全局变量对应的 = 指令
     IR_VAR_ALLOCA, // 变量声明,分配内存
     IR_DATA_LOAD,  // load指令
     IR_ADD_INT,    // 整数相加
@@ -27,6 +28,8 @@ enum class IROperator : int
     IR_MUL_INT,    // 整数乘法
     IR_DIV_INT,    // 除法
     IR_MOD_INT,    // 取余
+    IR_OP_LABEL,   // Label指令 用于跳转
+    IR_OP_LR,      // LLVMIR中的 br 跳转指令
     IR_BREAK,      // break
     IR_CONTINUE,   // continue
     IR_RETURN,     // 返回指令
@@ -63,6 +66,22 @@ public:
     /// @param str IR指令字符串存储
     /// @return
     virtual std::string &toString(std::string &str, Counter *counter) = 0;
+};
+
+class GlobalVarIRInst : public IRInst
+{
+public:
+    /// @brief 析构函数
+    ~GlobalVarIRInst() override;
+
+    /// @brief 构造函数
+    /// @param _dstvar 全局变量
+    GlobalVarIRInst(Var *_dstvar);
+
+    /// @brief 获取IR指令的字符串表述
+    /// @param str IR指令字符串存储
+    /// @return
+    std::string &toString(std::string &str, Counter *counter) override;
 };
 
 /// @brief 变量分配内存指令(将于此对变量进行编号)

@@ -43,6 +43,15 @@ public:
     /// @brief 析构函数
     virtual ~BaseSymTab() = 0;
 
+    /// @brief 判断符号表是否是全局符号表
+    /// @return
+    bool isGlobalTab()
+    {
+        if (type == TabAttr::GLOBAL_TAB)
+            return true;
+        return false;
+    }
+
     /// @brief 获取符号表中的 注册变量声明表
     /// @return 查找表引用
     std::unordered_map<string, Var *> &getDeclVars() { return DeclVars; }

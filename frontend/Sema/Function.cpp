@@ -66,7 +66,7 @@ string &Function::toString(string &str)
     {
         string frontstr;
         frontstr = frontir->toString(frontstr, cnter);
-        str += string(" "); // 缩进一格
+        str += string("  "); // 缩进一格
         str += frontstr;
         str += string("\n"); // 换行
     }
@@ -75,7 +75,7 @@ string &Function::toString(string &str)
     {
         string backstr;
         backstr = backir->toString(backstr, cnter);
-        str += string(" "); // 缩进一格
+        str += string("  "); // 缩进一格
         str += backstr;
         str += string("\n"); // 换行
     }

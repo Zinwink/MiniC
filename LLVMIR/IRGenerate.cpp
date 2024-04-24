@@ -283,7 +283,8 @@ bool IRGenerate::ir_declItems(ast_node *node)
             // 变量节点
             if (result->vari->getIsGloabl())
             { // 是全局变量的声明
-              // 暂时不做处理 TODO
+                IRInst *inst = new GlobalVarIRInst(result->vari);
+                scoper->globalTab()->varInsts().push_back(inst);
             }
             else
             { // 函数中的局部变量
@@ -311,9 +312,31 @@ bool IRGenerate::ir_assign(ast_node *node)
     ast_node *right = ir_visit_astnode(node->sons[1]);
     if (right == nullptr)
         return false;
-    IRInst *inst = new AssignIRInst(left->vari, right->vari);
-    node->CodesIr->extendIRBack(*(right->CodesIr));
-    node->CodesIr->irback().push_back(inst);
+    if (!scoper->curTab()->isGlobalTab())
+    {
+        if (node->sons[1]->node_type != ast_node_type::AST_LEAF_VAR_ID)
+        {
+            IRInst *inst = new AssignIRInst(left->vari, right->vari);
+            node->CodesIr->extendIRBack(*(right->CodesIr));
+            node->CodesIr->irback().push_back(inst);
+        }
+        else
+        {
+            ValueType tmpType(right->vari->getValType());
+            Var *tmp = newTempVar(tmpType);
+            IRInst *load = new LoadIRInst(right->vari, tmp);
+            IRInst *assign = new AssignIRInst(left->vari, tmp);
+            node->CodesIr->extendIRBack(*(right->CodesIr));
+            node->CodesIr->irback().push_back(load);
+            node->CodesIr->irback().push_back(assign);
+        }
+    }
+    else
+    {
+        int32_t value = right->vari->int32Value();
+        left->vari->int32Value() = value;
+    }
+
     return true;
 }
 
@@ -328,15 +351,26 @@ bool IRGenerate::ir_add(ast_node *node)
     ast_node *right = ir_visit_astnode(node->sons[1]);
     if (left == nullptr)
         return false;
-    // 产生的临时变量结果暂时设置为int，存放地址暂时为MEMORY 还未实现类型转换 @todo
-    ValueType temp_valType(BasicValueType::TYPE_INT32);
-    Var *tmp = newTempVar(temp_valType);
-    node->vari = tmp;
-    node->CodesIr->extendIRBack(*(left->CodesIr));
-    node->CodesIr->extendIRBack(*(right->CodesIr));
-    // 暂时为 int 加法，后继类型未实现 @todo
-    IRInst *add = new BinaryIRInst(IROperator::IR_ADD_INT, tmp, left->vari, right->vari);
-    node->CodesIr->irback().push_back(add); // 加入指令
+    if (!scoper->curTab()->isGlobalTab())
+    {
+        // 产生的临时变量结果暂时设置为int，存放地址暂时为MEMORY 还未实现类型转换 @todo
+        ValueType temp_valType(BasicValueType::TYPE_INT32);
+        Var *tmp = newTempVar(temp_valType);
+        node->vari = tmp;
+        node->CodesIr->extendIRBack(*(left->CodesIr));
+        node->CodesIr->extendIRBack(*(right->CodesIr));
+        // 暂时为 int 加法，后继类型未实现 @todo
+        IRInst *add = new BinaryIRInst(IROperator::IR_ADD_INT, tmp, left->vari, right->vari);
+        node->CodesIr->irback().push_back(add); // 加入指令
+    }
+    else
+    {
+        // 是全局符号表
+        int32_t leftval = left->vari->int32Value();
+        int32_t rightval = right->vari->int32Value();
+        Var *tmp = new Var((leftval + rightval));
+        node->vari = tmp;
+    }
     return true;
 }
 
@@ -351,15 +385,27 @@ bool IRGenerate::ir_sub(ast_node *node)
     ast_node *right = ir_visit_astnode(node->sons[1]);
     if (left == nullptr)
         return false;
-    // 产生的临时变量结果暂时设置为int，存放地址暂时为MEMORY 还未实现类型转换 @todo
-    ValueType temp_valType(BasicValueType::TYPE_INT32);
-    Var *tmp = newTempVar(temp_valType);
-    node->vari = tmp;
-    node->CodesIr->extendIRBack(*(left->CodesIr));
-    node->CodesIr->extendIRBack(*(right->CodesIr));
-    // 暂时为 int 加法，后继类型未实现 @todo
-    IRInst *sub = new BinaryIRInst(IROperator::IR_SUB_INT, tmp, left->vari, right->vari);
-    node->CodesIr->irback().push_back(sub); // 加入指令
+    if (!scoper->curTab()->isGlobalTab())
+    {
+        // 产生的临时变量结果暂时设置为int，存放地址暂时为MEMORY 还未实现类型转换 @todo
+        ValueType temp_valType(BasicValueType::TYPE_INT32);
+        Var *tmp = newTempVar(temp_valType);
+        node->vari = tmp;
+        node->CodesIr->extendIRBack(*(left->CodesIr));
+        node->CodesIr->extendIRBack(*(right->CodesIr));
+        // 暂时为 int 加法，后继类型未实现 @todo
+        IRInst *sub = new BinaryIRInst(IROperator::IR_SUB_INT, tmp, left->vari, right->vari);
+        node->CodesIr->irback().push_back(sub); // 加入指令
+    }
+    else
+    {
+        // 是全局符号表
+        int32_t leftval = left->vari->int32Value();
+        int32_t rightval = right->vari->int32Value();
+        Var *tmp = new Var((leftval - rightval));
+        node->vari = tmp;
+    }
+
     return true;
 }
 
@@ -374,15 +420,26 @@ bool IRGenerate::ir_mul(ast_node *node)
     ast_node *right = ir_visit_astnode(node->sons[1]);
     if (left == nullptr)
         return false;
-    // 产生的临时变量结果暂时设置为int，存放地址暂时为MEMORY 还未实现类型转换 @todo
-    ValueType temp_valType(BasicValueType::TYPE_INT32);
-    Var *tmp = newTempVar(temp_valType);
-    node->vari = tmp;
-    node->CodesIr->extendIRBack(*(left->CodesIr));
-    node->CodesIr->extendIRBack(*(right->CodesIr));
-    // 暂时为 int 加法，后继类型未实现 @todo
-    IRInst *mul = new BinaryIRInst(IROperator::IR_MUL_INT, tmp, left->vari, right->vari);
-    node->CodesIr->irback().push_back(mul); // 加入指令
+    if (!scoper->curTab()->isGlobalTab())
+    {
+        // 产生的临时变量结果暂时设置为int，存放地址暂时为MEMORY 还未实现类型转换 @todo
+        ValueType temp_valType(BasicValueType::TYPE_INT32);
+        Var *tmp = newTempVar(temp_valType);
+        node->vari = tmp;
+        node->CodesIr->extendIRBack(*(left->CodesIr));
+        node->CodesIr->extendIRBack(*(right->CodesIr));
+        // 暂时为 int 加法，后继类型未实现 @todo
+        IRInst *mul = new BinaryIRInst(IROperator::IR_MUL_INT, tmp, left->vari, right->vari);
+        node->CodesIr->irback().push_back(mul); // 加入指令
+    }
+    else
+    {
+        // 是全局符号表
+        int32_t leftval = left->vari->int32Value();
+        int32_t rightval = right->vari->int32Value();
+        Var *tmp = new Var((leftval * rightval));
+        node->vari = tmp;
+    }
     return true;
 }
 
@@ -397,15 +454,26 @@ bool IRGenerate::ir_div(ast_node *node)
     ast_node *right = ir_visit_astnode(node->sons[1]);
     if (left == nullptr)
         return false;
-    // 产生的临时变量结果暂时设置为int，存放地址暂时为MEMORY 还未实现类型转换 @todo
-    ValueType temp_valType(BasicValueType::TYPE_INT32);
-    Var *tmp = newTempVar(temp_valType);
-    node->vari = tmp;
-    node->CodesIr->extendIRBack(*(left->CodesIr));
-    node->CodesIr->extendIRBack(*(right->CodesIr));
-    // 暂时为 int 加法，后继类型未实现 @todo
-    IRInst *div = new BinaryIRInst(IROperator::IR_DIV_INT, tmp, left->vari, right->vari);
-    node->CodesIr->irback().push_back(div); // 加入指令
+    if (!scoper->curTab()->isGlobalTab())
+    {
+        // 产生的临时变量结果暂时设置为int，存放地址暂时为MEMORY 还未实现类型转换 @todo
+        ValueType temp_valType(BasicValueType::TYPE_INT32);
+        Var *tmp = newTempVar(temp_valType);
+        node->vari = tmp;
+        node->CodesIr->extendIRBack(*(left->CodesIr));
+        node->CodesIr->extendIRBack(*(right->CodesIr));
+        // 暂时为 int 加法，后继类型未实现 @todo
+        IRInst *div = new BinaryIRInst(IROperator::IR_DIV_INT, tmp, left->vari, right->vari);
+        node->CodesIr->irback().push_back(div); // 加入指令
+    }
+    else
+    {
+        // 是全局符号表
+        int32_t leftval = left->vari->int32Value();
+        int32_t rightval = right->vari->int32Value();
+        Var *tmp = new Var((leftval / rightval));
+        node->vari = tmp;
+    }
     return true;
 }
 
@@ -420,15 +488,26 @@ bool IRGenerate::ir_mod(ast_node *node)
     ast_node *right = ir_visit_astnode(node->sons[1]);
     if (left == nullptr)
         return false;
-    // 产生的临时变量结果暂时设置为int，存放地址暂时为MEMORY 还未实现类型转换 @todo
-    ValueType temp_valType(BasicValueType::TYPE_INT32);
-    Var *tmp = newTempVar(temp_valType);
-    node->vari = tmp;
-    node->CodesIr->extendIRBack(*(left->CodesIr));
-    node->CodesIr->extendIRBack(*(right->CodesIr));
-    // 暂时为 int 加法，后继类型未实现 @todo
-    IRInst *mod = new BinaryIRInst(IROperator::IR_MOD_INT, tmp, left->vari, right->vari);
-    node->CodesIr->irback().push_back(mod); // 加入指令
+    if (!scoper->curTab()->isGlobalTab())
+    { // 当前不是全局符号表
+        // 产生的临时变量结果暂时设置为int，存放地址暂时为MEMORY 还未实现类型转换 @todo
+        ValueType temp_valType(BasicValueType::TYPE_INT32);
+        Var *tmp = newTempVar(temp_valType);
+        node->vari = tmp;
+        node->CodesIr->extendIRBack(*(left->CodesIr));
+        node->CodesIr->extendIRBack(*(right->CodesIr));
+        // 暂时为 int 加法，后继类型未实现 @todo
+        IRInst *mod = new BinaryIRInst(IROperator::IR_MOD_INT, tmp, left->vari, right->vari);
+        node->CodesIr->irback().push_back(mod); // 加入指令
+    }
+    else
+    { // 是全局符号表
+        int32_t leftval = left->vari->int32Value();
+        int32_t rightval = right->vari->int32Value();
+        Var *tmp = new Var((leftval % rightval));
+        node->vari = tmp;
+    }
+
     return true;
 }
 
@@ -495,12 +574,23 @@ bool IRGenerate::ir_leafNode_var(ast_node *node)
             // 表示找到，使用的变量已经声明
             node->vari = result; // AST节点指向该变量，供后继使用
             // 由于是被使用，除了赋值操作外，其他的运算如 +- * /以及return 等都需要使用load取出该数
-            if (paretType != ast_node_type::AST_OP_ASSIGN)
+            if (paretType != ast_node_type::AST_OP_ASSIGN && !scoper->curTab()->isGlobalTab())
             {
                 Var *tmp = newTempVar(result->getValType()); // 创建临时变量 类型为搜索到的该变量的类型
                 node->vari = tmp;                            // 更新为临时变量
                 IRInst *load = new LoadIRInst(result, tmp);
                 node->CodesIr->irback().push_back(load);
+                return true;
+            }
+            if (paretType != ast_node_type::AST_OP_ASSIGN && scoper->curTab()->isGlobalTab())
+            {
+                // 全局符号表  出现在运算符号下的 var变量
+                if (result->getVarTag() != VarTag::CONST_VAR)
+                {
+                    // 不是常量类型
+                    std::cout << "[error] expression must have a constant value, line number:" << node->literal_val.line_no << std::endl;
+                    return false;
+                }
             }
         }
         else
@@ -529,6 +619,13 @@ void IRGenerate::IR2Str(const std::string &irpath)
     std::ofstream file(irpath);
     if (file.is_open())
     {
+        for (auto &globalvarInst : scoper->globalTab()->varInsts())
+        {
+            string str;
+            str = globalvarInst->toString(str, nullptr);
+            file << str;
+            file << "\n";
+        }
         for (auto &fun : scoper->globalTab()->getFunList())
         {
             string str;

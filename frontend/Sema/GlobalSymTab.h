@@ -16,6 +16,9 @@
 class GlobalSymTab : public BaseSymTab
 {
 private:
+    /// @brief 存放全局变脸的IR指令
+    std::deque<IRInst *> globalVarInsts;
+
     // 一些相对于基类新增的属性
     /// @brief 全局变量列表，用于存放全局变量
     std::vector<Var *> varList;
@@ -32,6 +35,10 @@ public:
 
     /// @brief 析构函数
     ~GlobalSymTab() override;
+
+    /// @brief 获取全局变量的声明指令
+    /// @return
+    std::deque<IRInst *> &varInsts() { return globalVarInsts; }
 
     /// @brief 查找声明的全局变脸
     /// @param name 全局变量名

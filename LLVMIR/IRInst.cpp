@@ -13,6 +13,33 @@
 #include "Function.h"
 using string = std::string;
 
+//******************  GlobalVarIRInst *****************
+
+/// @brief 析构函数
+GlobalVarIRInst::~GlobalVarIRInst()
+{
+    srcVars.clear();
+    dstVar = nullptr;
+}
+
+/// @brief 构造函数
+/// @param _dstvar 全局变量
+GlobalVarIRInst::GlobalVarIRInst(Var *_dstvar)
+{
+    OpType = IROperator::IR_GLOBAL_VAR;
+    dstVar = _dstvar;
+}
+
+/// @brief 获取IR指令的字符串表述
+/// @param str IR指令字符串存储
+/// @return
+std::string &GlobalVarIRInst::toString(std::string &str, Counter *counter)
+{
+    // 全局变量不使用编号
+    str = dstVar->llvmVarIDStr() + string(" = dso_local global ") + dstVar->llvmVarTypeStr() + string(" ") + std::to_string(dstVar->int32Value()) + string(", align 4");
+    return str;
+}
+
 //********************** AllocaIRInst ********************
 /// @brief 析构函数
 AllocaIRInst::~AllocaIRInst()
