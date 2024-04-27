@@ -14,7 +14,8 @@
 #include <cstdint>
 #include "Var.h"
 
-class FunFormalParam;  //前置声明
+class LabelIRInst;    // 前置声明
+class FunFormalParam; // 前置声明
 
 class Counter
 {
@@ -45,4 +46,9 @@ public:
     /// @param formal
     /// @return
     int32_t setCount(FunFormalParam *formal);
+
+    /// @brief 为label指令分配编号
+    /// @param label Label指令
+    /// @return
+    int32_t setCount(LabelIRInst *label);
 };

@@ -90,9 +90,24 @@ private: // 一些抽象语法树节点对应的操作函数
     bool ir_div(ast_node *node);
 
     /// @brief AST 取余节点对应的操作
-    /// @param node 
-    /// @return 
+    /// @param node
+    /// @return
     bool ir_mod(ast_node *node);
+
+    /// @brief AST < 节点对应的操作
+    /// @param node
+    /// @return
+    bool ir_cmp_less(ast_node *node);
+
+    /// @brief AST  > 节点对应的操作
+    /// @param node
+    /// @return
+    bool ir_cmp_greater(ast_node *node);
+
+    /// @brief AST == 节点对应的操作
+    /// @param node
+    /// @return
+    bool ir_cmp_equal(ast_node *node);
 
     /// @brief 对于int字面量AST节点的操作 AST_LEAF_LITERAL_INT,
     /// @param node AST int字面量节点

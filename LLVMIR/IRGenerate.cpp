@@ -53,6 +53,11 @@ IRGenerate::IRGenerate(ScopeMg *_scop, ast_node *_root)
     ast2ir_handers[ast_node_type::AST_OP_MUL] = &IRGenerate::ir_mul;
     ast2ir_handers[ast_node_type::AST_OP_DIV] = &IRGenerate::ir_div;
     ast2ir_handers[ast_node_type::AST_OP_MOD] = &IRGenerate::ir_mod;
+
+    // 条件相关的节点
+    ast2ir_handers[ast_node_type::AST_OP_COND_LESS] = &IRGenerate::ir_cmp_less;
+    ast2ir_handers[ast_node_type::AST_OP_COND_GREATER] = &IRGenerate::ir_cmp_greater;
+    ast2ir_handers[ast_node_type::AST_OP_COND_EQU] = &IRGenerate::ir_cmp_equal;
 }
 
 /// @brief 根据AST节点的类型查找相应的函数操作并执行
@@ -508,6 +513,31 @@ bool IRGenerate::ir_mod(ast_node *node)
         node->vari = tmp;
     }
 
+    return true;
+}
+
+// ********************AST 条件节点的翻译****************************
+/// @brief AST < 节点对应的操作
+/// @param node
+/// @return
+bool IRGenerate::ir_cmp_less(ast_node *node)
+{
+    return true;
+}
+
+/// @brief AST  > 节点对应的操作
+/// @param node
+/// @return
+bool IRGenerate::ir_cmp_greater(ast_node *node)
+{
+    return true;
+}
+
+/// @brief AST == 节点对应的操作
+/// @param node
+/// @return
+bool IRGenerate::ir_cmp_equal(ast_node *node)
+{
     return true;
 }
 

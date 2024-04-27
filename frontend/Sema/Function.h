@@ -56,11 +56,15 @@ public:
 class Function
 {
 private:
-    FuncTab *funTab;                               // 本函数的全局符号表
-    Counter *cnter;                                // 计数器对象，供本函数翻译llvmir 分配相关编号时使用
-    IRBlock *IRCodes;                              // 本函数的IR块(block中的iR指令)
-    std::string name;                              // 函数名
-    ValueType retType;                             // 函数返回类型
+    FuncTab *funTab;   // 本函数的全局符号表
+    Counter *cnter;    // 计数器对象，供本函数翻译llvmir 分配相关编号时使用
+    IRBlock *IRCodes;  // 本函数的IR块(block中的iR指令)
+    std::string name;  // 函数名
+    ValueType retType; // 函数返回类型
+
+    IRInst *entryLabel = nullptr; // 函数入口Label,nullptr表示还未指定
+    IRInst *exitLabel = nullptr;  // 函数出口Label,nullptr表示还未指定
+
     std::vector<FunFormalParam *> FormalParamList; // 形参列表
 public:
     /// @brief 符号表
@@ -118,6 +122,14 @@ public:
     /// @brief 获取本函数的符号表
     /// @return
     FuncTab *getFuncTab() { return funTab; }
+
+    /// @brief 获取函数入口标签(引用)
+    /// @return
+    IRInst *&EntryLabel() { return entryLabel; }
+
+    /// @brief 获取函数出口标签(指针引用)
+    /// @return
+    IRInst *&ExitLabel() { return exitLabel; }
 
     /// @brief 将函数转化为IR string表示
     /// @param str 用于存储字符串

@@ -13,6 +13,28 @@
 #include "Function.h"
 using string = std::string;
 
+//********************* EntryIRInst ******************************
+
+/// @brief 构造函数
+EntryIRInst::EntryIRInst()
+{
+    OpType = IROperator::IR_OP_ENTRY;
+}
+
+/// @brief 析构函数
+EntryIRInst::~EntryIRInst()
+{
+}
+
+/// @brief 获取IR指令的字符串表述
+/// @param str IR指令字符串存储
+/// @return
+std::string &EntryIRInst::toString(std::string &str, Counter *counter)
+{
+    str = "entry"; // 函数入口指令
+    return str;
+}
+
 //******************  GlobalVarIRInst *****************
 
 /// @brief 析构函数
@@ -146,6 +168,22 @@ std::string &BinaryIRInst::toString(std::string &str, Counter *counter)
 
     case IROperator::IR_MOD_INT:
         str = dstVar->llvmVarIDStr() + string(" = srem ") + srcVars[0]->llvmVarTypeStr() + string(" ") + srcVars[0]->llvmVarIDStr() + string(", ") + srcVars[1]->llvmVarIDStr();
+        break;
+
+    case IROperator::IR_CMP_LESS:
+        str = dstVar->llvmVarIDStr() + string(" = icmp slt ") + srcVars[0]->llvmVarTypeStr() + string(" ") + srcVars[0]->llvmVarIDStr() + string(", ") + srcVars[1]->llvmVarIDStr();
+        break;
+
+    case IROperator::IR_CMP_GREATER:
+        str = dstVar->llvmVarIDStr() + string(" = icmp sgt ") + srcVars[0]->llvmVarTypeStr() + string(" ") + srcVars[0]->llvmVarIDStr() + string(", ") + srcVars[1]->llvmVarIDStr();
+        break;
+
+    case IROperator::IR_CMP_EQUAL:
+        str = dstVar->llvmVarIDStr() + string(" = icmp eq ") + srcVars[0]->llvmVarTypeStr() + string(" ") + srcVars[0]->llvmVarIDStr() + string(", ") + srcVars[1]->llvmVarIDStr();
+        break;
+
+    case IROperator::IR_CMP_UNEQUAL:
+        str = dstVar->llvmVarIDStr() + string(" = icmp ne ") + srcVars[0]->llvmVarTypeStr() + string(" ") + srcVars[0]->llvmVarIDStr() + string(", ") + srcVars[1]->llvmVarIDStr();
         break;
 
     default:
@@ -289,5 +327,118 @@ std::string &CallIRInst::toString(std::string &str, Counter *counter)
         str.pop_back();
         str += string(")");
     }
+    return str;
+}
+
+//****************** LabelIRInst ***********************
+
+/// @brief 构造函数
+LabelIRInst::LabelIRInst()
+{
+    OpType = IROperator::IR_OP_LABEL;
+}
+
+/// @brief 析构函数
+LabelIRInst::~LabelIRInst()
+{
+}
+
+/// @brief 获取指令的IR字符串
+/// @param str 存取字符串
+/// @param counter 计数器
+/// @return
+std::string &LabelIRInst::toString(std::string &str, Counter *counter)
+{
+    // Label指令的llvm ir的字符串表示
+    counter->setCount(this); // 分配编号，函数设置如果已经分配子不会重复操作
+    // 设置标签名字(使用llvm ir的形式  %编号)
+    labelname = string("%") + std::to_string(_llvmId);
+    // 翻译得到对应的str
+    str = std::to_string(_llvmId) + string(":");
+    return str;
+}
+
+//************************* ZextIRInst *****************************
+/// @brief 构造函数
+/// @param _result 扩展结果
+/// @param _srcVal1 要扩展的源操作数
+/// @param _srcVal1 扩展类型
+ZextIRInst::ZextIRInst(Var *_result, Var *_srcVal1, ValueType &_extType)
+{
+    OpType = IROperator::IR_OP_ZEXT;
+    dstVar = _result;
+    srcVars.push_back(_srcVal1);
+    extendType = _extType;
+}
+
+/// @brief 析构函数
+ZextIRInst::~ZextIRInst()
+{
+    srcVars.clear();
+    dstVar = nullptr;
+}
+
+/// @brief 获取指令的IR字符串
+/// @param str 存取字符串
+/// @param counter 计数器
+/// @return
+std::string &ZextIRInst::toString(std::string &str, Counter *counter)
+{
+    // srcVar源操作数一定已经分配了编号 ，只需对dstVar目的操作数编号
+    counter->setCount(dstVar); // 为结果编号
+    str = dstVar->llvmVarIDStr() + string(" = zext ") + srcVars[0]->llvmVarTypeStr() + string(" ") + srcVars[0]->llvmVarIDStr() + string(" to ") + extendType.toString();
+    return str;
+}
+
+//********************** GotoIRInst *************************
+/// @brief 构造函数
+/// @param label 跳转标签
+GotoIRInst::GotoIRInst(IRInst *label)
+{
+    OpType = IROperator::IR_OP_GOTO; // GOTO无条件跳转类型
+    trueLabel = label;               // 跳转标签
+}
+
+/// @brief 析构函数
+GotoIRInst::~GotoIRInst()
+{
+}
+
+/// @brief 获取指令的IR字符串
+/// @param str 存取字符串
+/// @param counter 计数器
+/// @return
+std::string &GotoIRInst::toString(std::string &str, Counter *counter)
+{
+    str = string("br label ") + trueLabel->getLabelName();
+    return str;
+}
+
+//******************** BrIRInst ************************
+/// @brief 构造函数
+/// @param _dstvar 条件值
+/// @param _trueLabel 真标签入口
+/// @param _falseLabel 假标签入口
+BrIRInst::BrIRInst(Var *_dstvar, IRInst *_trueLabel, IRInst *_falseLabel)
+{
+    OpType = IROperator::IR_OP_BR; // 条件跳转类型
+    dstVar = _dstvar;
+    trueLabel = _trueLabel;
+    falseLabel = _falseLabel;
+}
+
+/// @brief 析构函数
+BrIRInst::~BrIRInst()
+{
+    // 暂时不写 之后使用智能指针管理
+}
+
+/// @brief 获取指令的IR字符串
+/// @param str 存取字符串
+/// @param counter 计数器
+/// @return
+std::string &BrIRInst::toString(std::string &str, Counter *counter)
+{
+    str = string("br ") + dstVar->llvmVarTypeStr() + string(" ") + dstVar->llvmVarIDStr() + string(", label ") + trueLabel->getLabelName() + string(", label ") + falseLabel->getLabelName();
     return str;
 }

@@ -11,6 +11,7 @@
 
 #include "IDCounter.h"
 #include "Function.h"
+#include "IRInst.h"
 
 /// @brief 获取计数器
 /// @return 计数器值
@@ -49,4 +50,18 @@ int32_t Counter::setCount(FunFormalParam *formal)
         count++;                     // 自增
     }
     return formal->getllvmId();
+}
+
+/// @brief 为label指令分配编号
+/// @param label Label指令
+/// @return
+int32_t Counter::setCount(LabelIRInst *label)
+{
+    if (label->getllvmId() == -1)
+    {
+        // 未分配编号
+        label->getllvmId() = count; // 分配编号
+        count++;                    // 自增
+    }
+    return label->getllvmId(); // 已经分配，则直接返回编号
 }
