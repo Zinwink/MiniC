@@ -59,6 +59,7 @@ void yyerror(const char* msg);
 %type <node> Declare
 %type <node> DeclareItems
 %type <node> DeclareItem
+%type <node> Array
 %type <node> var
 %type <node> Expr
 %type <node> AddExpr
@@ -138,6 +139,12 @@ FuncFormalParam : "int" DIGIT_ID{
     delete $2; //释放内存
     $2=nullptr;
 }
+| "int" Array{
+    
+}
+| "float" Array{
+
+}
 ;
 
 /* 语句块 */
@@ -184,11 +191,17 @@ Statement : "return" Expr ";" {
 | Declare {
     $$=$1;
 }
-| var "=" Expr ";" {
+/* | var "=" Expr ";" {
     $$ = new_ast_node(ast_node_type::AST_OP_ASSIGN,2,$1,$3);
-}
-| Expr ";"{
+} */
+/* | Expr ";"{
     ; // 仅仅有一个表达式(可能是一个函数调用，也可能是a+b表达式)  目前先设定无动作
+} */
+| Condition ";"{
+    // 无动作
+}
+| var "=" Condition ";"{
+    $$ = new_ast_node(ast_node_type::AST_OP_ASSIGN,2,$1,$3);
 }
 | "break" ";" {
     ; // break语句
@@ -196,25 +209,60 @@ Statement : "return" Expr ";" {
 | "continue" ";" {
     ;  //continue语句
 }
+| Array "=" Condition ";"{
+    $1->ArrayDim.clear();
+    $$=new_ast_node(ast_node_type::AST_OP_ASSIGN,2,$1,$3);
+}
+/* | {
+
+} */
 ;
 
 /* 条件if else *************** */
 IfStmt : "if" "(" Condition ")" Statement {
-    $$=new_ast_node(ast_node_type::AST_OP_IFSTMT,2,$3,$5);
+    // statement 可以是block,也可以是单条语句，为了方便处理，这里需要进行判断，在AST抽象语法树上统一显示block
+    if($5->node_type!=ast_node_type::AST_OP_BLOCK){
+        // statement不是  Block类型，为了统一翻译  套上一层block
+        ast_node* block=new_ast_node(ast_node_type::AST_OP_BLOCK,1,$5);
+        $$=new_ast_node(ast_node_type::AST_OP_IFSTMT,2,$3,block);
+    }
+    else{
+        $$=new_ast_node(ast_node_type::AST_OP_IFSTMT,2,$3,$5);
+    }
 }
 | "if" "(" Condition ")" Statement "else" Statement {
+    if($5->node_type!=ast_node_type::AST_OP_BLOCK){
+        // statement不是  Block类型，为了统一翻译  套上一层block
+        ast_node* block=new_ast_node(ast_node_type::AST_OP_BLOCK,1,$5);
+        $5=block;
+    }
+    if($7->node_type!=ast_node_type::AST_OP_BLOCK){
+        // statement不是  Block类型，为了统一翻译  套上一层block
+        ast_node* block=new_ast_node(ast_node_type::AST_OP_BLOCK,1,$7);
+        $7=block;
+    }
     $$=new_ast_node(ast_node_type::AST_OP_IFSTMT,3,$3,$5,$7);
 }
 ;
 
 /* 循环 while */
 WhileStmt : "while" "(" Condition ")" Statement {
+    if($5->node_type!=ast_node_type::AST_OP_BLOCK){
+        // statement不是  Block类型，为了统一翻译  套上一层block
+        ast_node* block=new_ast_node(ast_node_type::AST_OP_BLOCK,1,$5);
+        $5=block;
+    }
     $$=new_ast_node(ast_node_type::AST_OP_WHILESTMT,2,$3,$5);
 }
 ;
 
 /* do-while循环 */
 DowhileStmt : "do" Statement "while" "(" Condition ")" ";" {
+     if($2->node_type!=ast_node_type::AST_OP_BLOCK){
+        // statement不是  Block类型，为了统一翻译  套上一层block
+        ast_node* block=new_ast_node(ast_node_type::AST_OP_BLOCK,1,$2);
+        $2=block;
+    }
     $$=new_ast_node(ast_node_type::AST_OP_DOWHILESTMT,2,$2,$5);
 }
 ;
@@ -327,9 +375,32 @@ DeclareItem : var{
     $$=node;
     // $$ = new_ast_node(ast_node_type::AST_OP_DECL_ITEM,1,node);
 }
+| Array{
+    $1->node_type=ast_node_type::AST_DECL_ARRAY;
+    $1->ArrayIndexs.clear();
+    $$=$1;
+}
 ;
 
 
+/* 数组******************************* */
+Array: DIGIT_ID "[" DIGIT_INT "]"{
+    // 对于数组维度，在这里设计为 最右边的维度在AST树节点的顶部，最左边的维度在AST节点的底部
+    $$=new_ast_leaf_node(*$1,ast_node_type::AST_USE_ARRAY);
+    int num=$3->digit.int32_digit;
+    $$->ArrayDim.push_back(num);  //目前还不知道节点类型，所以都加入数值
+    $$->ArrayIndexs.push_back(num);
+    delete $3;
+    $3=nullptr;
+}
+|Array "[" DIGIT_INT "]" {
+    int num=$3->digit.int32_digit;
+    $$->ArrayDim.push_back(num);  //目前还不知道节点类型，所以都加入数值
+    $$->ArrayIndexs.push_back(num);
+    delete $3;
+    $3=nullptr;
+} 
+;
 
 /* 表达式 *********************************************************/
 Expr : AddExpr {
@@ -400,6 +471,10 @@ Term :  DIGIT_INT{
 }
 | "(" Expr ")" {
     $$=$2;
+}
+| Array {
+    $1->ArrayDim.clear();
+    $$=$1;
 }
 ;
 

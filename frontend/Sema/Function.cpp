@@ -4,7 +4,7 @@
 /// @return
 string FunFormalParam::toString(Counter *cnt)
 {
-    string str = val_type.toString() + string(" noundef %") + std::to_string(cnt->setCount(this)); // 为形参分配编号
+    string str = val_type.toString() + string(" %") + std::to_string(cnt->setCount(this)); // 为形参分配编号
     return str;
 }
 
@@ -47,7 +47,7 @@ Function::Function(std::string &_name, const ValueType &retTy)
 /// @return 字符串
 string &Function::toString(string &str)
 {
-    str = string("\ndefine dso_local ") + retType.toString() + string(" @") + name + string("(");
+    str = string("\ndefine ") + retType.toString() + string(" @") + name + string("(");
     // 翻译函数形参 并编号
     for (uint32_t i = 0; i < FormalParamList.size(); i++)
     {

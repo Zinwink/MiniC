@@ -58,7 +58,7 @@ GlobalVarIRInst::GlobalVarIRInst(Var *_dstvar)
 std::string &GlobalVarIRInst::toString(std::string &str, Counter *counter)
 {
     // 全局变量不使用编号
-    str = dstVar->llvmVarIDStr() + string(" = dso_local global ") + dstVar->llvmVarTypeStr() + string(" ") + std::to_string(dstVar->int32Value()) + string(", align 4");
+    str = dstVar->llvmVarIDStr() + string(" = global ") + dstVar->llvmVarTypeStr() + string(" ") + std::to_string(dstVar->int32Value()) + string(", align 4");
     return str;
 }
 
@@ -322,7 +322,7 @@ std::string &CallIRInst::toString(std::string &str, Counter *counter)
         std::vector<FunFormalParam *> &formalparams = fun->getFormalParams();
         for (uint32_t i = 0; i < formalparams.size(); i++)
         {
-            str += formalparams[i]->llvmVarTypeStr() + string(" noundef ") + srcVars[i]->llvmVarIDStr() + string(",");
+            str += formalparams[i]->llvmVarTypeStr() + string(" ") + srcVars[i]->llvmVarIDStr() + string(",");
         }
         str.pop_back();
         str += string(")");

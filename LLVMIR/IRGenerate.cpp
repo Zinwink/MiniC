@@ -522,6 +522,24 @@ bool IRGenerate::ir_mod(ast_node *node)
 /// @return
 bool IRGenerate::ir_cmp_less(ast_node *node)
 {
+    ast_node *left = ir_visit_astnode(node->sons[0]);
+    if (left == nullptr)
+        return false;
+    ast_node *right = ir_visit_astnode(node->sons[1]);
+    if (left == nullptr)
+        return false;
+    ValueType temp_valType1(BasicValueType::TYPE_BOOL); // 比较产生的bool结果
+    Var *tmp1 = newTempVar(temp_valType1);
+    node->CodesIr->extendIRBack(*(left->CodesIr));
+    node->CodesIr->extendIRBack(*(right->CodesIr));
+    IRInst *inst1 = new BinaryIRInst(IROperator::IR_CMP_LESS, tmp1, left->vari, right->vari);
+    // 进行zero enxtend扩展
+    ValueType temp_valType2(BasicValueType::TYPE_INT32);
+    Var *tmp2 = newTempVar(temp_valType2); // 扩展为int32
+    node->vari = tmp2;
+    IRInst *inst2 = new ZextIRInst(tmp2, tmp1, temp_valType2);
+    node->CodesIr->irback().push_back(inst1); // 加入指令
+    node->CodesIr->irback().push_back(inst2);
     return true;
 }
 
@@ -530,6 +548,24 @@ bool IRGenerate::ir_cmp_less(ast_node *node)
 /// @return
 bool IRGenerate::ir_cmp_greater(ast_node *node)
 {
+    ast_node *left = ir_visit_astnode(node->sons[0]);
+    if (left == nullptr)
+        return false;
+    ast_node *right = ir_visit_astnode(node->sons[1]);
+    if (left == nullptr)
+        return false;
+    ValueType temp_valType1(BasicValueType::TYPE_BOOL); // 比较产生的bool结果
+    Var *tmp1 = newTempVar(temp_valType1);
+    node->CodesIr->extendIRBack(*(left->CodesIr));
+    node->CodesIr->extendIRBack(*(right->CodesIr));
+    IRInst *inst1 = new BinaryIRInst(IROperator::IR_CMP_GREATER, tmp1, left->vari, right->vari);
+    // 进行zero enxtend扩展
+    ValueType temp_valType2(BasicValueType::TYPE_INT32);
+    Var *tmp2 = newTempVar(temp_valType2); // 扩展为int32
+    node->vari = tmp2;
+    IRInst *inst2 = new ZextIRInst(tmp2, tmp1, temp_valType2);
+    node->CodesIr->irback().push_back(inst1); // 加入指令
+    node->CodesIr->irback().push_back(inst2);
     return true;
 }
 
@@ -538,6 +574,24 @@ bool IRGenerate::ir_cmp_greater(ast_node *node)
 /// @return
 bool IRGenerate::ir_cmp_equal(ast_node *node)
 {
+    ast_node *left = ir_visit_astnode(node->sons[0]);
+    if (left == nullptr)
+        return false;
+    ast_node *right = ir_visit_astnode(node->sons[1]);
+    if (left == nullptr)
+        return false;
+    ValueType temp_valType1(BasicValueType::TYPE_BOOL); // 比较产生的bool结果
+    Var *tmp1 = newTempVar(temp_valType1);
+    node->CodesIr->extendIRBack(*(left->CodesIr));
+    node->CodesIr->extendIRBack(*(right->CodesIr));
+    IRInst *inst1 = new BinaryIRInst(IROperator::IR_CMP_EQUAL, tmp1, left->vari, right->vari);
+    // 进行zero enxtend扩展
+    ValueType temp_valType2(BasicValueType::TYPE_INT32);
+    Var *tmp2 = newTempVar(temp_valType2); // 扩展为int32
+    node->vari = tmp2;
+    IRInst *inst2 = new ZextIRInst(tmp2, tmp1, temp_valType2);
+    node->CodesIr->irback().push_back(inst1); // 加入指令
+    node->CodesIr->irback().push_back(inst2);
     return true;
 }
 
