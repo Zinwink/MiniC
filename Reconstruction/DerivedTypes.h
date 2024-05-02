@@ -72,20 +72,20 @@ public:
     /// @brief 构造函数
     /// @param result 返回类型
     /// @param argTys 参数类型
-    FunctionType(TypePtr &result, std::vector<TypePtr> &argTys);
+    FunctionType(TypePtr result, std::vector<TypePtr> &argTys);
 
     /// @brief 构造函数
     /// @param result 返回类型
-    FunctionType(TypePtr &result);
+    FunctionType(TypePtr result);
 
     /// @brief 函数的返回类型
     /// @return
-    TypePtr &getReturnType() const { return ContainedTys[0]; }
+    TypePtr getReturnType() const { return ContainedTys[0]; }
 
     /// @brief 获取参数类型指针
     /// @param ord 参数列表索引(从0开始) ContainedTys第一位为返回类型
     /// @return
-    TypePtr &getParamType(unsigned ord)
+    TypePtr getParamType(unsigned ord)
     {
         return ContainedTys[ord + 1];
     };
@@ -107,9 +107,10 @@ public:
     /// @brief 获取函数类型
     /// @param result 返回值类型
     /// @return
-    static FunctionTyPtr get(TypePtr &result)
+    static FunctionTyPtr get(TypePtr result)
     {
-        FunctionTyPtr fun(new FunctionType(result));
+        // FunctionTyPtr fun(new FunctionType(result));
+        FunctionTyPtr fun = std::make_shared<FunctionType>(result);
         return fun;
     }
 
@@ -117,9 +118,10 @@ public:
     /// @param result  返回类型
     /// @param argTypes 参数类型
     /// @return
-    static FunctionTyPtr get(TypePtr &result, std::vector<TypePtr> &argTypes)
+    static FunctionTyPtr get(TypePtr result, std::vector<TypePtr> &argTypes)
     {
-        FunctionTyPtr fun(new FunctionType(result, argTypes));
+        // FunctionTyPtr fun(new FunctionType(result, argTypes));
+        FunctionTyPtr fun = std::make_shared<FunctionType>(result, argTypes);
         return fun;
     }
 };
@@ -139,7 +141,7 @@ public:
     /// @brief 构造函数
     /// @param containedTy 元素类型
     /// @param numElems 元素数目
-    ArrayType(TypePtr &containedTy, uint64_t numElems) : Type(Type::ArrayTyID)
+    ArrayType(TypePtr containedTy, uint64_t numElems) : Type(Type::ArrayTyID)
     {
         ContainedTy = containedTy;
         NumElems = numElems;
@@ -152,13 +154,14 @@ public:
         return string("[") + std::to_string(NumElems) + string(" x ") + ContainedTy->TypeStr() + string("]");
     }
 
-    /// @brief 
-    /// @param containedTy 
-    /// @param numElems 
-    /// @return 
-    static ArrayTyPtr get(TypePtr &containedTy, uint64_t numElems)
+    /// @brief
+    /// @param containedTy
+    /// @param numElems
+    /// @return
+    static ArrayTyPtr get(TypePtr containedTy, uint64_t numElems)
     {
-        ArrayTyPtr arr(new ArrayType(containedTy, numElems));
+        // ArrayTyPtr arr(new ArrayType(containedTy, numElems));
+        ArrayTyPtr arr = std::make_shared<ArrayType>(containedTy, numElems);
         return arr;
     }
 };
@@ -174,14 +177,14 @@ public:
 
     /// @brief 构造函数
     /// @param _elemT 指针元素类型
-    PointerType(TypePtr &_elemT) : Type(Type::PointerTyID)
+    PointerType(TypePtr _elemT) : Type(Type::PointerTyID)
     {
         ElemntTy = _elemT;
     }
 
     /// @brief 获取指针元素类型
     /// @return
-    TypePtr &getElemntTy() { return ElemntTy; }
+    TypePtr getElemntTy() { return ElemntTy; }
 
     /// @brief 获取该指针类型的字符串表示
     /// @return
@@ -189,13 +192,14 @@ public:
     {
         return ElemntTy->TypeStr() + string("*");
     }
-    
-    /// @brief 
-    /// @param _elemT 
-    /// @return 
-    static PointerTyPtr get(TypePtr &_elemT)
+
+    /// @brief
+    /// @param _elemT
+    /// @return
+    static PointerTyPtr get(TypePtr _elemT)
     {
-        PointerTyPtr ptr(new PointerType(_elemT));
+        // PointerTyPtr ptr(new PointerType(_elemT));
+        PointerTyPtr ptr = std::make_shared<PointerType>(_elemT);
         return ptr;
     }
 };

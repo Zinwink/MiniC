@@ -15,16 +15,17 @@
 #include <memory>
 
 using string = std::string;
-using TypePtr = std::shared_ptr<Type>;
 
 class IntegerType;
 class FunctionType;
 class PointerType;
 class ArrayType;
+class Type;
 using IntegerTyPtr = std::shared_ptr<IntegerType>;
 using FunctionTyPtr = std::shared_ptr<FunctionType>;
 using PointerTyPtr = std::shared_ptr<PointerType>;
 using ArrayTyPtr = std::shared_ptr<ArrayType>;
+using TypePtr = std::shared_ptr<Type>;
 
 /// @brief 类型管理基类
 class Type

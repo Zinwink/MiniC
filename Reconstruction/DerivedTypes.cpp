@@ -13,7 +13,7 @@
 /// @brief 构造函数
 /// @param result 返回类型
 /// @param argTys 参数类型
-FunctionType::FunctionType(TypePtr &result, std::vector<TypePtr> &argTys) : Type(Type::FunctionTyID)
+FunctionType::FunctionType(TypePtr result, std::vector<TypePtr> &argTys) : Type(Type::FunctionTyID)
 {
     NumContainedTys = 1 + argTys.size();
     ContainedTys.push_back(result);
@@ -25,7 +25,7 @@ FunctionType::FunctionType(TypePtr &result, std::vector<TypePtr> &argTys) : Type
 
 /// @brief 构造函数
 /// @param result 返回类型
-FunctionType::FunctionType(TypePtr &result) : Type(Type::FunctionTyID)
+FunctionType::FunctionType(TypePtr result) : Type(Type::FunctionTyID)
 {
     NumContainedTys = 1;
     ContainedTys.push_back(result);
