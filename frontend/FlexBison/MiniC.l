@@ -5,6 +5,7 @@
 #include <cstring>
 #include "BisonParser.h"
 #include "Literal_Val.h"
+#include <string>
 %}
 
 /* 不添加默认规则, 当给定规则无法匹配时，抛出错误 */

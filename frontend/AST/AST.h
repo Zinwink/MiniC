@@ -14,10 +14,10 @@
 #include <vector>
 #include <string>
 #include <cstdint>
-#include "ValueType.h"
 #include "Literal_Val.h"
-#include "Var.h"
-#include "IRBlock.h"
+#include "Type.h"
+#include "Value.h"
+#include "DerivedTypes.h"
 
 /// @brief AST节点类型 枚举
 enum class ast_node_type : int
@@ -34,6 +34,9 @@ enum class ast_node_type : int
 
     ///@brief 标识符变量叶子节点
     AST_LEAF_VAR_ID,
+
+    /// @brief 数组节点,可能是声明处，也可能是取址处，也可能是函数形参
+    AST_LEAF_ARRAY,
 
     /// @brief 单个函数形参运算符节点 属性包含名字与类型
     AST_LEAF_FUNC_FORMAL_PARAM,
@@ -142,7 +145,7 @@ class ast_node
 {
 public: // 属性
     /// @brief 父节点
-    ast_node *parent;
+    ast_node *parent = nullptr;
 
     /// @brief 孩子节点
     std::vector<ast_node *> sons;
@@ -150,42 +153,46 @@ public: // 属性
     /// @brief 节点类型
     ast_node_type node_type;
 
-    /// @brief 节点值类型
-    ValueType val_type;
+    /// @brief 节点值类型 指针
+    Type *attr = nullptr;
 
     /// @brief 节点的字面量值  包含,(标识符名,函数名,参数名，uint，int,float等字面量之一)以及所在的行号line_no
     Literal_Val literal_val;
 
-    /// @brief 对应的变量
-    Var *vari = nullptr;
+    /// @brief 对应的Value
+    ValPtr value = nullptr;
 
-    /// @brief IRBlock指针，翻译IR时使用
-    IRBlock *CodesIr;
+    /// @brief 数组维度下标值  在 DeclareItem下表示声明的大小，其他情况为索引取值, -1表示该维为空(可能出现在函数参数的情形下)
+    std::vector<int> ArraydimOrd;
 
-public: // 构造函数
-    /// @brief 拷贝构造
-    /// @param node
-    ast_node(const ast_node &node);
-
-    /// @brief 根据 节点值类型以及所在行号构造,若ValueType能确定顶节点类型则指定，否则按照_node_type指定
-    /// @param _type 节点值类型
-    /// @param _node_type 节点类型,若_type值类型无法确定节点类型，则由该参数指定
-    ast_node(const ValueType &_type, ast_node_type _node_type = ast_node_type::AST_ILLEGAL);
+public:
+    /// @brief 析构函数
+    ~ast_node()
+    {
+        parent = nullptr;
+        delete attr; // attr不共享
+        attr = nullptr;
+        value.reset();
+    }
 
     /// @brief 根据抽象语法树节点类型构造,若节点类型能确定节点的值类型则指定，否则默认为TYPE_NONE
     /// @param _node_type AST节点类型
-    ast_node(const ast_node_type &_node_type);
+    ast_node(ast_node_type _node_type);
 
     /// @brief 通过字面量创建,若字面量类型能确定节点的值类型，则指定，否则默认初始化为TYPE_NONE
     /// @param literal 字面量
     /// @param _node_type 节点类型，默认为非法类型；若literal 无法确定节点类型，将由该参数指定
-    ast_node(const Literal_Val &literal, ast_node_type _node_type = ast_node_type::AST_ILLEGAL);
+    ast_node(Literal_Val &literal, ast_node_type _node_type = ast_node_type::AST_ILLEGAL);
 };
 
 // 下面是一些工具函数**************************************
 
 /// @brief 抽象语法树根节点
 extern ast_node *ast_root;
+
+/// @brief 释放内存
+/// @param root
+void free_ast(ast_node *root);
 
 /// @brief 判断是否是叶子节点类型
 /// @param _node_type AST节点类型
@@ -195,14 +202,13 @@ bool isLeafNodeType(ast_node_type _node_type);
 /// @brief 判断是否是叶子节点
 /// @param node AST节点 指针类型
 /// @return true：是叶子节点 false：内部节点
-bool isLeafNode(const ast_node *node);
+bool isLeafNode(ast_node *node);
 
 /// @brief 创建指定节点类型的节点
 /// @param type 节点类型
-/// @param sons_num 子节点的数目
-/// @param  可变参数，支持插入若干孩子节点,
+/// @param _sons  孩子节点指针列表
 /// @return 创建节点的指针
-ast_node *new_ast_node(ast_node_type type, int sons_num, ...);
+ast_node *new_ast_node(ast_node_type type, std::initializer_list<ast_node *> _sons);
 
 /// @brief 向父节点插入一个节点
 /// @param parent 父节点
@@ -213,30 +219,34 @@ ast_node *insert_ast_node(ast_node *parent, ast_node *node);
 /// @brief 根据字面量(将在bison语法分析中读取数据)创建叶子节点(字面量：如uint,int,float等)
 /// @param literal 字面量
 /// @param _node_type 节点类型,默认为AST_LEAF_TYPE
-/// @param _type 节点值类型,默认为非法类型
 /// @return 创建的节点指针
-ast_node *new_ast_leaf_node(const Literal_Val &literal, ast_node_type _node_type = ast_node_type::AST_LEAF_TYPE, const ValueType &_type = BasicValueType::TYPE_MAX);
-
-/// @brief 清理抽象语法树节点 node为root时清楚整个AST
-/// @param node 抽象语法树节点
-void free_ast_node(ast_node *node);
+ast_node *new_ast_leaf_node(Literal_Val &literal, ast_node_type _node_type = ast_node_type::AST_LEAF_TYPE);
 
 /// @brief 创建函数定义节点  中间节点
 /// @param literal 字面量 包含行号,函数名信息
-/// @param block 函数体语句块节点
 /// @param params 函数形参列表节点,可以为空(未指定则默认参数为nullptr)
+/// @param block   block块节点
 /// @param ret_type 函数定义节点的值类型(返回类型) 未指定则默认为TYPE__VOID
 /// @return 创建函数定义节点指针
-ast_node *create_fun_def(const Literal_Val &literal, ast_node *block, ast_node *params = nullptr, const ValueType &ret_type = BasicValueType::TYPE_VOID);
+ast_node *create_fun_def(Literal_Val &literal, Type *ret_type, ast_node *params = nullptr, ast_node *block = nullptr);
 
 /// @brief 创建函数形参节点
 /// @param literal 字面量 包含行号 形参名
 /// @param _type 参数的值类型
 /// @return 创建的节点指针
-ast_node *create_fun_formal_param(const Literal_Val &literal, const ValueType _type);
+ast_node *create_fun_formal_param(Literal_Val &literal, Type *_type);
 
 /// @brief 创建函数调用节点
 /// @param literal 字面量 包含行号，函数名
 /// @param params 形参列表
 /// @return 创建的节点指针
-ast_node *create_fun_call(const Literal_Val &literal, ast_node *params);
+ast_node *create_fun_call(Literal_Val &literal, ast_node *params);
+
+/// @brief 更新子节点类型   Bison采用规约的形式，如此可以更新子节点类型
+/// @param parent
+void updateDeclTypes(ast_node *parent);
+
+/// @brief 获取数组名
+/// @param arr
+/// @return
+std::string getNameofArray(ast_node *arr);

@@ -549,7 +549,8 @@ char *yytext;
 #include <cstring>
 #include "BisonParser.h"
 #include "Literal_Val.h"
-#line 553 "MiniCFlex.cpp"
+#include <string>
+#line 554 "MiniCFlex.cpp"
 /* 不添加默认规则, 当给定规则无法匹配时，抛出错误 */
 /* 不使用yywrap */
 /* yylineno维护当前行编号 */
@@ -564,7 +565,7 @@ char *yytext;
 /* 小数 */
 /* 空白 */
 /* 空白行 */
-#line 568 "MiniCFlex.cpp"
+#line 569 "MiniCFlex.cpp"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -782,10 +783,10 @@ YY_DECL
 		}
 
 	{
-#line 37 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 38 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 
 
-#line 789 "MiniCFlex.cpp"
+#line 790 "MiniCFlex.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -850,14 +851,14 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 39 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 40 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {    // 进入注释有限自动机
                     BEGIN(COMMENT);
                 } 
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 42 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 43 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {
             // 结束注释子优先自动机
             BEGIN(INITIAL);
@@ -866,13 +867,13 @@ YY_RULE_SETUP
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 46 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 47 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {
        ;  //忽略注释中所有字符 包括换行符
 }
 	YY_BREAK
 case YY_STATE_EOF(COMMENT):
-#line 49 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 50 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {
     //处于注释有限自动机中，没遇到 */ 文件结束
     printf("Line %d: Unterminated comment\n",yylineno);
@@ -882,179 +883,179 @@ case YY_STATE_EOF(COMMENT):
 case 4:
 /* rule 4 can match eol */
 YY_RULE_SETUP
-#line 54 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 55 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {
     ;   //忽略行注释
 }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 59 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 60 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_INT;}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 60 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 61 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_FLOAT;}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 61 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 62 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_VOID;}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 63 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 64 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_IF;}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 64 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 65 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_ELSE;}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 65 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 66 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_RETURN;}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 67 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 68 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_WHILE;}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 68 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 69 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_DO;}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 69 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 70 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_BREAK;}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 70 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 71 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_CONTINUE;}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 72 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 73 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_ADD;}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 73 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 74 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_DIV;}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 74 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 75 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_MUL;}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 75 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 76 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_SUB;}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 76 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 77 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_ASSIGN;}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 77 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 78 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_MOD;}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 79 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 80 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_EQUAL;}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 80 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 81 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_NOT_EQU;}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 81 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 82 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_LESS;}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 82 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 83 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_GREATER;}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 83 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 84 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_LESS_EQU;}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 84 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 85 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_GREATER_EQU;}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 85 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 86 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_NOT;}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 86 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 87 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_AND;}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 87 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 88 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_OR;}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 89 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 90 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_LBRACE;}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 90 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 91 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_RBRACE;}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 91 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 92 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_LPAREN;}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 92 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 93 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_RPAREN;}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 93 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 94 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_LSQU;}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 94 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 95 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_RSQU;}
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 96 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 97 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_COMMA;}
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 97 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 98 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {return T_SEMICOLON;}
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 99 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 100 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {
     //识别整数
     yylval.literal=new Literal_Val(std::stoi(yytext),yylineno);
@@ -1063,7 +1064,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 105 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 106 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {
     // 识别标识符
     yylval.literal=new Literal_Val(strdup(yytext),yylineno);
@@ -1072,7 +1073,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 111 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 112 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {
     //识别小数
     yylval.literal=new Literal_Val(std::stof(yytext),yylineno);
@@ -1081,18 +1082,18 @@ YY_RULE_SETUP
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 117 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 118 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 ;
 	YY_BREAK
 case 42:
 /* rule 42 can match eol */
 YY_RULE_SETUP
-#line 118 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 119 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 ;
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 120 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 121 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {  //其余未识别的符号 错误
         printf("Line %d:unknown token %s\n",yylineno,yytext);
         return 8909;
@@ -1100,10 +1101,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 126 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 127 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1107 "MiniCFlex.cpp"
+#line 1108 "MiniCFlex.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2121,7 +2122,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 126 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 127 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 
 
 

@@ -13,11 +13,6 @@
 
 #include "Type.h"
 
-// using IntegerTyPtr = std::shared_ptr<IntegerType>;
-// using FunctionTyPtr = std::shared_ptr<FunctionType>;
-// using PointerTyPtr = std::shared_ptr<PointerType>;
-// using ArrayTyPtr = std::shared_ptr<ArrayType>;
-
 ///******************  IntegerType  ***************************
 
 /// @brief 整型 包含位宽信息
@@ -72,20 +67,20 @@ public:
     /// @brief 构造函数
     /// @param result 返回类型
     /// @param argTys 参数类型
-    FunctionType(TypePtr result, std::vector<TypePtr> &argTys);
+    FunctionType(Type *result, std::vector<Type *> &argTys);
 
     /// @brief 构造函数
     /// @param result 返回类型
-    FunctionType(TypePtr result);
+    FunctionType(Type *result);
 
     /// @brief 函数的返回类型
     /// @return
-    TypePtr getReturnType() const { return ContainedTys[0]; }
+    Type *getReturnType() const { return ContainedTys[0]; }
 
     /// @brief 获取参数类型指针
     /// @param ord 参数列表索引(从0开始) ContainedTys第一位为返回类型
     /// @return
-    TypePtr getParamType(unsigned ord)
+    Type *getParamType(unsigned ord)
     {
         return ContainedTys[ord + 1];
     };
@@ -107,10 +102,10 @@ public:
     /// @brief 获取函数类型
     /// @param result 返回值类型
     /// @return
-    static FunctionTyPtr get(TypePtr result)
+    static FunctionType *get(Type *result)
     {
-        // FunctionTyPtr fun(new FunctionType(result));
-        FunctionTyPtr fun = std::make_shared<FunctionType>(result);
+        // FunctionType* fun(new FunctionType(result));
+        FunctionType *fun = new FunctionType(result);
         return fun;
     }
 
@@ -118,10 +113,10 @@ public:
     /// @param result  返回类型
     /// @param argTypes 参数类型
     /// @return
-    static FunctionTyPtr get(TypePtr result, std::vector<TypePtr> &argTypes)
+    static FunctionType *get(Type *result, std::vector<Type *> &argTypes)
     {
-        // FunctionTyPtr fun(new FunctionType(result, argTypes));
-        FunctionTyPtr fun = std::make_shared<FunctionType>(result, argTypes);
+        // FunctionType* fun(new FunctionType(result, argTypes));
+        FunctionType *fun = new FunctionType(result, argTypes);
         return fun;
     }
 };
@@ -130,21 +125,43 @@ public:
 /// 数组类型
 class ArrayType : public Type
 {
+    friend class Type;
+
 private:
-    TypePtr ContainedTy;
+    Type *ContainedTy = nullptr;
     uint64_t NumElems;
 
 public:
     /// @brief 析构函数
-    ~ArrayType() = default;
+    ~ArrayType()
+    {
+        delete ContainedTy;
+        ContainedTy = nullptr;
+    }
 
     /// @brief 构造函数
     /// @param containedTy 元素类型
     /// @param numElems 元素数目
-    ArrayType(TypePtr containedTy, uint64_t numElems) : Type(Type::ArrayTyID)
+    ArrayType(Type *containedTy, uint64_t numElems) : Type(Type::ArrayTyID)
     {
         ContainedTy = containedTy;
         NumElems = numElems;
+    }
+
+    /// @brief 更新设置元素类型
+    /// @param _ty
+    void setContaintedTy(Type *_ty)
+    {
+        if (ContainedTy)
+        {
+            delete ContainedTy;
+        }
+        ContainedTy = _ty;
+    }
+
+    Type *&getContainedTy()
+    {
+        return ContainedTy;
     }
 
     /// @brief 获取数组类型的表示形式
@@ -154,14 +171,32 @@ public:
         return string("[") + std::to_string(NumElems) + string(" x ") + ContainedTy->TypeStr() + string("]");
     }
 
-    /// @brief
+    /// @brief 根据元素类型和元素数构造数组类型
     /// @param containedTy
     /// @param numElems
     /// @return
-    static ArrayTyPtr get(TypePtr containedTy, uint64_t numElems)
+    static ArrayType *get(Type *containedTy, uint64_t numElems)
     {
-        // ArrayTyPtr arr(new ArrayType(containedTy, numElems));
-        ArrayTyPtr arr = std::make_shared<ArrayType>(containedTy, numElems);
+        // ArrayType* arr(new ArrayType(containedTy, numElems));
+        ArrayType *arr = new ArrayType(containedTy, numElems);
+        return arr;
+    }
+
+    /// @brief 根据数组的维度列表以及最小单个元素的类型构造数组类型
+    /// @param dim 维度列表
+    /// @param lastDImTy 单个元素的基本类型(最后一个维度的元素类型)
+    /// @return
+    static ArrayType *get(std::vector<int> &dim, Type *lastDimTy)
+    {
+        // 先得到ContainedType
+        Type *contain;
+        Type *temp = lastDimTy;
+        for (auto it = dim.rbegin(); it != dim.rend(); ++it)
+        {
+            contain = ArrayType::get(temp, *it);
+            temp = contain;
+        }
+        ArrayType *arr = static_cast<ArrayType *>(contain);
         return arr;
     }
 };
@@ -170,21 +205,25 @@ public:
 class PointerType : public Type
 {
 private:
-    TypePtr ElemntTy; // 指针元素类型
+    Type *ElemntTy; // 指针元素类型
 public:
     /// @brief 析构
-    ~PointerType() = default;
+    ~PointerType()
+    {
+        delete ElemntTy;
+        ElemntTy = nullptr;
+    };
 
     /// @brief 构造函数
     /// @param _elemT 指针元素类型
-    PointerType(TypePtr _elemT) : Type(Type::PointerTyID)
+    PointerType(Type *_elemT) : Type(Type::PointerTyID)
     {
         ElemntTy = _elemT;
     }
 
     /// @brief 获取指针元素类型
     /// @return
-    TypePtr getElemntTy() { return ElemntTy; }
+    Type *getElemntTy() { return ElemntTy; }
 
     /// @brief 获取该指针类型的字符串表示
     /// @return
@@ -196,10 +235,10 @@ public:
     /// @brief
     /// @param _elemT
     /// @return
-    static PointerTyPtr get(TypePtr _elemT)
+    static PointerType *get(Type *_elemT)
     {
-        // PointerTyPtr ptr(new PointerType(_elemT));
-        PointerTyPtr ptr = std::make_shared<PointerType>(_elemT);
+        // PointerType* ptr(new PointerType(_elemT));
+        PointerType *ptr = new PointerType(_elemT);
         return ptr;
     }
 };

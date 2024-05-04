@@ -11,7 +11,6 @@
 #pragma once
 
 #include <cstdint>
-#include "ValueType.h"
 
 /// @brief 联合体存储各类型字面量数据
 union Literal_digit
@@ -24,6 +23,9 @@ union Literal_digit
 
     /// @brief 有符号32位整型字面量
     int32_t int32_digit;
+
+    /// @brief 8位整型
+    int8_t char_digit;
 
     /// @brief 浮点数字面量
     float float_digit;
@@ -38,9 +40,6 @@ public:
 
     /// @brief 所在行号
     uint32_t line_no;
-
-    /// @brief 字面量类型 确定字面量的类型
-    ValueType type;
 
     /// @brief 默认无参构造
     Literal_Val();

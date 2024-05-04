@@ -14,34 +14,34 @@
 
 /// @brief 获取 VoidType类型
 /// @return
-TypePtr Type::getVoidType()
+Type *Type::getVoidType()
 {
-    TypePtr ptr = std::make_shared<Type>(Type::VoidTyID);
+    Type *ptr = new Type(Type::VoidTyID);
     return ptr;
 }
 
 /// @brief 获取Label类型
 /// @return
-TypePtr Type::getLabelType()
+Type *Type::getLabelType()
 {
-    TypePtr ptr = std::make_shared<Type>(Type::LabelTyID);
+    Type *ptr = new Type(Type::LabelTyID);
     return ptr;
 }
 
 /// @brief 获取 int类型(有符号)
 /// @param N 位数
 /// @return
-IntegerTyPtr Type::getIntNType(unsigned N)
+IntegerType *Type::getIntNType(unsigned N)
 {
-    IntegerTyPtr intptr = std::make_shared<IntegerType>(N, true);
+    IntegerType *intptr = new IntegerType(N, true);
     return intptr;
 }
 
 /// @brief 获取 uint类型(无符号)
 /// @param N 位数
 /// @return
-IntegerTyPtr Type::getUintNType(unsigned N)
+IntegerType *Type::getUintNType(unsigned N)
 {
-    IntegerTyPtr uint = std::make_shared<IntegerType>(N, false);
+    IntegerType *uint = new IntegerType(N, false);
     return uint;
 }

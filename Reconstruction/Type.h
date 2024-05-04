@@ -21,11 +21,6 @@ class FunctionType;
 class PointerType;
 class ArrayType;
 class Type;
-using IntegerTyPtr = std::shared_ptr<IntegerType>;
-using FunctionTyPtr = std::shared_ptr<FunctionType>;
-using PointerTyPtr = std::shared_ptr<PointerType>;
-using ArrayTyPtr = std::shared_ptr<ArrayType>;
-using TypePtr = std::shared_ptr<Type>;
 
 /// @brief 类型管理基类
 class Type
@@ -51,8 +46,8 @@ private:
 
 protected:
     // 主要用于处理数组等复合类型
-    unsigned NumContainedTys = 0;      // 当前类型有多少个子类型
-    std::vector<TypePtr> ContainedTys; // 但当前类型所含子类型对应的类型指针
+    unsigned NumContainedTys = 0;     // 当前类型有多少个子类型
+    std::vector<Type *> ContainedTys; // 但当前类型所含子类型对应的类型指针
 
 public:
     /// @brief 默认的无参构造  初始化为未知类型
@@ -65,8 +60,11 @@ public:
     /// @brief 析构函数
     ~Type()
     {
-        ContainedTys.clear();
-        ContainedTys.shrink_to_fit();
+        for (auto &t : ContainedTys)
+        {
+            delete t;
+            t = nullptr;
+        }
     };
 
     /// @brief 返回类型的字符串
@@ -116,19 +114,27 @@ public:
 
     /// @brief 获取 VoidType类型
     /// @return
-    static TypePtr getVoidType();
+    static Type *getVoidType();
 
     /// @brief 获取Label类型
     /// @return
-    static TypePtr getLabelType();
+    static Type *getLabelType();
+
+    /// @brief
+    /// @return
+    static Type *getFloatType()
+    {
+        Type *floatT = new Type(Type::FloatTypeID);
+        return floatT;
+    }
 
     /// @brief 获取 int类型(有符号)
     /// @param N 位数
     /// @return
-    static IntegerTyPtr getIntNType(unsigned N);
+    static IntegerType *getIntNType(unsigned N);
 
     /// @brief 获取 uint类型(无符号)
     /// @param N 位数
     /// @return
-    static IntegerTyPtr getUintNType(unsigned N);
+    static IntegerType *getUintNType(unsigned N);
 };

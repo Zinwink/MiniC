@@ -14,7 +14,7 @@
 /// @brief 获取节点名字
 /// @param node 节点
 /// @return 字符串名
-std::string getNodeName(const ast_node *node)
+std::string getNodeName(ast_node *node)
 {
     std::string name;
     switch (node->node_type)
@@ -93,6 +93,7 @@ std::string getNodeName(const ast_node *node)
         break;
     case ast_node_type::AST_LEAF_FUNC_FORMAL_PARAM:
         name = node->literal_val.digit.id;
+        name = node->attr->TypeStr() + string(": ") + string(name);
         break;
     case ast_node_type::AST_OP_COMPILE_UNIT:
         name = "CompileUnit";
@@ -105,6 +106,7 @@ std::string getNodeName(const ast_node *node)
         break;
     case ast_node_type::AST_OP_DECL_ITEMS:
         name = "DeclarationItems";
+        name = string(name) + string(": ") + node->attr->TypeStr();
         break;
     case ast_node_type::AST_OP_IFSTMT:
         name = "If-stmt";
@@ -115,6 +117,10 @@ std::string getNodeName(const ast_node *node)
         break;
     case ast_node_type::AST_OP_DOWHILESTMT:
         name = "Do-while";
+        break;
+
+    case ast_node_type::AST_LEAF_ARRAY:
+        name = getNameofArray(node);
         break;
 
     default:
@@ -128,7 +134,7 @@ std::string getNodeName(const ast_node *node)
 /// @param g Agraph_t 图形对象
 /// @param astnode ast节点
 /// @return Agnode_t* 节点
-Agnode_t *genLeafGraphNode(Agraph_t *g, const ast_node *astnode)
+Agnode_t *genLeafGraphNode(Agraph_t *g, ast_node *astnode)
 {
     // 第三个参数1表示创建一个新节点，0表示如果已经存在相同名称节点，则不创建
     Agnode_t *node = agnode(g, (char *)nullptr, 1);
@@ -154,12 +160,12 @@ Agnode_t *genLeafGraphNode(Agraph_t *g, const ast_node *astnode)
 /// @param g 图形对象
 /// @param astnode
 /// @return Agnode_t*
-Agnode_t *genInternalGraphNode(Agraph_t *g, const ast_node *astnode)
+Agnode_t *genInternalGraphNode(Agraph_t *g, ast_node *astnode)
 {
     // 得到astnode子节点对应的Agnode_t图可视化节点
     std::vector<Agnode_t *> Agsons;
     // 下面遍历astnode的子节点生成子节点对应Agnode_t
-    for (ast_node *son : astnode->sons)
+    for (auto &son : astnode->sons)
     {
         Agnode_t *ag_son = Traverse_AST(g, son);
         Agsons.push_back(ag_son);
@@ -186,7 +192,7 @@ Agnode_t *genInternalGraphNode(Agraph_t *g, const ast_node *astnode)
 /// @param g 图形对象
 /// @param astnode
 /// @return
-Agnode_t *Traverse_AST(Agraph_t *g, const ast_node *astnode)
+Agnode_t *Traverse_AST(Agraph_t *g, ast_node *astnode)
 { // 递归
     if (astnode == nullptr)
     {

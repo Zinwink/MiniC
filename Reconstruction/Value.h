@@ -36,7 +36,7 @@ public:
     using User_iterator = std::list<UserPtr>::iterator;
 
 private:
-    TypePtr ty;                  // 类型
+    Type *ty;                    // 类型
     std::list<UserPtr> UserList; // 该Value被其他Value使用的记录列表
     SubClassID ValID;            // 标识
 
@@ -47,6 +47,8 @@ public:
     /// @brief 析构
     ~Value()
     {
+        delete ty;
+        ty = nullptr;
         UserList.clear();
     }
 
@@ -61,23 +63,23 @@ public:
 
     /// @brief 构造函数
     /// @param _ty 类型
-    Value(TypePtr _ty) : ty(_ty)
+    Value(Type *_ty) : ty(_ty)
     {
     }
 
     /// @brief 构造函数
     /// @param _ty
     /// @param _id
-    Value(TypePtr _ty, SubClassID _id) : ty(_ty), ValID(_id) {}
+    Value(Type *_ty, SubClassID _id) : ty(_ty), ValID(_id) {}
 
 public:
     /// @brief 获取Value类型
     /// @return
-    TypePtr &getType() { return ty; }
+    Type *getType() { return ty; }
 
     /// @brief 设置Type
     /// @param _ty
-    void setType(TypePtr _ty) { ty = _ty; }
+    void setType(Type *_ty) { ty = _ty; }
 
     /// @brief 获取子类类型
     /// @return

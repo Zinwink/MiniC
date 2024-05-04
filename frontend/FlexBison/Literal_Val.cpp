@@ -15,7 +15,6 @@
 Literal_Val::Literal_Val()
 {
     line_no = -1;
-    type.type = BasicValueType::TYPE_MAX;
 }
 
 /// @brief uint32字面量构造
@@ -25,7 +24,6 @@ Literal_Val::Literal_Val(uint32_t val, uint32_t line_no)
 {
     digit.uint32_digit = val;
     this->line_no = line_no;
-    type.type = BasicValueType::TYPE_UINT32;
 }
 
 /// @brief int32字面量构造
@@ -35,7 +33,6 @@ Literal_Val::Literal_Val(int32_t val, uint32_t line_no)
 {
     digit.int32_digit = val;
     this->line_no = line_no;
-    type.type = BasicValueType::TYPE_INT32;
 }
 
 /// @brief float字面量构造
@@ -45,7 +42,6 @@ Literal_Val::Literal_Val(float val, uint32_t line_no)
 {
     digit.float_digit = val;
     this->line_no = line_no;
-    type.type = BasicValueType::TYPE_FLOAT;
 }
 
 /// @brief 字符串字面量构造
@@ -55,7 +51,6 @@ Literal_Val::Literal_Val(const char *id, uint32_t line_no)
 {
     digit.id = id;
     this->line_no = line_no;
-    type.type = BasicValueType::TYPE_STR;
 }
 
 /// @brief 重载 = 赋值
@@ -65,7 +60,6 @@ Literal_Val &Literal_Val::operator=(const Literal_Val &literal)
 {
     this->line_no = literal.line_no;
     this->digit = literal.digit;
-    this->type = literal.type;
     return *this;
 }
 
@@ -74,7 +68,6 @@ Literal_Val &Literal_Val::operator=(const Literal_Val &literal)
 /// @return 本对象
 Literal_Val &Literal_Val::operator=(const char *id)
 {
-    this->type.type = BasicValueType::TYPE_STR;
     this->digit.id = id;
     return *this;
 }
@@ -84,7 +77,6 @@ Literal_Val &Literal_Val::operator=(const char *id)
 /// @return 本对象
 Literal_Val &Literal_Val::operator=(float float_digit)
 {
-    this->type.type = BasicValueType::TYPE_FLOAT;
     this->digit.float_digit = float_digit;
     return *this;
 }
@@ -94,7 +86,6 @@ Literal_Val &Literal_Val::operator=(float float_digit)
 /// @return 本对象
 Literal_Val &Literal_Val::operator=(uint32_t uint32_digit)
 {
-    this->type.type = BasicValueType::TYPE_UINT32;
     this->digit.uint32_digit = uint32_digit;
     return *this;
 }
@@ -104,7 +95,6 @@ Literal_Val &Literal_Val::operator=(uint32_t uint32_digit)
 /// @return 本对象
 Literal_Val &Literal_Val::operator=(int32_t int32_digit)
 {
-    this->type.type = BasicValueType::TYPE_INT32;
     this->digit.int32_digit = int32_digit;
     return *this;
 }
