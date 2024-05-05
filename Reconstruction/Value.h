@@ -59,7 +59,7 @@ public:
     }
 
     /// @brief 默认无参构造
-    Value() = default;
+    Value() : ValID(Value::Unknown){};
 
     /// @brief 构造函数
     /// @param _ty 类型

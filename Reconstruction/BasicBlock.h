@@ -11,14 +11,84 @@
 
 #pragma once
 #include "Value.h"
+#include "Instruction.h"
 
 class Function;
 class BasicBlock;
 using BasicBlockPtr = std::shared_ptr<BasicBlock>;
-using FunctionPtr = std::shared_ptr<Function>;
+using FuncPtr = std::shared_ptr<Function>;
 
+/// @brief 基本块 基本快的类型的Label类型
 class BasicBlock : public Value
 {
 private:
+    std::list<InstPtr> InstLists; // 指令列表
+    FuncPtr parent;               // 基本块所属的函数
+    string Labelname;             // 基本块名字，可以没有
 
+public:
+    using InstIterator = std::list<InstPtr>::iterator; // 指令迭代器
+
+public:
+    /// @brief 析构函数
+    ~BasicBlock()
+    {
+        parent.reset();
+        InstLists.clear();
+    }
+
+    /// @brief 引用存在环，需要打破
+    void clear() override
+    {
+        Value::clear();
+        parent.reset();
+        InstLists.clear();
+    }
+
+    /// @brief 无参构造
+    BasicBlock() : Value(Type::getLabelType(), Value::BasicBlockVal)
+    {
+    }
+
+    /// @brief 构造函数
+    /// @param _parent
+    BasicBlock(FuncPtr _parent) : Value(Type::getLabelType(), Value::BasicBlockVal)
+    {
+        parent = _parent;
+    }
+
+    /// @brief 获取对应的函数
+    /// @return
+    FuncPtr &getParentFun()
+    {
+        return parent;
+    }
+
+    /// @brief 设置对应的函数
+    /// @param _p
+    void setParentFun(FuncPtr _p)
+    {
+        parent = _p;
+    }
+
+    /// @brief 获取指令列表
+    /// @return
+    std::list<InstPtr> &getInstLists()
+    {
+        return InstLists;
+    }
+
+    /// @brief 获取Value名
+    /// @return
+    string getName() override { return Labelname; }
+
+    /// @brief 设置Value名
+    /// @param name
+    void setName(string &name) override
+    {
+        HasName = 1;
+        Labelname = name;
+    }
+
+    // void InsertInst()
 };

@@ -34,14 +34,17 @@ public:
         operands.shrink_to_fit();
     }
 
+    /// @brief 无参构造
+    User() {}
+
     /// @brief 构造函数
     /// @param _ty Type指针
-    User(Type* _ty) : Value(_ty) {}
+    User(Type *_ty) : Value(_ty) {}
 
     /// @brief 构造函数
     /// @param _ty
     /// @param _operands
-    User(Type* _ty, std::vector<ValPtr> &_operands) : Value(_ty)
+    User(Type *_ty, std::vector<ValPtr> &_operands) : Value(_ty)
     {
         for (ValPtr &op : _operands)
         {
@@ -63,7 +66,7 @@ public:
     /// @brief 构造函数
     /// @param _ty
     /// @param _ops 支持使用1 {,,,,}列表初始化
-    User(Type* _ty, std::initializer_list<ValPtr> _ops) : Value(_ty)
+    User(Type *_ty, std::initializer_list<ValPtr> _ops) : Value(_ty)
     {
         for (auto &op : _ops)
         {
@@ -74,7 +77,7 @@ public:
     /// @brief 静态构造
     /// @param _ty
     /// @return
-    static UserPtr CreateUser(Type* _ty)
+    static UserPtr CreateUser(Type *_ty)
     {
         UserPtr ptr = std::make_shared<User>(_ty);
         return ptr;
@@ -84,7 +87,7 @@ public:
     /// @param _ty
     /// @param _operands
     /// @return
-    static UserPtr CreateUser(Type* _ty, std::vector<ValPtr> &_operands)
+    static UserPtr CreateUser(Type *_ty, std::vector<ValPtr> &_operands)
     {
         UserPtr ptr = std::make_shared<User>(_ty, _operands);
         for (auto &op : _operands)
@@ -98,7 +101,7 @@ public:
     /// @param _ty
     /// @param _ops
     /// @return
-    static UserPtr CreateUser(Type* _ty, std::initializer_list<ValPtr> _ops)
+    static UserPtr CreateUser(Type *_ty, std::initializer_list<ValPtr> _ops)
     {
         UserPtr ptr = std::make_shared<User>(_ty, _ops);
         for (auto &op : _ops)

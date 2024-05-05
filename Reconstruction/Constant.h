@@ -31,7 +31,7 @@ public:
 
     /// @brief 构造
     /// @param _ty
-    Constant(TypePtr _ty) : Value(_ty, Value::Constant) {}
+    Constant(Type* _ty) : Value(_ty, Value::Constant) {}
 };
 
 /// @brief ConstantInt类型

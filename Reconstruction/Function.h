@@ -15,7 +15,7 @@
 
 class BasicBlock;
 class Function;
-using FunctionPtr = std::shared_ptr<Function>;
+using FuncPtr = std::shared_ptr<Function>;
 
 class Function : public Value
 {
@@ -27,8 +27,12 @@ private:
 public:
     /// @brief 构造函数
     /// @param _ty
+    Function(Type *_ty) : Value(_ty, Value::FunctionVal) {}
+
+    /// @brief 构造函数
+    /// @param _ty 函数类型 包含返回类型  参数类型列表
     /// @param _name
-    Function(FunctionTyPtr _ty, string _name);
+    Function(Type *_ty, string _name);
 
     /// @brief 析构函数
     ~Function()
@@ -36,5 +40,25 @@ public:
         args.clear();
         args.shrink_to_fit();
         BlocksList.clear();
+    }
+
+    /// @brief 存在环 需要打破
+    void clear() override
+    {
+        args.clear();
+        args.shrink_to_fit();
+        BlocksList.clear();
+    }
+
+    /// @brief 获取Value名
+    /// @return
+    string getName() override { return funcName; }
+
+    /// @brief 设置Value名
+    /// @param name
+    void setName(string &name) override
+    {
+        funcName = name;
+        HasName = 1;
     }
 };

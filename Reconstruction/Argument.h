@@ -28,7 +28,7 @@ public:
     /// @brief 构造函数
     /// @param _ty
     /// @param name
-    Argument(TypePtr _ty, string name) : Value(_ty, Value::ArgumentVal)
+    Argument(Type *_ty, string name) : Value(_ty, Value::ArgumentVal)
     {
         argName = name;
     }

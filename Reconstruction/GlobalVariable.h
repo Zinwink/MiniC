@@ -24,7 +24,7 @@ public:
     /// @brief
     /// @param _ty
     /// @param name
-    GlobalVariable(TypePtr _ty, string name) : Value(_ty, Value::GlobalVari)
+    GlobalVariable(Type* _ty, string name) : Value(_ty, Value::GlobalVari)
     {
         Gname = name;
     }
@@ -57,7 +57,7 @@ public:
         HasName = 1;
     }
 
-    static GlobalVariPtr get(TypePtr _ty, string name)
+    static GlobalVariPtr get(Type* _ty, string name)
     {
         GlobalVariPtr ptr = std::make_shared<GlobalVariable>(_ty, name);
         return ptr;
