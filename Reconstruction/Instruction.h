@@ -45,6 +45,11 @@ public:
     /// @brief 析构函数
     ~Instruction() { parent.reset(); };
 
+    virtual void clear() override
+    {
+        parent.reset();
+    }
+
     /// @brief 无参构造
     Instruction()
     {

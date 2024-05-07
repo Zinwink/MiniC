@@ -90,5 +90,23 @@ public:
         Labelname = name;
     }
 
-    // void InsertInst()
+    /// @brief 向basicBlock末尾增加指令
+    /// @param inst
+    void AddInstBack(InstPtr inst);
+
+    /// @brief 在指定指令之前
+    /// @param inst 
+    /// @param AtFront 
+    void insertInst(InstPtr inst, InstPtr AtFront);
+
+    /// @brief 得到基本块指针
+    /// @param _parent
+    /// @return
+    static BasicBlockPtr get(FuncPtr _parent);
+
+    /// @brief 得到基本块指针
+    /// @param _parent
+    /// @param _name
+    /// @return
+    static BasicBlockPtr get(FuncPtr _parent, string _name);
 };

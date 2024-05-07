@@ -12,10 +12,12 @@
 #include "Value.h"
 #include "BasicBlock.h"
 #include "Argument.h"
+#include <unordered_map>
 
 class BasicBlock;
 class Function;
 using FuncPtr = std::shared_ptr<Function>;
+using bblockIter = std::list<BasicBlockPtr>::iterator;
 
 class Function : public Value
 {
@@ -27,7 +29,7 @@ private:
 public:
     /// @brief 构造函数
     /// @param _ty
-    Function(Type *_ty) : Value(_ty, Value::FunctionVal) {}
+    Function(Type *_ty);
 
     /// @brief 构造函数
     /// @param _ty 函数类型 包含返回类型  参数类型列表
@@ -61,4 +63,32 @@ public:
         funcName = name;
         HasName = 1;
     }
+
+    /// @brief 参数列表
+    /// @return
+    std::vector<ArgPtr> &getArgsList() { return args; }
+
+    /// @brief BasicBlock列表
+    /// @return
+    std::list<BasicBlockPtr> &getBasicBlocks() { return BlocksList; }
+
+    /// @brief 在BasicBlockList末尾加入BasicBlock
+    /// @param block
+    void AddBBlockBack(BasicBlockPtr block);
+
+    /// @brief 在AtFront前插入BasicBlock
+    /// @param block
+    /// @param AtFront
+    void insertBBlock(BasicBlockPtr block, BasicBlockPtr AtFront);
+
+    /// @brief 构造
+    /// @param _ty
+    /// @return
+    static FuncPtr get(Type *_ty);
+
+    /// @brief 构造
+    /// @param _ty functiontype
+    /// @param name 函数名
+    /// @return
+    static FuncPtr get(Type *_ty, string name);
 };

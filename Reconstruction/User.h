@@ -27,7 +27,7 @@ public:
     }
 
     /// @brief 形成了环，需要调用打破环
-    void clear() override
+    virtual void clear() override
     {
         Value::clear();
         operands.clear();
