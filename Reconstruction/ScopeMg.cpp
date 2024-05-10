@@ -15,21 +15,25 @@
 ScopeMg::ScopeMg()
 {
     // 创建全局符号表 加入栈中
-    BaseSymTab *globalTab = new GlobalSymTab();
+    BaseSymTabPtr globalTab = GlobalSymTab::get();
     stk.push(globalTab);
     // 转型得到管理器的全局符号表
-    curGlobalTab = dynamic_cast<GlobalSymTab *>(globalTab);
+    curGlobalTab = globalTab;
 }
 
 /// @brief 析构函数
 ScopeMg::~ScopeMg()
 {
-    // 暂时未完成  @todo
+    curGlobalTab.reset();
+    while (!stk.empty())
+    {
+        stk.pop();
+    }
 }
 
 /// @brief 获取当前管理栈的全局符号表
 /// @return 全局符号表指针(使用基类指针转型得到)
-GlobalSymTab *ScopeMg::globalTab()
+BaseSymTabPtr ScopeMg::globalTab()
 {
     return curGlobalTab;
 }

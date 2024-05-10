@@ -137,4 +137,9 @@ public:
     /// @param N 位数
     /// @return
     static IntegerType *getUintNType(unsigned N);
+
+    /// @brief 创建拷贝副本
+    /// @param copyed
+    /// @return
+    static Type *copy(Type *copyed);
 };

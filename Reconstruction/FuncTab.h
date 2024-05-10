@@ -11,39 +11,34 @@
 
 #pragma once
 #include "BaseSymTab.h"
-#include "IDCounter.h"
 
 /// @brief 函数整体符号表
 class FuncTab : public BaseSymTab
 {
-private:
-    /// @brief 全域声明的变量列表(包括其下的Block中声明的变量),生成IR时使用，用于事先分配内存(alloca)
-    std::vector<Var *> varList;
-
 public:
     /// @brief 构造函数
     /// @param _parent
-    FuncTab(BaseSymTab *_parent = nullptr)
+    FuncTab(BaseSymTabPtr _parent = nullptr)
     {
         type = TabAttr::FUNC_TAB;
         parent = _parent;
     }
 
     /// @brief 析构函数
-    ~FuncTab() override;
-
+    ~FuncTab();
 
     /// @brief 纯虚函数 查找声明变脸的引用 (包含当前以及所有父作用域)
     /// @param 查找变量名
     /// @return
-    Var *findDeclVar(string &name) override;
+    ValPtr findDeclVar(string &name) override;
 
     /// @brief 纯虚函数 新增声明变量
     /// @param  变量指针
     /// @return nullptr表示插入失败，说明已经存在
-    Var *newDeclVar(Var *var) override;
+    ValPtr newDeclVar(ValPtr var) override;
 
-    /// @brief 获取变量列表
-    /// @return 变量列表引用
-    std::vector<Var *> &getVarList() { return varList; }
+    /// @brief 创建基本表
+    /// @param _parent
+    /// @return
+    static BaseSymTabPtr get(BaseSymTabPtr _parent = nullptr);
 };

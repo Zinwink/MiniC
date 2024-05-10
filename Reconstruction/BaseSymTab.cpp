@@ -12,13 +12,18 @@
 //
 #include "BaseSymTab.h"
 
+/// @brief 析构函数
 BaseSymTab::~BaseSymTab()
 {
+    // 清空容器中的内容
+    DeclVars.clear();
+    parent.reset();
 }
+
 
 /// @brief 从当前符号表中查找变量(搜搜域只限于当前符号表)
 /// @return
-Var *BaseSymTab::findDeclVarOfCurTab(string &name)
+ValPtr BaseSymTab::findDeclVarOfCurTab(string &name)
 {
     auto iter = DeclVars.find(name);
     if (iter == DeclVars.end())

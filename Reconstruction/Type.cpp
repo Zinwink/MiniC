@@ -45,3 +45,45 @@ IntegerType *Type::getUintNType(unsigned N)
     IntegerType *uint = new IntegerType(N, false);
     return uint;
 }
+
+/// @brief 创建拷贝副本
+/// @param copyed
+/// @return
+Type *Type::copy(Type *copyed)
+{
+    Type *res = nullptr;
+
+    if (copyed->isIntegerType())
+    {
+        IntegerType *intTy = static_cast<IntegerType *>(copyed);
+        res = IntegerType::copy(intTy);
+    }
+    else if (copyed->isPointerType())
+    {
+        PointerType *ptrTy = static_cast<PointerType *>(copyed);
+        res = PointerType::copy(ptrTy);
+    }
+    else if (copyed->isArrayType())
+    {
+        ArrayType *arrTy = static_cast<ArrayType *>(copyed);
+        res = ArrayType::copy(arrTy);
+    }
+    else if (copyed->isVoidType())
+    {
+        res = new Type(*copyed);
+    }
+    else if (copyed->isFunctionType())
+    {
+        FunctionType *funTy = static_cast<FunctionType *>(copyed);
+        res = FunctionType::copy(funTy);
+    }
+    else if (copyed->isLabelType())
+    {
+        res = new Type(*copyed);
+    }
+    else
+    {
+        res = nullptr;
+    }
+    return res;
+}

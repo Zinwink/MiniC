@@ -47,6 +47,7 @@ public:
 
     virtual void clear() override
     {
+        User::clear();
         parent.reset();
     }
 

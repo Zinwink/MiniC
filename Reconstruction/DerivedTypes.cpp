@@ -9,11 +9,22 @@
  *
  */
 #include "DerivedTypes.h"
+#include <cassert>
+
+/// @brief 拷贝副本
+/// @param copied
+/// @return
+IntegerType *IntegerType::copy(IntegerType *copied)
+{
+    assert(copied->isIntegerType() && "not IntegerType!");
+    IntegerType *res = new IntegerType(*copied);
+    return res;
+}
 
 /// @brief 构造函数
 /// @param result 返回类型
 /// @param argTys 参数类型
-FunctionType::FunctionType(Type* result, std::vector<Type*> &argTys) : Type(Type::FunctionTyID)
+FunctionType::FunctionType(Type *result, std::vector<Type *> &argTys) : Type(Type::FunctionTyID)
 {
     NumContainedTys = 1 + argTys.size();
     ContainedTys.push_back(result);
@@ -25,8 +36,46 @@ FunctionType::FunctionType(Type* result, std::vector<Type*> &argTys) : Type(Type
 
 /// @brief 构造函数
 /// @param result 返回类型
-FunctionType::FunctionType(Type* result) : Type(Type::FunctionTyID)
+FunctionType::FunctionType(Type *result) : Type(Type::FunctionTyID)
 {
     NumContainedTys = 1;
     ContainedTys.push_back(result);
+}
+
+/// @brief 拷贝生成副本
+/// @param copied
+/// @return
+FunctionType *FunctionType::copy(FunctionType *copied)
+{
+    assert(copied->isFunctionType() && "not FunctionType!");
+    FunctionType *funTy = new FunctionType();
+    for (auto &c : copied->ContainedTys)
+    {
+        funTy->ContainedTys.push_back(Type::copy(c));
+    }
+    funTy->NumContainedTys = copied->NumContainedTys;
+    return funTy;
+}
+
+/// @brief 拷贝生成副本
+/// @param copied
+/// @return
+ArrayType *ArrayType::copy(ArrayType *copied)
+{
+    assert(copied->isArrayType() && "not ArrayType!");
+    ArrayType *arrTy = new ArrayType();
+    arrTy->NumElems = copied->NumElems;
+    arrTy->ContainedTy = Type::copy(copied->ContainedTy);
+    return arrTy;
+}
+
+/// @brief 拷贝生成副本
+/// @param copied
+/// @return
+PointerType *PointerType::copy(PointerType *copied)
+{
+    assert(copied->isPointerType() && "not pointerType!");
+    PointerType *ptrTy = new PointerType();
+    ptrTy->ElemntTy = Type::copy(copied->ElemntTy);
+    return ptrTy;
 }

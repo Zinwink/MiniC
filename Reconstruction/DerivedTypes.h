@@ -54,6 +54,11 @@ public:
     {
         return string("i") + std::to_string(getBitsWidth());
     }
+
+    /// @brief 拷贝副本
+    /// @param copied
+    /// @return
+    static IntegerType *copy(IntegerType *copied);
 };
 
 ///******************  FunctionType  ***************************
@@ -63,6 +68,9 @@ class FunctionType : public Type
 public:
     /// @brief 析构
     ~FunctionType() = default;
+
+    /// @brief 无参构造
+    FunctionType() : Type(Type::FunctionTyID){};
 
     /// @brief 构造函数
     /// @param result 返回类型
@@ -119,6 +127,11 @@ public:
         FunctionType *fun = new FunctionType(result, argTypes);
         return fun;
     }
+
+    /// @brief 拷贝生成副本
+    /// @param copied
+    /// @return
+    static FunctionType *copy(FunctionType *copied);
 };
 
 ///******************  ArrayType  ***************************
@@ -138,6 +151,9 @@ public:
         delete ContainedTy;
         ContainedTy = nullptr;
     }
+
+    /// @brief 无参构造
+    ArrayType() : Type(Type::ArrayTyID) {}
 
     /// @brief 构造函数
     /// @param containedTy 元素类型
@@ -199,6 +215,11 @@ public:
         ArrayType *arr = static_cast<ArrayType *>(contain);
         return arr;
     }
+
+    /// @brief 拷贝生成副本
+    /// @param copied
+    /// @return
+    static ArrayType *copy(ArrayType *copied);
 };
 
 ///******************  PointerType  ***************************
@@ -213,6 +234,9 @@ public:
         delete ElemntTy;
         ElemntTy = nullptr;
     };
+
+    /// @brief 无参构造
+    PointerType() : Type(Type::PointerTyID) {}
 
     /// @brief 构造函数
     /// @param _elemT 指针元素类型
@@ -241,4 +265,9 @@ public:
         PointerType *ptr = new PointerType(_elemT);
         return ptr;
     }
+
+    /// @brief 拷贝生成副本
+    /// @param copied
+    /// @return
+    static PointerType *copy(PointerType *copied);
 };

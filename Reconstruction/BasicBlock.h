@@ -42,6 +42,10 @@ public:
     {
         Value::clear();
         parent.reset();
+        for (auto &l : InstLists) // 循环对InstList进行clear
+        {
+            l->clear();
+        }
         InstLists.clear();
     }
 
@@ -95,8 +99,8 @@ public:
     void AddInstBack(InstPtr inst);
 
     /// @brief 在指定指令之前
-    /// @param inst 
-    /// @param AtFront 
+    /// @param inst
+    /// @param AtFront
     void insertInst(InstPtr inst, InstPtr AtFront);
 
     /// @brief 得到基本块指针

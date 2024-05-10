@@ -24,12 +24,17 @@ public:
     /// @brief
     /// @param _ty
     /// @param name
-    GlobalVariable(Type* _ty, string name) : Value(_ty, Value::GlobalVari)
+    GlobalVariable(Type *_ty, string name) : Value(_ty, Value::GlobalVari)
     {
         Gname = name;
     }
     /// @brief 析构函数
     ~GlobalVariable() = default;
+
+    // void clear() override
+    // {
+
+    // }
 
     /// @brief 获取Value名
     /// @return
@@ -57,7 +62,7 @@ public:
         HasName = 1;
     }
 
-    static GlobalVariPtr get(Type* _ty, string name)
+    static GlobalVariPtr get(Type *_ty, string name)
     {
         GlobalVariPtr ptr = std::make_shared<GlobalVariable>(_ty, name);
         return ptr;

@@ -32,7 +32,7 @@ public:
     Function(Type *_ty);
 
     /// @brief 构造函数
-    /// @param _ty 函数类型 包含返回类型  参数类型列表
+    /// @param _ty 函数类型 包含返回类型 
     /// @param _name
     Function(Type *_ty, string _name);
 
@@ -49,6 +49,10 @@ public:
     {
         args.clear();
         args.shrink_to_fit();
+        for (auto &b : BlocksList)
+        {
+            b->clear();
+        }
         BlocksList.clear();
     }
 

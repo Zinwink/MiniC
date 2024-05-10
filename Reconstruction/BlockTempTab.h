@@ -18,22 +18,27 @@ class BlockTempTab : public BaseSymTab
 {
 public:
     /// @brief 构造函数
-    BlockTempTab(BaseSymTab *_parent = nullptr)
+    BlockTempTab(BaseSymTabPtr _parent = nullptr)
     {
         type = TabAttr::BLOCKTEMP_TAB;
         parent = _parent;
     }
 
     /// @brief 析构函数
-    ~BlockTempTab() override;
+    ~BlockTempTab();
 
     /// @brief 查找声明变量引用 (只用于确定使用的变量来源，搜索域为当前符号表以及所有上层父符号表)
     /// @param 查找变量名
     /// @return 声明变量指针
-    Var *findDeclVar(string &name) override;
+    ValPtr findDeclVar(string &name) override;
 
     /// @brief 为当前表新增声明变量
     /// @param  变量
     /// @return 变量
-    Var *newDeclVar(Var *var) override;
+    ValPtr newDeclVar(ValPtr var) override;
+
+    /// @brief 创建BlockTempTab表
+    /// @param _parent
+    /// @return
+    static BaseSymTabPtr get(BaseSymTabPtr _parent = nullptr);
 };

@@ -12,8 +12,13 @@
 #pragma once
 #include <unordered_map>
 #include <vector>
-#include "Var.h"
+#include <string>
+#include "DerivedInst.h"
+#include "Value.h"
+
 using string = std::string;
+class BaseSymTab;
+using BaseSymTabPtr = std::shared_ptr<BaseSymTab>;
 
 /// @brief 符号表属性 方便进行指针的类型转换
 enum class TabAttr
@@ -32,16 +37,16 @@ enum class TabAttr
 class BaseSymTab
 {
 protected:
-    /// @brief 本表中已经声明注册的变量 查询  一个基本的符号表中只有变量声明的查询功能
-    std::unordered_map<string, Var *> DeclVars;
+    /// @brief 本表中已经声明注册的变量（设计中Value是个基类）
+    std::unordered_map<string, ValPtr> DeclVars;
     /// @brief 符号表的类型
     TabAttr type;
     /// @brief 可用于获取相关符号信息的父符号表
-    BaseSymTab *parent = nullptr;
+    BaseSymTabPtr parent = nullptr;
 
 public:
     /// @brief 析构函数
-    virtual ~BaseSymTab() = 0;
+    ~BaseSymTab();
 
     /// @brief 判断符号表是否是全局符号表
     /// @return
@@ -54,25 +59,25 @@ public:
 
     /// @brief 获取符号表中的 注册变量声明表
     /// @return 查找表引用
-    std::unordered_map<string, Var *> &getDeclVars() { return DeclVars; }
+    std::unordered_map<string, ValPtr> &getDeclVars() { return DeclVars; }
 
     /// @brief 纯虚函数 查找声明变脸的引用
     /// @param 查找变量名
     /// @return
-    virtual Var *findDeclVar(string &name) = 0;
+    virtual ValPtr findDeclVar(string &name) = 0;
 
     /// @brief 纯虚函数 新增声明变量
     /// @param  变量指针
     /// @return nullptr表示插入失败，说明已经存在
-    virtual Var *newDeclVar(Var *) = 0;
+    virtual ValPtr newDeclVar(ValPtr) = 0;
 
     /// @brief 设置父作用表
     /// @param ptr
-    virtual void setParent(BaseSymTab *ptr) { parent = ptr; }
+    virtual void setParent(BaseSymTabPtr ptr) { parent = ptr; }
 
     /// @brief 获取父作用表
     /// @return BaseSymTab*
-    virtual BaseSymTab *getParent() { return parent; }
+    virtual BaseSymTabPtr getParent() { return parent; }
 
     /// @brief 符号表 类型
     /// @return
@@ -80,5 +85,5 @@ public:
 
     /// @brief 从当前符号表中查找变量(搜搜域只限于当前符号表)
     /// @return 变量指针 未找到为nullptr
-    virtual Var *findDeclVarOfCurTab(string &name);
+    virtual ValPtr findDeclVarOfCurTab(string &name);
 };
