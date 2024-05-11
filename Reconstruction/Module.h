@@ -46,4 +46,8 @@ public:
     /// @brief 添加函数
     /// @param fun
     void addFunction(FuncPtr fun) { funcList.push_back(fun); }
+
+    /// @brief 将IR指令打印至文件中
+    /// @param filePath
+    void print(string filePath);
 };

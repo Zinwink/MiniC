@@ -10,6 +10,7 @@
  */
 #pragma once
 #include "Value.h"
+#include "Constant.h"
 
 class GlobalVariable;
 using GlobalVariPtr = std::shared_ptr<GlobalVariable>;
@@ -17,8 +18,8 @@ using GlobalVariPtr = std::shared_ptr<GlobalVariable>;
 class GlobalVariable : public Value
 {
 private:
-    string Gname;   // 名称
-    ValPtr binding; // 绑定的Value
+    string Gname;           // 名称
+    ConstantPtr initilizer; // 初始化的值
 
 public:
     /// @brief
@@ -29,12 +30,14 @@ public:
         Gname = name;
     }
     /// @brief 析构函数
-    ~GlobalVariable() = default;
+    ~GlobalVariable() { initilizer.reset(); }
 
-    // void clear() override
-    // {
-
-    // }
+    /// @brief 清理
+    void clear() override
+    {
+        Value::clear();
+        initilizer.reset();
+    }
 
     /// @brief 获取Value名
     /// @return
@@ -42,16 +45,16 @@ public:
 
     /// @brief 设置binding
     /// @param b
-    void setBinding(ValPtr b)
+    void setInitilizer(ConstantPtr b)
     {
-        binding = b;
+        initilizer = b;
     }
 
     /// @brief 获取binding
     /// @return
-    ValPtr getBinding()
+    ConstantPtr getBinding()
     {
-        return binding;
+        return initilizer;
     }
 
     /// @brief 设置Value名

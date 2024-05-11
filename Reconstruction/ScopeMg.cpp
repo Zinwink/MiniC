@@ -33,7 +33,7 @@ ScopeMg::~ScopeMg()
 
 /// @brief 获取当前管理栈的全局符号表
 /// @return 全局符号表指针(使用基类指针转型得到)
-BaseSymTabPtr ScopeMg::globalTab()
+BaseSymTabPtr& ScopeMg::globalTab()
 {
     return curGlobalTab;
 }

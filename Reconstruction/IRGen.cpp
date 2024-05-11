@@ -112,10 +112,54 @@ bool IRGen::ir_CompileUnit(ast_node *node, LabelParams blocks)
 /// @brief AST  function define节点对应的函数操作
 /// @param node
 /// @return
-bool ir_func_define(ast_node *node, LabelParams blocks)
+bool IRGen::ir_func_define(ast_node *node, LabelParams blocks)
 {
     string funcname = node->literal_val.digit.id; // 函数名
     FuncPtr fun = Function::get(node->attr, funcname);
+    // @todo
+    return true;
+}
+
+/// @brief AST  ASSIGN赋值节点对应的函数操作
+/// @param node
+/// @return
+bool IRGen::ir_assign(ast_node *node, LabelParams blocks)
+{
+    return true;
+}
+
+/// @brief AST   DeclarationItems节点对应的操作函数
+/// @param node
+/// @return
+bool IRGen::ir_declItems(ast_node *node, LabelParams blocks)
+{
+    
+    return true;
+}
+
+/// @brief 对于AST_LEAF_VAR_ID(变量)的函数操作
+/// @param node
+/// @return
+bool IRGen::ir_leafNode_var(ast_node *node, LabelParams blocks)
+{
+    return true;
+}
+
+/// @brief 对于int字面量AST节点的操作 AST_LEAF_LITERAL_INT,
+/// @param node AST int字面量节点
+/// @return true成功 false失败
+bool IRGen::ir_leafNode_int(ast_node *node, LabelParams blocks)
+{
+    
+    return true;
+}
+
+/// @brief 对于float字面量AST节点的操作 AST_LEAF_LITERAL_FLOAT
+/// @param node AST float字面量节点
+/// @return
+bool IRGen::ir_leafNode_float(ast_node *node, LabelParams blocks)
+{
+    return true;
 }
 
 //***************** 运行产生线性IR ******************

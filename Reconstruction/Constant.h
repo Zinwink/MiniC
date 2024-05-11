@@ -14,7 +14,9 @@
 #include "DerivedTypes.h"
 
 class ConstantInt;
+class Constant;
 using ConstantIntPtr = std::shared_ptr<ConstantInt>;
+using ConstantPtr = std::shared_ptr<Constant>;
 
 /// @brief Constant类
 class Constant : public Value
@@ -31,7 +33,7 @@ public:
 
     /// @brief 构造
     /// @param _ty
-    Constant(Type* _ty) : Value(_ty, Value::Constant) {}
+    Constant(Type *_ty) : Value(_ty, Value::Constant) {}
 };
 
 /// @brief ConstantInt类型

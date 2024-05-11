@@ -25,6 +25,9 @@ private:
     /// @brief 符号管理栈的全局符号表
     BaseSymTabPtr curGlobalTab;
 
+    /// @brief 当前所在的函数定义块中
+    FuncPtr curfun = nullptr;
+
 public:
     /// @brief 构造函数
     ScopeMg();
@@ -37,7 +40,15 @@ public:
 
     /// @brief 获取当前管理栈的全局符号表
     /// @return 全局符号表指针(使用基类指针转型得到)
-    BaseSymTabPtr globalTab();
+    BaseSymTabPtr& globalTab();
+
+    /// @brief 返回当前函数指针(具有函数定义)
+    /// @return
+    FuncPtr &curFun() { return curfun; }
+
+    /// @brief 设置当前函数
+    /// @param fun
+    void setCurFun(FuncPtr fun) { curfun = fun; }
 
     /// @brief 获取当前符号表
     /// @return 当前符号表
