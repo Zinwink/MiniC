@@ -40,6 +40,14 @@ void BasicBlock::AddInstBack(InstPtr inst)
     InstLists.push_back(inst);
 }
 
+/// @brief 在指定迭代器前面插入指令
+/// @param inst
+/// @param pos
+void BasicBlock::insertInst(InstPtr inst, InstIterator posFront)
+{
+    InstLists.insert(posFront, inst);
+}
+
 /// @brief 在指定指令之前
 /// @param inst
 /// @param AtFront

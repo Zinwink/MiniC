@@ -98,7 +98,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 15 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 16 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
 
     class ast_node * node;
     class Literal_Val* literal;

@@ -100,7 +100,7 @@ bool IRGen::ir_CompileUnit(ast_node *node, LabelParams blocks)
 {
     for (ast_node *son : node->sons)
     {
-        ast_node *sonNode = ir_visit_astnode(son, blocks);
+        ast_node *sonNode = ir_visit_astnode(son, {});
         if (sonNode == nullptr)
         {
             return false;
@@ -115,8 +115,58 @@ bool IRGen::ir_CompileUnit(ast_node *node, LabelParams blocks)
 bool IRGen::ir_func_define(ast_node *node, LabelParams blocks)
 {
     string funcname = node->literal_val.digit.id; // 函数名
-    FuncPtr fun = Function::get(node->attr, funcname);
-    // @todo
+    FuncPtr fun = Function::get(std::move(node->attr), funcname);
+    // 创建entry函数入口基本块
+    BasicBlockPtr block = BasicBlock::get(fun, "entry"); // 每个function一定有一个entry基本快
+    fun->AddBBlockBack(block);                           // 加入函数内
+    fun->AllocaIter() = block->begin();                  // 设置函数的AllocaInst的插入点
+    scoper->curFun() = fun;                              // 标记当前记录函数
+    scoper->pushTab(FuncTab::get());                     // 创建函数的符号表并加入到管理器scoper中
+    for (auto &son : node->sons)
+    {
+        ast_node *result = ir_visit_astnode(node, {block}); // 将函数基本块传参至下游节点
+        if (result == nullptr)
+        {
+            scoper->curFun() = nullptr;
+            return false;
+        }
+    }
+    // 结束翻译函数时curFun赋值为nullptr,函数符号表弹出栈
+    scoper->curFun() = nullptr;
+    scoper->popTab(); // 弹栈
+    return true;
+}
+
+/// @brief AST  函数形参列表节点对应的操作函数
+/// @param node
+/// @return
+bool IRGen::ir_func_formal_params(ast_node *node, LabelParams blocks)
+{
+    return true;
+}
+
+/// @brief AST中block节点对应的函数操作
+/// @param node
+/// @return
+bool IRGen::ir_block(ast_node *node, LabelParams blocks)
+{
+    return true;
+}
+
+/// @brief AST中 return 节点对应的函数操作
+/// @param node
+/// @return
+bool IRGen::ir_return(ast_node *node, LabelParams blocks)
+{
+    
+    return true;
+}
+
+/// @brief AST函数调用节点对应的操作
+/// @param node
+/// @return
+bool IRGen::ir_funcall(ast_node *node, LabelParams blocks)
+{
     return true;
 }
 
@@ -125,6 +175,7 @@ bool IRGen::ir_func_define(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_assign(ast_node *node, LabelParams blocks)
 {
+
     return true;
 }
 
@@ -133,7 +184,78 @@ bool IRGen::ir_assign(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_declItems(ast_node *node, LabelParams blocks)
 {
-    
+    for (auto &son : node->sons)
+    {
+        ast_node *result = ir_visit_astnode(node, blocks);
+        if (result == nullptr)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+/// @brief AST 加法操作节点对应的函数操作
+/// @param node
+/// @return
+bool IRGen::ir_add(ast_node *node, LabelParams blocks)
+{
+    return true;
+}
+
+/// @brief AST 减法节点对应的操作
+/// @param node
+/// @return
+bool IRGen::ir_sub(ast_node *node, LabelParams blocks)
+{
+    return true;
+}
+
+/// @brief AST 乘法节点对应的操作
+/// @param node
+/// @return
+bool IRGen::ir_mul(ast_node *node, LabelParams blocks)
+{
+    return true;
+}
+
+/// @brief AST 除法节点对应的操作
+/// @param node
+/// @return
+bool IRGen::ir_div(ast_node *node, LabelParams blocks)
+{
+    return true;
+}
+
+/// @brief AST 取余节点对应的操作
+/// @param node
+/// @return
+bool IRGen::ir_mod(ast_node *node, LabelParams blocks)
+{
+    return true;
+}
+
+/// @brief AST < 节点对应的操作
+/// @param node
+/// @return
+bool IRGen::ir_cmp_less(ast_node *node, LabelParams blocks)
+{
+    return true;
+}
+
+/// @brief AST  > 节点对应的操作
+/// @param node
+/// @return
+bool IRGen::ir_cmp_greater(ast_node *node, LabelParams blocks)
+{
+    return true;
+}
+
+/// @brief AST == 节点对应的操作
+/// @param node
+/// @return
+bool IRGen::ir_cmp_equal(ast_node *node, LabelParams blocks)
+{
     return true;
 }
 
@@ -142,6 +264,42 @@ bool IRGen::ir_declItems(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_leafNode_var(ast_node *node, LabelParams blocks)
 {
+    string name = node->literal_val.digit.id; // 变量名
+    // 判断变量 可能是声明区域下的，也可能是使用区域下的
+    if (node->parent->node_type == ast_node_type::AST_OP_DECL_ITEMS)
+    {                                                             // 变量的父节点是declare_items
+        ValPtr val = scoper->curTab()->findDeclVarOfCurTab(name); // 查找
+        if (val != nullptr)
+        { // 查找到该value
+            std::cout << ">>>Error:the variable " << name << " is redifined! line:" << node->literal_val.line_no << std::endl;
+            return false;
+        }
+        if (scoper->curTab()->isGlobalTab())
+        { // 全局变量声明
+            GlobalVariPtr g = GlobalVariable::get(std::move(node->attr), name);
+            module->addGlobalVar(g);         // 加入全局变量列表
+            scoper->curTab()->newDeclVar(g); // 符号表中加入相应的声明
+        }
+        else
+        {
+            // 非全局变量声明
+            AllocaInstPtr alloca = AllocaInst::get(name, std::move(node->attr));
+            scoper->curTab()->newDeclVar(alloca);       //  将声明变量加入当前符号表中
+            scoper->curFun()->insertAllocaInst(alloca); // 将allocaInst加入到指令基本块中
+        }
+    }
+    else
+    {
+        // 不直接在declitems下的节点(被使用)
+        ValPtr val = scoper->curTab()->findDeclVar(name); // 查找
+        if (val == nullptr)
+        {
+            std::cout << ">>>Error:the variable " << name << " is not declared! line:" << node->literal_val.line_no << std::endl;
+            return false;
+        }
+        node->value = val;
+    }
+
     return true;
 }
 
@@ -150,7 +308,10 @@ bool IRGen::ir_leafNode_var(ast_node *node, LabelParams blocks)
 /// @return true成功 false失败
 bool IRGen::ir_leafNode_int(ast_node *node, LabelParams blocks)
 {
-    
+    int num = node->literal_val.digit.int32_digit; // 获取常数数值
+    ConstantIntPtr conInt = ConstantInt::get(32, true);
+    conInt->setValue(num);
+    node->value = std::move(conInt);
     return true;
 }
 

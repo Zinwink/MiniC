@@ -41,4 +41,5 @@ public:
     /// @param _parent
     /// @return
     static BaseSymTabPtr get(BaseSymTabPtr _parent = nullptr);
+
 };

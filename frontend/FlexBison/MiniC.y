@@ -1,6 +1,7 @@
 %{
 #include <cstdio>
 #include <cstring>
+#include <vector>
 // 词法分析文件
 #include "FlexLexer.h"
 // 语法分析头文件
@@ -88,32 +89,50 @@ CompileUnit : FuncDef{
 
 /* 函数定义 */
 FuncDef : "int" DIGIT_ID "(" ")" Block{
-    $$=create_fun_def(*$2,Type::getIntNType(32),nullptr,$5);
+    Type* funType=FunctionType::get(Type::getIntNType(32));
+    $$=create_fun_def(*$2,funType,nullptr,$5);
     delete $2; //释放内存
     $2=nullptr;
 }
 | "int" DIGIT_ID "(" FuncFormalParams ")" Block{
-    $$=create_fun_def(*$2,Type::getIntNType(32),$4,$6);
+    std::vector<Type*> argsTy;
+    for(auto& son:$4->sons){
+        argsTy.push_back(Type::copy(son->attr));
+    }
+    Type* funType=FunctionType::get(Type::getIntNType(32),argsTy);
+    $$=create_fun_def(*$2,funType,$4,$6);
     delete $2; //释放内存
     $2=nullptr;
 }
 | "void" DIGIT_ID "(" ")" Block{
-    $$=create_fun_def(*$2,Type::getVoidType(),nullptr,$5);
+    Type* funType=FunctionType::get(Type::getVoidType());
+    $$=create_fun_def(*$2,funType,nullptr,$5);
     delete $2; //释放内存
     $2=nullptr;
 }
 | "void" DIGIT_ID "(" FuncFormalParams ")" Block{
-    $$=create_fun_def(*$2,Type::getVoidType(),$4,$6);
+    std::vector<Type*> argsTy;
+    for(auto& son:$4->sons){
+        argsTy.push_back(Type::copy(son->attr));
+    }
+    Type* funType=FunctionType::get(Type::getVoidType(),argsTy);
+    $$=create_fun_def(*$2,funType,$4,$6);
     delete $2; //释放内存
     $2=nullptr;
 }
 | "float" DIGIT_ID "(" ")" Block{
-    $$=create_fun_def(*$2,Type::getFloatType(),nullptr,$5);
+    Type* funType=FunctionType::get(Type::getFloatType());
+    $$=create_fun_def(*$2,funType,nullptr,$5);
     delete $2; //释放内存
     $2=nullptr;
 }
 | "float" DIGIT_ID "(" FuncFormalParams ")" Block{
-    $$=create_fun_def(*$2,Type::getFloatType(),$4,$6);
+    std::vector<Type*> argsTy;
+    for(auto& son:$4->sons){
+        argsTy.push_back(Type::copy(son->attr));
+    }
+    Type* funType=FunctionType::get(Type::getFloatType(),argsTy);
+    $$=create_fun_def(*$2,funType,$4,$6);
     delete $2; //释放内存
     $2=nullptr;
 }

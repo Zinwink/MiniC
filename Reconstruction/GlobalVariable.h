@@ -18,8 +18,8 @@ using GlobalVariPtr = std::shared_ptr<GlobalVariable>;
 class GlobalVariable : public Value
 {
 private:
-    string Gname;           // 名称
-    ConstantPtr initilizer; // 初始化的值
+    string Gname;                     // 名称
+    ConstantPtr initilizer = nullptr; // 初始化的值
 
 public:
     /// @brief

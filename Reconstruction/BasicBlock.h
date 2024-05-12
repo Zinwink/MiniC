@@ -28,6 +28,8 @@ private:
 
 public:
     using InstIterator = std::list<InstPtr>::iterator; // 指令迭代器
+    InstIterator begin() { return InstLists.begin(); }
+    InstIterator end() { return InstLists.end(); }
 
 public:
     /// @brief 析构函数
@@ -102,6 +104,11 @@ public:
     /// @param inst
     /// @param AtFront
     void insertInst(InstPtr inst, InstPtr AtFront);
+
+    /// @brief 在指定迭代器前面插入指令
+    /// @param inst
+    /// @param pos
+    void insertInst(InstPtr inst, InstIterator posFront);
 
     /// @brief 得到基本块指针
     /// @param _parent

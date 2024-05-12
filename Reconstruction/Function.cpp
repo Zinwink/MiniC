@@ -36,8 +36,6 @@ Function::Function(Type *_ty, string _name) : Value(_ty, Value::FunctionVal)
 FuncPtr Function::get(Type *_ty)
 {
     FuncPtr fun = std::make_shared<Function>(_ty);
-    BasicBlockPtr block = BasicBlock::get(fun, "entry"); // 每个function一定有一个entry基本快
-    fun->BlocksList.push_back(std::move(block));         // 加入函数内
     return fun;
 }
 
@@ -48,8 +46,6 @@ FuncPtr Function::get(Type *_ty)
 FuncPtr Function::get(Type *_ty, string name)
 {
     FuncPtr fun = std::make_shared<Function>(_ty, name);
-    BasicBlockPtr block = BasicBlock::get(fun, "entry");
-    fun->BlocksList.push_back(std::move(block));
     return fun;
 }
 
@@ -76,3 +72,18 @@ void Function::insertBBlock(BasicBlockPtr block, BasicBlockPtr AtFront)
     }
 }
 
+/// @brief 获取函数的入口Block
+/// @return
+BasicBlockPtr &Function::getEntryBlock()
+{
+    assert(BlocksList.size() > 0 && "no Entry Block has been constructed!");
+    return BlocksList.front();
+}
+
+/// @brief 插入allocaInst
+/// @param alloca
+void Function ::insertAllocaInst(InstPtr alloca)
+{
+    assert(alloca->getOpcode() == Opcode::Alloca && "not allocaInst type!");
+    getEntryBlock()->insertInst(alloca, allocaIter);
+}

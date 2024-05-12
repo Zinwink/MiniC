@@ -25,6 +25,7 @@ private:
     string funcName;                     // 函数名
     std::vector<ArgPtr> args;            // 形参列表
     std::list<BasicBlockPtr> BlocksList; // 基本块列表
+    BasicBlock::InstIterator allocaIter; // 记录  AllocaInst的迭代指针
 
 public:
     /// @brief 构造函数
@@ -32,7 +33,7 @@ public:
     Function(Type *_ty);
 
     /// @brief 构造函数
-    /// @param _ty 函数类型 包含返回类型 
+    /// @param _ty 函数类型 包含返回类型
     /// @param _name
     Function(Type *_ty, string _name);
 
@@ -55,6 +56,10 @@ public:
         }
         BlocksList.clear();
     }
+
+    /// @brief 返回AllocaInst的位置(引用 可直接修改)
+    /// @return
+    BasicBlock::InstIterator &AllocaIter() { return allocaIter; }
 
     /// @brief 获取Value名
     /// @return
@@ -84,6 +89,14 @@ public:
     /// @param block
     /// @param AtFront
     void insertBBlock(BasicBlockPtr block, BasicBlockPtr AtFront);
+
+    /// @brief 获取函数的入口Block
+    /// @return
+    BasicBlockPtr &getEntryBlock();
+
+    /// @brief 插入allocaInst
+    /// @param alloca
+    void insertAllocaInst(InstPtr alloca);
 
     /// @brief 构造
     /// @param _ty

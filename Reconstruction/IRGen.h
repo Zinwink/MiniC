@@ -28,6 +28,8 @@ private:
     /// @brief 节点类型--函数操作的对应哈希表
     std::unordered_map<ast_node_type, ast2ir_handler_t> ast2ir_handers;
 
+    std::list<BasicBlockPtr> transmitBlocks; // 传递基本快参数  基本快流
+
 public:
     /// @brief 析构函数
     ~IRGen();
@@ -42,9 +44,14 @@ public:
     bool run();
 
 private:
+    /// @brief 获取基本块流中的当前基本块
+    /// @return
+    BasicBlockPtr &getCurBlock();
+
     /// @brief 根据AST节点的类型查找相应的函数操作并执行
     /// @return nullptr表示运行失败，否则返回node指针
-    ast_node *ir_visit_astnode(ast_node *node, LabelParams blocks);
+    ast_node *
+    ir_visit_astnode(ast_node *node, LabelParams blocks);
 
     /// @brief 对AST compileUnit的翻译函数
     /// @param node 抽象书节点
