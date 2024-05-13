@@ -18,19 +18,29 @@ using GlobalVariPtr = std::shared_ptr<GlobalVariable>;
 class GlobalVariable : public Value
 {
 private:
-    string Gname;                     // 名称
+    string Gname; // 名称
+    Type *globalValType;
     ConstantPtr initilizer = nullptr; // 初始化的值
 
 public:
     /// @brief
     /// @param _ty
     /// @param name
-    GlobalVariable(Type *_ty, string name) : Value(_ty, Value::GlobalVari)
+    GlobalVariable(Type *_ty, string name) : Value(PointerType::get(_ty), Value::GlobalVari)
     {
+        globalValType = _ty;
         Gname = name;
     }
     /// @brief 析构函数
-    ~GlobalVariable() { initilizer.reset(); }
+    ~GlobalVariable()
+    {
+        initilizer.reset();
+        globalValType = nullptr;
+    }
+
+    /// @brief 获取全局变量中存放值得类型
+    /// @return 
+    Type *getElemTy() { return globalValType; }
 
     /// @brief 清理
     void clear() override
@@ -52,7 +62,7 @@ public:
 
     /// @brief 获取binding
     /// @return
-    ConstantPtr getBinding()
+    ConstantPtr &getInitilizer()
     {
         return initilizer;
     }

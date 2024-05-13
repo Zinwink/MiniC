@@ -12,8 +12,10 @@
 #include "Function.h"
 #include "Value.h"
 #include "BasicBlock.h"
+#include "DerivedInst.h"
 #include <algorithm>
 #include <stdexcept>
+#include "Module.h"
 
 /// @brief 构造函数
 /// @param _ty
@@ -28,6 +30,14 @@ Function::Function(Type *_ty, string _name) : Value(_ty, Value::FunctionVal)
 {
     funcName = _name;
     HasName = 1;
+}
+
+/// @brief 获取函数返回类型
+/// @return
+Type *Function::getReturnTy()
+{
+    FunctionType *funTy = static_cast<FunctionType *>(getType());
+    return funTy->getReturnType();
 }
 
 /// @brief 构造
@@ -76,8 +86,16 @@ void Function::insertBBlock(BasicBlockPtr block, BasicBlockPtr AtFront)
 /// @return
 BasicBlockPtr &Function::getEntryBlock()
 {
-    assert(BlocksList.size() > 0 && "no Entry Block has been constructed!");
+    assert(BlocksList.size() >= 2 && "no Entry Block has been constructed!");
     return BlocksList.front();
+}
+
+/// @brief 获取函数的出口block标签
+/// @return
+BasicBlockPtr &Function::getExitBlock()
+{
+    assert(BlocksList.size() >= 2 && "no Exit Block has been constructed!");
+    return BlocksList.back();
 }
 
 /// @brief 插入allocaInst

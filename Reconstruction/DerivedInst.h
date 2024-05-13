@@ -16,8 +16,18 @@
 #include "Type.h"
 
 class AllocaInst;
+class StoreInst;
+class BinaryOperator;
+class LoadInst;
+class RetInst;
+class CallInst;
 
 using AllocaInstPtr = std::shared_ptr<AllocaInst>;
+using StoreInstPtr = std::shared_ptr<StoreInst>;
+using BinaryOperatorPtr = std::shared_ptr<BinaryOperator>;
+using LoadInstPtr = std::shared_ptr<LoadInst>;
+using RetInstPtr = std::shared_ptr<RetInst>;
+using CallInstPtr = std::shared_ptr<CallInst>;
 
 /// @brief AllocaInst (将充当变量)(AllocaInst本身的Type是指针类型)
 class AllocaInst : public Instruction
@@ -95,6 +105,18 @@ public:
         operands.push_back(val);
         operands.push_back(Ptr);
     }
+
+    /// @brief 创建指令StoreInst
+    /// @param val
+    /// @param Ptr
+    /// @return
+    static StoreInstPtr get(ValPtr val, ValPtr Ptr);
+
+    /// @brief 在atBack基本快后创建指令(有条件判断)
+    /// @param val
+    /// @param Ptr
+    /// @return
+    static StoreInstPtr create(ValPtr val, ValPtr Ptr, BasicBlockPtr atBack);
 };
 
 /// @brief  LoadInst
@@ -119,6 +141,11 @@ public:
         PointerType *pointerTy = static_cast<PointerType *>(Ptr->getType());
         setType(pointerTy->getElemntTy());
     }
+
+    /// @brief 创建获取LoadInst
+    /// @param Ptr
+    /// @return
+    static LoadInstPtr get(ValPtr Ptr);
 };
 
 /// @brief 二元运算符
@@ -138,5 +165,90 @@ public:
         setOpcode(_op);
         operands.push_back(val1);
         operands.push_back(val2);
+
+        // 目前只设置为int结果类型 后面可以根据  val1,val2类型编写函数获取结果类型进行设置
+        setType(Type::getIntNType(32));
     }
+
+    /// @brief 创建BInaryOperator指令
+    /// @param _op
+    /// @param val1
+    /// @param val2
+    /// @return
+    static BinaryOperatorPtr get(Opcode _op, ValPtr val1, ValPtr val2);
+
+    /// @brief 在Block末尾创建BinaryOperator指令(该创建方法具有自动识别类型的功能)
+    /// @param _op
+    /// @param val1
+    /// @param val2
+    /// @param atBack
+    /// @return
+    static BinaryOperatorPtr create(Opcode _op, ValPtr val1, ValPtr val2, BasicBlockPtr atBack);
+};
+
+/// @brief RetInst
+class RetInst : public Instruction
+{
+    friend class Instruction;
+
+public:
+    /// @brief 析构
+    ~RetInst() = default;
+
+    /// @brief 构造
+    /// @param val
+    RetInst(ValPtr val)
+    {
+        operands.push_back(val);
+        setOpcode(Opcode::Ret);
+    }
+
+    static RetInstPtr get(ValPtr val);
+};
+
+class CallInst : public Instruction
+{
+public:
+    /// @brief 析构
+    ~CallInst() = default;
+
+    /// @brief 构造函数
+    /// @param fun
+    /// @param relArgs
+    CallInst(ValPtr fun, std::vector<ValPtr> &relArgs)
+    {
+        setOpcode(Opcode::Call);
+        operands.push_back(fun);
+        for (auto &arg : relArgs)
+        {
+            operands.push_back(arg);
+        }
+    }
+
+    /// @brief 创建CallInst
+    /// @param fun
+    /// @param relArgs
+    /// @return
+    static CallInstPtr get(ValPtr fun, std::vector<ValPtr> &relArgs);
+};
+
+class ICmpInst : public Instruction
+{
+public:
+    /// @brief 析构
+    ~ICmpInst() = default;
+
+    /// @brief 构造函数
+    /// @param _op
+    /// @param val1
+    /// @param val2
+    ICmpInst(Opcode _op, ValPtr val1, ValPtr val2)
+    {
+        setOpcode(_op);
+        operands.push_back(val1);
+        operands.push_back(val2);
+        setType(Type::getIntNType(1));
+    }
+
+    static I
 };

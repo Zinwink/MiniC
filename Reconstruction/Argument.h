@@ -44,4 +44,10 @@ public:
         argName = name;
         HasName = 1;
     }
+
+    /// @brief 创建形参
+    /// @param _ty
+    /// @param name
+    /// @return
+    static ArgPtr get(Type *_ty, string name);
 };

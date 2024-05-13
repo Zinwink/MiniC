@@ -10,3 +10,14 @@
  */
 
 #include "Argument.h"
+#include "Module.h"
+
+/// @brief 创建形参
+/// @param _ty
+/// @param name
+/// @return
+ArgPtr Argument::get(Type *_ty, string name)
+{
+    ArgPtr arg = std::make_shared<Argument>(_ty, name);
+    return arg;
+}

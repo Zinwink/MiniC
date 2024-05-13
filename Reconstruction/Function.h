@@ -14,6 +14,7 @@
 #include "Argument.h"
 #include <unordered_map>
 
+class Counter;
 class BasicBlock;
 class Function;
 using FuncPtr = std::shared_ptr<Function>;
@@ -77,6 +78,10 @@ public:
     /// @return
     std::vector<ArgPtr> &getArgsList() { return args; }
 
+    /// @brief 加入形参
+    /// @param arg
+    void addArg(ArgPtr arg) { args.push_back(arg); }
+
     /// @brief BasicBlock列表
     /// @return
     std::list<BasicBlockPtr> &getBasicBlocks() { return BlocksList; }
@@ -90,13 +95,22 @@ public:
     /// @param AtFront
     void insertBBlock(BasicBlockPtr block, BasicBlockPtr AtFront);
 
+    /// @brief 获取函数返回类型
+    /// @return
+    Type *getReturnTy();
+
     /// @brief 获取函数的入口Block
     /// @return
     BasicBlockPtr &getEntryBlock();
 
+    /// @brief 获取函数的出口block标签
+    /// @return
+    BasicBlockPtr &getExitBlock();
+
     /// @brief 插入allocaInst
     /// @param alloca
-    void insertAllocaInst(InstPtr alloca);
+    void
+    insertAllocaInst(InstPtr alloca);
 
     /// @brief 构造
     /// @param _ty

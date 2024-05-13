@@ -31,6 +31,8 @@ enum class Opcode
     DivInteger,  // 整数除法
     MulInteger,  // 整数乘法
     ModInteger,  // 整数取余
+    GtInteger,  // 大于
+    
 
     Unknown // 未知
 };

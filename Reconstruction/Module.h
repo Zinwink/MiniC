@@ -15,6 +15,7 @@
 #include <deque>
 
 class Module;
+class Counter;
 using ModulePtr = std::shared_ptr<Module>;
 
 class Module
@@ -26,9 +27,11 @@ private:
     /// @brief 函数列表
     std::deque<FuncPtr> funcList;
 
+    Counter *cnt = nullptr;
+
 public:
     /// @brief 构造函数
-    Module() {}
+    Module();
     /// @brief 析构函数
     ~Module();
 
@@ -49,5 +52,38 @@ public:
 
     /// @brief 将IR指令打印至文件中
     /// @param filePath
-    void print(string filePath);
+    void printIR(string filePath);
+
+    /// @brief 获取Module
+    /// @return
+    static ModulePtr get();
+};
+
+/// @brief 翻译为文本时所需使用的计数器
+class Counter
+{
+private:
+    int64_t ValCount = 0;                         // Value编号  Value是基类
+    std::unordered_map<ValPtr, int64_t> countMap; // 用于查找已有的编号
+public:
+    /// @brief 析构函数
+    ~Counter()
+    {
+        countMap.clear();
+    }
+
+    /// @brief 构造函数
+    Counter() {}
+
+    /// @brief 获取Val的编号 val 一定是需要编号的变量 对于常量无需编号不行
+    /// @param val
+    /// @return
+    int64_t getCount(ValPtr val);
+
+    /// @brief 重置
+    void reset()
+    {
+        ValCount = 0;
+        countMap.clear();
+    }
 };

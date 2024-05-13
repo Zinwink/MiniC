@@ -34,6 +34,7 @@ public:
     /// @brief 构造
     /// @param _ty
     Constant(Type *_ty) : Value(_ty, Value::Constant) {}
+
 };
 
 /// @brief ConstantInt类型

@@ -12,6 +12,8 @@
 #include "AST.h"
 #include <stdarg.h>
 #include <cassert>
+#include "Type.h"
+#include "DerivedTypes.h"
 
 /// @brief 整个AST的叶子节点
 ast_node *ast_root = nullptr;
@@ -184,12 +186,12 @@ void updateDeclTypes(ast_node *parent)
 
         if (son->node_type == ast_node_type::AST_LEAF_ARRAY) // 子节点为数组类型较为特殊
         {
-            Type *ty = new Type(*(parent->attr));
+            Type *ty = Type::copy(parent->attr);
             son->attr = ArrayType::get(son->ArraydimOrd, ty);
         }
         else if (son->node_type == ast_node_type::AST_LEAF_VAR_ID)
         {
-            Type *ty = new Type(*(parent->attr));
+            Type *ty = Type::copy(parent->attr);
             son->attr = ty;
         }
     }

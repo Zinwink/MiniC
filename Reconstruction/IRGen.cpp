@@ -67,6 +67,25 @@ IRGen::IRGen(ast_node *root, ModulePtr _module)
     ast2ir_handers[ast_node_type::AST_OP_COND_EQU] = &IRGen::ir_cmp_equal;
 }
 
+/// @brief 创建IRGen对象
+/// @param root
+/// @param _module
+/// @return
+IRGenPtr IRGen::get(ast_node *root, ModulePtr _module)
+{
+    IRGenPtr gen = std::make_shared<IRGen>(root, _module);
+    return gen;
+}
+
+// ***************** 从基本快流中获取当前基本块 ******************
+/// @brief 获取基本块流中的当前基本块
+/// @return
+BasicBlockPtr &IRGen::getCurBlock()
+{
+    assert(transmitBlocks.size() != 0 && "the transmitBlocks has no element!");
+    return transmitBlocks.front();
+}
+
 /// @brief 根据AST节点的类型查找相应的函数操作并执行
 /// @return nullptr表示运行失败，否则返回node指针
 ast_node *IRGen::ir_visit_astnode(ast_node *node, LabelParams blocks)
@@ -115,16 +134,36 @@ bool IRGen::ir_CompileUnit(ast_node *node, LabelParams blocks)
 bool IRGen::ir_func_define(ast_node *node, LabelParams blocks)
 {
     string funcname = node->literal_val.digit.id; // 函数名
-    FuncPtr fun = Function::get(std::move(node->attr), funcname);
+    // 先查找符号表中有没有对应的函数声明
+    ValPtr vfun = scoper->globalTab()->findDeclVar(funcname);
+    FuncPtr fun = nullptr;
+    if (vfun == nullptr)
+    { // 未找到  则创建
+        fun = Function::get(std::move(node->attr), funcname);
+        scoper->globalTab()->newDeclVar(fun); // 将声明定义的函数加入到全局符号表中，供后继查找
+        module->addFunction(fun);             // 加入到module函数列表中
+    }
+    else // 找到了
+    {
+        fun = std::static_pointer_cast<Function>(vfun);
+    }
     // 创建entry函数入口基本块
-    BasicBlockPtr block = BasicBlock::get(fun, "entry"); // 每个function一定有一个entry基本快
-    fun->AddBBlockBack(block);                           // 加入函数内
-    fun->AllocaIter() = block->begin();                  // 设置函数的AllocaInst的插入点
-    scoper->curFun() = fun;                              // 标记当前记录函数
-    scoper->pushTab(FuncTab::get());                     // 创建函数的符号表并加入到管理器scoper中
+    BasicBlockPtr Entry = BasicBlock::get(fun, "entry"); // 每个function一定有一个entry基本快
+    BasicBlockPtr Exit = BasicBlock::get(fun, "exit");   // 创建函数的出口
+    fun->AddBBlockBack(Entry);                           // 加入函数内
+    fun->AddBBlockBack(Exit);
+    // 根据函数返回值类型创建 函数返回值临时变量
+    if(fun->getReturnTy()->isVoidType()){
+        Exit->AddInstBack("")
+    }
+    transmitBlocks.push_back(Entry); // 加入基本块流
+    transmitBlocks.push_back(Exit);
+    fun->AllocaIter() = Entry->begin(); // 设置函数的AllocaInst的插入点
+    scoper->curFun() = fun;             // 标记当前记录函数
+    scoper->pushTab(FuncTab::get());    // 创建函数的符号表并加入到管理器scoper中
     for (auto &son : node->sons)
     {
-        ast_node *result = ir_visit_astnode(node, {block}); // 将函数基本块传参至下游节点
+        ast_node *result = ir_visit_astnode(node, {}); // 将函数基本块传参至下游节点
         if (result == nullptr)
         {
             scoper->curFun() = nullptr;
@@ -133,7 +172,8 @@ bool IRGen::ir_func_define(ast_node *node, LabelParams blocks)
     }
     // 结束翻译函数时curFun赋值为nullptr,函数符号表弹出栈
     scoper->curFun() = nullptr;
-    scoper->popTab(); // 弹栈
+    scoper->popTab();           // 弹栈
+    transmitBlocks.pop_front(); // 弹出函数中剩余的最后一个基本块   流队列的方式
     return true;
 }
 
@@ -142,6 +182,26 @@ bool IRGen::ir_func_define(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_func_formal_params(ast_node *node, LabelParams blocks)
 {
+    // 先查找父节点对应的函数
+    ast_node *parent = node->parent;
+    string funname = parent->literal_val.digit.id;          // 形参对应的函数名
+    ValPtr fun = scoper->globalTab()->findDeclVar(funname); // 查找对应的函数
+    FuncPtr fun_f = std::static_pointer_cast<Function>(fun);
+    for (auto &son : node->sons)
+    {
+        string argName = son->literal_val.digit.id;                // 形参名
+        ArgPtr arg = Argument::get(std::move(son->attr), argName); // 形参对象
+        fun_f->addArg(arg);
+        // 如果父节点是define类型的，则将形参变量加入到函数符号表中   对于形参列表节点 其父节点有可能是decalre function(只声明无定义)
+        if (parent->node_type == ast_node_type::AST_OP_FUNC_DEF)
+        {
+            AllocaInstPtr alloca = AllocaInst::get(argName, Type::copy(arg->getType())); // 创建 Alloca
+            StoreInstPtr store = StoreInst::get(arg, alloca);
+            fun_f->insertAllocaInst(alloca);            // 加入AllocaInst
+            fun_f->getEntryBlock()->AddInstBack(store); // 加入store指令
+            scoper->curTab()->newDeclVar(alloca);
+        }
+    }
     return true;
 }
 
@@ -150,6 +210,7 @@ bool IRGen::ir_func_formal_params(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_block(ast_node *node, LabelParams blocks)
 {
+
     return true;
 }
 
@@ -158,7 +219,7 @@ bool IRGen::ir_block(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_return(ast_node *node, LabelParams blocks)
 {
-    
+
     return true;
 }
 
@@ -175,6 +236,31 @@ bool IRGen::ir_funcall(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_assign(ast_node *node, LabelParams blocks)
 {
+    ast_node *left = ir_visit_astnode(node->sons[0], blocks);
+    if (left == nullptr)
+    {
+        return false;
+    }
+    ast_node *right = ir_visit_astnode(node->sons[1], blocks);
+    if (right == nullptr)
+        return false;
+    if (scoper->curTab()->isGlobalTab())
+    { // 全局中的变量初始化
+        assert(left->value->isGlobalVariable() && "it's not global value");
+        if (!right->value->isConstant())
+        {
+            std::cout << "globalvariable " << left->value->getName() << " must use constant to define! line: " << left->literal_val.line_no << std::endl;
+            return false;
+        }
+        GlobalVariPtr g = std::static_pointer_cast<GlobalVariable>(left->value);
+        ConstantPtr initer = std::static_pointer_cast<Constant>(right->value);
+        g->setInitilizer(std::move(initer)); // 设置初始化值
+    }
+    else
+    {
+        // 在局部作用域下的赋值指令
+        StoreInst::create(right->value, left->value, getCurBlock());
+    }
 
     return true;
 }
@@ -186,7 +272,7 @@ bool IRGen::ir_declItems(ast_node *node, LabelParams blocks)
 {
     for (auto &son : node->sons)
     {
-        ast_node *result = ir_visit_astnode(node, blocks);
+        ast_node *result = ir_visit_astnode(son, blocks);
         if (result == nullptr)
         {
             return false;
@@ -200,6 +286,30 @@ bool IRGen::ir_declItems(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_add(ast_node *node, LabelParams blocks)
 {
+    ast_node *left = ir_visit_astnode(node->sons[0], blocks);
+    if (left == nullptr)
+    {
+        return false;
+    }
+    ast_node *right = ir_visit_astnode(node->sons[1], blocks);
+    if (right == nullptr)
+        return false;
+    if (left->value->isConstant() && right->value->isConstant())
+    {
+        // 如果加法的两者均为常数 则直接相加运算 (目前默认只实现整数的加法运算)
+        ConstantIntPtr left_const = std::static_pointer_cast<ConstantInt>(left->value);
+        ConstantIntPtr right_const = std::static_pointer_cast<ConstantInt>(right->value);
+        int res = left_const->getValue() + right_const->getValue();
+        ConstantIntPtr resPtr = ConstantInt::get(32);
+        resPtr->setValue(res); // 设置常数值
+        node->value = resPtr;
+    }
+    else
+    { // 不都是常数
+        BinaryOperatorPtr binaryOp = BinaryOperator::create(Opcode::AddInteger, left->value, right->value, getCurBlock());
+        node->value = binaryOp;
+    }
+
     return true;
 }
 

@@ -14,7 +14,8 @@
 #include "ScopeMg.h"
 #include "BasicBlock.h"
 #include "Module.h"
-
+class IRGen;
+using IRGenPtr = std::shared_ptr<IRGen>;
 using LabelParams = std::initializer_list<BasicBlockPtr>;
 class IRGen
 {
@@ -38,6 +39,12 @@ public:
     /// @param root
     /// @param _module
     IRGen(ast_node *root, ModulePtr _module);
+
+    /// @brief 创建IRGen对象
+    /// @param root
+    /// @param _module
+    /// @return
+    static IRGenPtr get(ast_node *root, ModulePtr _module);
 
     /// @brief 运行产生线性IR
     /// @return
@@ -147,4 +154,10 @@ private:
     /// @param node
     /// @return
     bool ir_leafNode_var(ast_node *node, LabelParams blocks);
+
+    /// @brief 数组节点
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_leafNode_array(ast_node *node, LabelParams blocks);
 };

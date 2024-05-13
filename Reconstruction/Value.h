@@ -15,6 +15,7 @@
 
 class User;
 class Value;
+class Counter;
 using ValPtr = std::shared_ptr<Value>;
 using UserPtr = std::shared_ptr<User>;
 
@@ -89,6 +90,8 @@ public:
     /// @param _id
     void setSubClassID(SubClassID _id) { ValID = _id; }
 
+    bool hasName() { return HasName; }
+
     /// @brief 获取Value名
     /// @return
     virtual string getName() { return string("Null"); }
@@ -119,4 +122,15 @@ public:
     {
         return getSubclassID() == Value::Constant;
     }
+
+    bool isGlobalVariable()
+    {
+        return getSubclassID() == Value::GlobalVari;
+    }
 };
+
+/// @brief 获取 Val的 llvm 标识  可以是函数 全局变量 常量 %编号形式
+/// @param val
+/// @param cnt
+/// @return
+string getllvmID(ValPtr val, Counter *cnt);
