@@ -91,6 +91,9 @@ string Instruction::toIRstr(InstPtr inst, Counter *cnt)
     case Opcode::ModInteger:
         str = BinaryInstStr(inst, cnt);
         break;
+    case Opcode::Call:
+        str = CallInstStr(inst, cnt);
+        break;
 
     default:
         break;
@@ -159,6 +162,37 @@ string RetInstStr(InstPtr ret, Counter *cnt)
     {
         ValPtr retVal = ret->getOperand(0);
         str = ret->getOpcodeName() + string(" ") + retVal->getType()->TypeStr() + string(" ") + getllvmID(retVal, cnt);
+    }
+    return str;
+}
+
+/// @brief CallInst文本
+/// @param call
+/// @param cnt
+/// @return
+string CallInstStr(InstPtr call, Counter *cnt)
+{
+    ValPtr vfun = call->getOperand(0);
+    FuncPtr fun = std::static_pointer_cast<Function>(vfun);
+    string argsStr = "";
+    int argsNum = call->getOperandNum() - 1;
+    for (int ord = 1; ord <= argsNum; ord++)
+    {
+        ValPtr arg = call->getOperand(ord);
+        argsStr += arg->getType()->TypeStr() + string(" ") + getllvmID(arg, cnt);
+        if (ord < argsNum)
+        {
+            argsStr += ", ";
+        }
+    }
+    string str;
+    if (call->getType()->isVoidType())
+    {
+        str = call->getOpcodeName() + string(" void ") + getllvmID(vfun, cnt) + string("(") + argsStr + string(")");
+    }
+    else
+    {
+        str = getllvmID(call, cnt) + string(" = ") + call->getOpcodeName() + string(" ") + call->getType()->TypeStr() + string(" ") + getllvmID(vfun, cnt) + string("(") + argsStr + string(")");
     }
     return str;
 }

@@ -22,7 +22,7 @@ string GlobalVariable::toIRstr(GlobalVariPtr g, Counter *cnt)
     ConstantPtr initi = g->getInitilizer();
     if (initi == nullptr)
     {
-        initiStr = (g->getType()->isArrayType() ? string("zeroinitializer") : string("0"));
+        initiStr = (g->getElemTy()->isArrayType() ? string("zeroinitializer") : string("0"));
     }
     else
     {

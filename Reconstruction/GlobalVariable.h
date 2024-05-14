@@ -19,7 +19,7 @@ class GlobalVariable : public Value
 {
 private:
     string Gname; // 名称
-    Type *globalValType;
+    Type *globalValType = nullptr;
     ConstantPtr initilizer = nullptr; // 初始化的值
 
 public:
@@ -82,8 +82,8 @@ public:
     }
 
     /// @brief 全局变量翻译为文本
-    /// @param g 
-    /// @param cnt 
-    /// @return 
+    /// @param g
+    /// @param cnt
+    /// @return
     static string toIRstr(GlobalVariPtr g, Counter *cnt);
 };

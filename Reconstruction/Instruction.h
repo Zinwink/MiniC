@@ -130,3 +130,9 @@ string LoadInstStr(InstPtr load, Counter *cnt);
 /// @param cnt
 /// @return
 string RetInstStr(InstPtr ret, Counter *cnt);
+
+/// @brief CallInst文本
+/// @param call
+/// @param cnt
+/// @return
+string CallInstStr(InstPtr call, Counter *cnt);

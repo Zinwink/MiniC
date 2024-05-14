@@ -55,6 +55,10 @@ private:
     /// @return
     BasicBlockPtr &getCurBlock();
 
+    /// @brief 在当前block后面插入blocks,并在函数中对应的当前block后插入基本块
+    /// @param block
+    void insertAtCurBlockBack(LabelParams blocks);
+
     /// @brief 根据AST节点的类型查找相应的函数操作并执行
     /// @return nullptr表示运行失败，否则返回node指针
     ast_node *
@@ -74,6 +78,12 @@ private:
     /// @param node
     /// @return
     bool ir_func_formal_params(ast_node *node, LabelParams blocks);
+
+    /// @brief if 语句
+    /// @param node 
+    /// @param blocks 
+    /// @return 
+    bool ir_if_Stmt(ast_node *node, LabelParams blocks);
 
     /// @brief AST中block节点对应的函数操作
     /// @param node

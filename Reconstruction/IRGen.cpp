@@ -13,6 +13,7 @@
 #include "DerivedInst.h"
 #include "BlockTempTab.h"
 #include "FuncTab.h"
+#include "Function.h"
 #include <iostream>
 
 /// @brief 析构函数
@@ -46,6 +47,7 @@ IRGen::IRGen(ast_node *root, ModulePtr _module)
     ast2ir_handers[ast_node_type::AST_LEAF_LITERAL_INT] = &IRGen::ir_leafNode_int;
     ast2ir_handers[ast_node_type::AST_LEAF_LITERAL_FLOAT] = &IRGen::ir_leafNode_float;
     ast2ir_handers[ast_node_type::AST_LEAF_VAR_ID] = &IRGen::ir_leafNode_var;
+    ast2ir_handers[ast_node_type::AST_LEAF_ARRAY] = &IRGen::ir_leafNode_array;
 
     // AST中的block节点
     ast2ir_handers[ast_node_type::AST_OP_BLOCK] = &IRGen::IRGen::ir_block;
@@ -64,6 +66,7 @@ IRGen::IRGen(ast_node *root, ModulePtr _module)
     ast2ir_handers[ast_node_type::AST_OP_MOD] = &IRGen::ir_mod;
 
     // 条件相关的节点
+    ast2ir_handers[ast_node_type::AST_OP_IFSTMT] = &IRGen::ir_if_Stmt;
     ast2ir_handers[ast_node_type::AST_OP_COND_LESS] = &IRGen::ir_cmp_less;
     ast2ir_handers[ast_node_type::AST_OP_COND_GREATER] = &IRGen::ir_cmp_greater;
     ast2ir_handers[ast_node_type::AST_OP_COND_EQU] = &IRGen::ir_cmp_equal;
@@ -86,6 +89,20 @@ BasicBlockPtr &IRGen::getCurBlock()
 {
     assert(transmitBlocks.size() != 0 && "the transmitBlocks has no element!");
     return transmitBlocks.front();
+}
+
+/// @brief 在当前block后面插入blocks,并在函数中对应的当前block后插入基本块
+/// @param block
+void IRGen::insertAtCurBlockBack(LabelParams blocks)
+{
+    assert(transmitBlocks.size() != 0 && "Error! the function has ended"); // 表示队列为空
+    bblockIter transmitpos = std::next(transmitBlocks.begin());
+    transmitBlocks.insert(transmitpos, blocks.begin(), blocks.end()); // 插入
+    // 查找FUnction中的插入位置
+
+    blocks.clear();
+    blocks.shrink_to_fit();
+    // bblockIter pos = (transmitBlocks.begin())
 }
 
 /// @brief 根据AST节点的类型查找相应的函数操作并执行
@@ -228,6 +245,16 @@ bool IRGen::ir_func_formal_params(ast_node *node, LabelParams blocks)
             scoper->curTab()->newDeclVar(alloca);
         }
     }
+    return true;
+}
+
+/// @brief if 语句
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_if_Stmt(ast_node *node, LabelParams blocks)
+{
+    
     return true;
 }
 
@@ -512,6 +539,53 @@ bool IRGen::ir_leafNode_int(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_leafNode_float(ast_node *node, LabelParams blocks)
 {
+    return true;
+}
+
+/// @brief 数组节点
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_leafNode_array(ast_node *node, LabelParams blocks)
+{
+    string name = node->literal_val.digit.id; // 数组名
+    // 判断变量 可能是声明区域下的，也可能是使用区域下的
+    if (node->parent->node_type == ast_node_type::AST_OP_DECL_ITEMS)
+    {                                                             // 数组的父节点是declare_items
+        ValPtr val = scoper->curTab()->findDeclVarOfCurTab(name); // 查找
+        if (val != nullptr)
+        { // 查找到该value
+            std::cout << ">>>Error:the array variable " << name << " is redifined! line:" << node->literal_val.line_no << std::endl;
+            return false;
+        }
+        if (scoper->curTab()->isGlobalTab())
+        { // 全局变量声明
+            GlobalVariPtr g = GlobalVariable::get(node->attr, name);
+            node->attr = nullptr;            // 防止反复释放
+            module->addGlobalVar(g);         // 加入全局变量列表
+            scoper->curTab()->newDeclVar(g); // 符号表中加入相应的声明
+        }
+        else
+        {
+            // 非全局变量声明
+            AllocaInstPtr alloca = AllocaInst::get(name, node->attr);
+            node->attr = nullptr;
+            scoper->curTab()->newDeclVar(alloca);       //  将声明变量加入当前符号表中
+            scoper->curFun()->insertAllocaInst(alloca); // 将allocaInst加入到指令基本块中
+        }
+    }
+    else
+    {
+        // 不直接在declitems下的节点(被使用)
+        ValPtr val = scoper->curTab()->findDeclVar(name); // 查找
+        if (val == nullptr)
+        {
+            std::cout << ">>>Error:the array variable " << name << " is not declared! line:" << node->literal_val.line_no << std::endl;
+            return false;
+        }
+        node->value = val;
+    }
+
     return true;
 }
 
