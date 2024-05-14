@@ -39,15 +39,15 @@ ast_node::ast_node(Literal_Val &literal, ast_node_type _node_type)
 /// @param root
 void free_ast(ast_node *root)
 {
-    if (root)
+    if (root != nullptr)
     {
         for (auto &son : root->sons)
         {
             free_ast(son);
         }
+        delete root;
+        root = nullptr;
     }
-    delete root;
-    root = nullptr;
 }
 
 /// @brief 判断是否是叶子节点类型

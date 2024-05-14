@@ -23,7 +23,7 @@ private:
     std::stack<BaseSymTabPtr> stk;
 
     /// @brief 符号管理栈的全局符号表
-    BaseSymTabPtr curGlobalTab;
+    BaseSymTabPtr curGlobalTab=nullptr;
 
     /// @brief 当前所在的函数定义块中
     FuncPtr curfun = nullptr;

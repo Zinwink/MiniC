@@ -120,4 +120,10 @@ public:
     /// @param _name
     /// @return
     static BasicBlockPtr get(FuncPtr _parent, string _name);
+
+    /// @brief 获取一个Block的文本表示
+    /// @param block 
+    /// @param cnt 
+    /// @return 
+    static string toIRstr(BasicBlockPtr block, Counter *cnt);
 };

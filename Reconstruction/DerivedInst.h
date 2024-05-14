@@ -21,6 +21,8 @@ class BinaryOperator;
 class LoadInst;
 class RetInst;
 class CallInst;
+class ICmpInst;
+class BranchInst;
 
 using AllocaInstPtr = std::shared_ptr<AllocaInst>;
 using StoreInstPtr = std::shared_ptr<StoreInst>;
@@ -28,6 +30,8 @@ using BinaryOperatorPtr = std::shared_ptr<BinaryOperator>;
 using LoadInstPtr = std::shared_ptr<LoadInst>;
 using RetInstPtr = std::shared_ptr<RetInst>;
 using CallInstPtr = std::shared_ptr<CallInst>;
+using ICmpInstPtr = std::shared_ptr<ICmpInst>;
+using BranchInstPtr = std::shared_ptr<BranchInst>;
 
 /// @brief AllocaInst (将充当变量)(AllocaInst本身的Type是指针类型)
 class AllocaInst : public Instruction
@@ -44,6 +48,7 @@ public:
     {
         // AllocaInst本身的Type 为PointerType 将复用AllocatedType 因此析构时只需将 AllocatedType=null
         // 防止反复释放
+        delete AllocatedType;
         AllocatedType = nullptr;
     };
 
@@ -58,7 +63,7 @@ public:
     AllocaInst(Type *_allocatedType)
     {
         AllocatedType = _allocatedType;
-        setType(PointerType::get(_allocatedType));
+        setType(PointerType::get(Type::copy(_allocatedType)));
         setOpcode(Opcode::Alloca);
     }
 
@@ -74,11 +79,16 @@ public:
         HasName = 1;
     }
 
+    /// @brief 获取存储类型
+    /// @return
+    Type *getAllocatedType() { return AllocatedType; }
+
     /// @brief 静态函数  获取指令对象指针
     /// @param name
     /// @param _allocatedTy
     /// @return
-    static AllocaInstPtr get(string name, Type *_allocatedTy);
+    static AllocaInstPtr
+    get(string name, Type *_allocatedTy);
 };
 
 /// @brief storeInst
@@ -195,6 +205,12 @@ public:
     /// @brief 析构
     ~RetInst() = default;
 
+    /// @brief 无返回值  ret void
+    RetInst()
+    {
+        setOpcode(Opcode::Ret);
+    }
+
     /// @brief 构造
     /// @param val
     RetInst(ValPtr val)
@@ -203,6 +219,13 @@ public:
         setOpcode(Opcode::Ret);
     }
 
+    /// @brief 创建 ret void
+    /// @return
+    static RetInstPtr get();
+
+    /// @brief 创建 RetInst
+    /// @param val
+    /// @return
     static RetInstPtr get(ValPtr val);
 };
 
@@ -215,21 +238,20 @@ public:
     /// @brief 构造函数
     /// @param fun
     /// @param relArgs
-    CallInst(ValPtr fun, std::vector<ValPtr> &relArgs)
-    {
-        setOpcode(Opcode::Call);
-        operands.push_back(fun);
-        for (auto &arg : relArgs)
-        {
-            operands.push_back(arg);
-        }
-    }
+    CallInst(ValPtr fun, std::vector<ValPtr> &relArgs);
 
     /// @brief 创建CallInst
     /// @param fun
     /// @param relArgs
     /// @return
     static CallInstPtr get(ValPtr fun, std::vector<ValPtr> &relArgs);
+
+    /// @brief 在atBack basicblock后创建指令(具有判断功能，主要判断 relArgs类型是否与函数的参数类型相符，进行处理 如实参是 alloca,对应形参为 int  则需要load)
+    /// @param fun
+    /// @param relArgs
+    /// @param atBack
+    /// @return
+    static CallInstPtr create(ValPtr fun, std::vector<ValPtr> &relArgs, BasicBlockPtr atBack);
 };
 
 class ICmpInst : public Instruction
@@ -250,5 +272,50 @@ public:
         setType(Type::getIntNType(1));
     }
 
-    static I
+    /// @brief 创建ICmp
+    /// @param _op
+    /// @param val1
+    /// @param val2
+    /// @return
+    static ICmpInstPtr get(Opcode _op, ValPtr val1, ValPtr val2);
+};
+
+/// @brief 无条件跳转
+class BranchInst : public Instruction
+{
+public:
+    /// @brief 析构
+    ~BranchInst() = default;
+
+    /// @brief 无条件跳转 Goto
+    /// @param ifTrue BasicBlock
+    BranchInst(ValPtr ifTrue)
+    {
+        setOpcode(Opcode::Goto);
+        operands.push_back(ifTrue);
+    }
+
+    /// @brief 条件跳转
+    /// @param cond  i1 条件
+    /// @param ifTrue 真basicblock
+    /// @param ifFalse 假 basicblock
+    BranchInst(ValPtr cond, ValPtr ifTrue, ValPtr ifFalse)
+    {
+        setOpcode(Opcode::ConditionBr);
+        operands.push_back(cond);
+        operands.push_back(ifTrue);
+        operands.push_back(ifFalse);
+    }
+
+    /// @brief 获取BrachInst goto
+    /// @param ifTrue
+    /// @return
+    static BranchInstPtr get(ValPtr ifTrue);
+
+    /// @brief 获取条件跳转
+    /// @param cond 条件
+    /// @param ifTrue 真 basicblock
+    /// @param ifFalse 假 basicBlock
+    /// @return
+    static BranchInstPtr get(ValPtr cond, ValPtr ifTrue, ValPtr ifFalse);
 };

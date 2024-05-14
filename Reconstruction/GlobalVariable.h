@@ -11,7 +11,7 @@
 #pragma once
 #include "Value.h"
 #include "Constant.h"
-
+class Counter;
 class GlobalVariable;
 using GlobalVariPtr = std::shared_ptr<GlobalVariable>;
 
@@ -39,7 +39,7 @@ public:
     }
 
     /// @brief 获取全局变量中存放值得类型
-    /// @return 
+    /// @return
     Type *getElemTy() { return globalValType; }
 
     /// @brief 清理
@@ -80,4 +80,10 @@ public:
         GlobalVariPtr ptr = std::make_shared<GlobalVariable>(_ty, name);
         return ptr;
     }
+
+    /// @brief 全局变量翻译为文本
+    /// @param g 
+    /// @param cnt 
+    /// @return 
+    static string toIRstr(GlobalVariPtr g, Counter *cnt);
 };

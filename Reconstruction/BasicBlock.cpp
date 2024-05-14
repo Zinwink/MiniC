@@ -12,6 +12,10 @@
 #include "BasicBlock.h"
 #include <algorithm>
 #include <stdexcept>
+#include "Instruction.h"
+#include "Module.h"
+#include "Value.h"
+#include <string>
 
 /// @brief 得到基本块指针
 /// @param _parent
@@ -62,4 +66,31 @@ void BasicBlock::insertInst(InstPtr inst, InstPtr AtFront)
     {
         throw std::invalid_argument("The AtFront argument is not valid!");
     }
+}
+
+/// @brief 获取一个Block的文本表示
+/// @param block
+/// @param cnt
+/// @return
+string BasicBlock::toIRstr(BasicBlockPtr block, Counter *cnt)
+{
+    string str;
+    if (block->hasName())
+    {
+        str = block->getName();
+    }
+    else
+    {
+        int id = cnt->getCount(block);
+        str = std::to_string(id);
+    }
+
+    str += string(":");
+    str += string("\n");
+    for (auto &inst : block->getInstLists())
+    {
+        str += string("  ") + Instruction::toIRstr(inst, cnt);
+        str += string("\n");
+    }
+    return str;
 }

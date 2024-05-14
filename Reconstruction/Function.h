@@ -25,8 +25,8 @@ class Function : public Value
 private:
     string funcName;                     // 函数名
     std::vector<ArgPtr> args;            // 形参列表
+    std::list<InstPtr> allocaLists;      // AllocaInst链表
     std::list<BasicBlockPtr> BlocksList; // 基本块列表
-    BasicBlock::InstIterator allocaIter; // 记录  AllocaInst的迭代指针
 
 public:
     /// @brief 构造函数
@@ -44,6 +44,7 @@ public:
         args.clear();
         args.shrink_to_fit();
         BlocksList.clear();
+        allocaLists.clear();
     }
 
     /// @brief 存在环 需要打破
@@ -57,10 +58,6 @@ public:
         }
         BlocksList.clear();
     }
-
-    /// @brief 返回AllocaInst的位置(引用 可直接修改)
-    /// @return
-    BasicBlock::InstIterator &AllocaIter() { return allocaIter; }
 
     /// @brief 获取Value名
     /// @return
@@ -99,6 +96,11 @@ public:
     /// @return
     Type *getReturnTy();
 
+    /// @brief 获取第 ord个参数的类型 从0开始
+    /// @param ord
+    /// @return
+    Type *getArgsTy(uint32_t ord);
+
     /// @brief 获取函数的入口Block
     /// @return
     BasicBlockPtr &getEntryBlock();
@@ -109,8 +111,14 @@ public:
 
     /// @brief 插入allocaInst
     /// @param alloca
-    void
-    insertAllocaInst(InstPtr alloca);
+    void insertAllocaInst(InstPtr alloca);
+
+    /// @brief  将AllocaInst加入到Entry入口
+    void mergeAllocaToEntry()
+    {
+        BasicBlockPtr entry = getEntryBlock();
+        entry->getInstLists().splice(entry->begin(), allocaLists);
+    }
 
     /// @brief 构造
     /// @param _ty
@@ -122,4 +130,10 @@ public:
     /// @param name 函数名
     /// @return
     static FuncPtr get(Type *_ty, string name);
+
+    /// @brief 翻译得到函数对应的文本
+    /// @param fun
+    /// @param cnt
+    /// @return
+    static string toIRstr(FuncPtr fun, Counter *cnt);
 };

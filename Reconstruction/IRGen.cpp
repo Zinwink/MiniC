@@ -10,6 +10,9 @@
  */
 
 #include "IRGen.h"
+#include "DerivedInst.h"
+#include "BlockTempTab.h"
+#include "FuncTab.h"
 #include <iostream>
 
 /// @brief 析构函数
@@ -18,7 +21,6 @@ IRGen::~IRGen()
     module.reset();
     delete scoper;
     scoper = nullptr;
-    ast_root = nullptr;
 }
 
 /// @brief 构造函数
@@ -125,6 +127,7 @@ bool IRGen::ir_CompileUnit(ast_node *node, LabelParams blocks)
             return false;
         }
     }
+    scoper->popTab(); // 弹出全局表
     return true;
 }
 
@@ -134,18 +137,26 @@ bool IRGen::ir_CompileUnit(ast_node *node, LabelParams blocks)
 bool IRGen::ir_func_define(ast_node *node, LabelParams blocks)
 {
     string funcname = node->literal_val.digit.id; // 函数名
+    uint64_t lineno = node->literal_val.line_no;  // 行号
     // 先查找符号表中有没有对应的函数声明
     ValPtr vfun = scoper->globalTab()->findDeclVar(funcname);
     FuncPtr fun = nullptr;
     if (vfun == nullptr)
     { // 未找到  则创建
-        fun = Function::get(std::move(node->attr), funcname);
+        fun = Function::get(node->attr, funcname);
+        node->attr = nullptr;                 // 防止反复释放
         scoper->globalTab()->newDeclVar(fun); // 将声明定义的函数加入到全局符号表中，供后继查找
         module->addFunction(fun);             // 加入到module函数列表中
     }
     else // 找到了
     {
         fun = std::static_pointer_cast<Function>(vfun);
+        if (fun->getBasicBlocks().size() != 0)
+        {
+            // 已经定义 报错 退出
+            std::cout << ">>>Error: the function: " << funcname << " is redifined! line: " << lineno << std::endl;
+            return false;
+        }
     }
     // 创建entry函数入口基本块
     BasicBlockPtr Entry = BasicBlock::get(fun, "entry"); // 每个function一定有一个entry基本快
@@ -153,17 +164,22 @@ bool IRGen::ir_func_define(ast_node *node, LabelParams blocks)
     fun->AddBBlockBack(Entry);                           // 加入函数内
     fun->AddBBlockBack(Exit);
     // 根据函数返回值类型创建 函数返回值临时变量
-    if(fun->getReturnTy()->isVoidType()){
-        Exit->AddInstBack("")
+    if (fun->getReturnTy()->isVoidType())
+    {
+        Exit->AddInstBack(RetInst::get()); // 出口处加入ret指令
+    }
+    else
+    {                                                                               // 非void
+        fun->insertAllocaInst(AllocaInst::get("", Type::copy(fun->getReturnTy()))); // 加入创建的返回值临时变量
     }
     transmitBlocks.push_back(Entry); // 加入基本块流
     transmitBlocks.push_back(Exit);
-    fun->AllocaIter() = Entry->begin(); // 设置函数的AllocaInst的插入点
-    scoper->curFun() = fun;             // 标记当前记录函数
-    scoper->pushTab(FuncTab::get());    // 创建函数的符号表并加入到管理器scoper中
+    // fun->AllocaIter() = Entry->begin(); // 设置函数的AllocaInst的插入点
+    scoper->curFun() = fun;          // 标记当前记录函数
+    scoper->pushTab(FuncTab::get()); // 创建函数的符号表并加入到管理器scoper中
     for (auto &son : node->sons)
     {
-        ast_node *result = ir_visit_astnode(node, {}); // 将函数基本块传参至下游节点
+        ast_node *result = ir_visit_astnode(son, {}); // 将函数基本块传参至下游节点
         if (result == nullptr)
         {
             scoper->curFun() = nullptr;
@@ -172,8 +188,9 @@ bool IRGen::ir_func_define(ast_node *node, LabelParams blocks)
     }
     // 结束翻译函数时curFun赋值为nullptr,函数符号表弹出栈
     scoper->curFun() = nullptr;
-    scoper->popTab();           // 弹栈
-    transmitBlocks.pop_front(); // 弹出函数中剩余的最后一个基本块   流队列的方式
+    scoper->popTab();       // 弹栈
+    transmitBlocks.clear(); // 弹出函数中剩余的最后一个基本块   流队列的方式
+    fun->mergeAllocaToEntry();
     return true;
 }
 
@@ -189,12 +206,21 @@ bool IRGen::ir_func_formal_params(ast_node *node, LabelParams blocks)
     FuncPtr fun_f = std::static_pointer_cast<Function>(fun);
     for (auto &son : node->sons)
     {
-        string argName = son->literal_val.digit.id;                // 形参名
-        ArgPtr arg = Argument::get(std::move(son->attr), argName); // 形参对象
+        string argName = son->literal_val.digit.id;     // 形参名
+        ArgPtr arg = Argument::get(son->attr, argName); // 形参对象
+        son->attr = nullptr;
         fun_f->addArg(arg);
         // 如果父节点是define类型的，则将形参变量加入到函数符号表中   对于形参列表节点 其父节点有可能是decalre function(只声明无定义)
         if (parent->node_type == ast_node_type::AST_OP_FUNC_DEF)
         {
+            ValPtr argFind = scoper->curTab()->findDeclVarOfCurTab(argName);
+            if (argFind != nullptr)
+            {
+                // 找到了该参数名 报错
+                int64_t lino = son->literal_val.line_no;
+                std::cout << ">>>Error! redefinition of parameter:" << argName << " line: " << lino << std::endl;
+                return false;
+            }
             AllocaInstPtr alloca = AllocaInst::get(argName, Type::copy(arg->getType())); // 创建 Alloca
             StoreInstPtr store = StoreInst::get(arg, alloca);
             fun_f->insertAllocaInst(alloca);            // 加入AllocaInst
@@ -210,6 +236,40 @@ bool IRGen::ir_func_formal_params(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_block(ast_node *node, LabelParams blocks)
 {
+    ast_node_type parentNodeTy = node->parent->node_type;
+    if (parentNodeTy == ast_node_type::AST_OP_COMPILE_UNIT)
+    {
+        // 全局中不能只出现 block，智能出现在function定义下
+        std::cout << ">>>Error! expected identifier or '(' before '{' token" << std::endl;
+        return false;
+    }
+    else if (parentNodeTy == ast_node_type::AST_OP_FUNC_DEF)
+    {
+        // 说明是函数定义的函数体block
+        // 无需操作  在ir_func_define中已经完成
+    }
+    else
+    {
+        // 说明是 函数体下的子block 压栈block
+        scoper->pushTab(BlockTempTab::get());
+    }
+    for (auto &son : node->sons)
+    {
+        ast_node *result = ir_visit_astnode(son, {}); // block的跳转块不传入子节点
+        if (result == nullptr)
+            return false;
+    }
+    if (blocks.size() == 1)
+    {
+        // block ast节点一般只有一个跳转   条件语句通常两个跳转块
+        // 有一个跳转块  goto无条件跳转
+        getCurBlock()->AddInstBack(BranchInst::get(blocks[0]));
+        transmitBlocks.pop_front(); // 当前基本块已完成  弹出 (使用的跳转基本快创建时会加入transmitBlocks队列流中)
+    }
+    if (parentNodeTy != ast_node_type::AST_OP_FUNC_DEF)
+    {
+        scoper->popTab(); // 是blocktemp表 则从此弹出
+    }
 
     return true;
 }
@@ -228,6 +288,26 @@ bool IRGen::ir_return(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_funcall(ast_node *node, LabelParams blocks)
 {
+    string funcname = node->literal_val.digit.id;            // 调用的函数名
+    int lineno = node->literal_val.line_no;                  // 行号
+    ValPtr fun = scoper->globalTab()->findDeclVar(funcname); // 查找该函数
+    if (fun == nullptr)
+    {
+        // 未找到 报错  退出
+        std::cout << ">>>Error: no such function:" << funcname << "line: " << lineno << std::endl;
+        return false;
+    }
+    ast_node *realParams = node->sons[0]; // 实参列表
+    std::vector<ValPtr> realArgs;         // 记录实参值
+    for (auto &son : realParams->sons)
+    { // son为实参
+        ast_node *result = ir_visit_astnode(son, {});
+        if (result == nullptr)
+            return false;
+        realArgs.push_back(std::move(result->value)); // 记录实参值Value
+    }
+    CallInstPtr call = CallInst::create(fun, realArgs, getCurBlock());
+    node->value = call; // 记录 value(对于有返回值的函数有作用)
     return true;
 }
 
@@ -386,14 +466,16 @@ bool IRGen::ir_leafNode_var(ast_node *node, LabelParams blocks)
         }
         if (scoper->curTab()->isGlobalTab())
         { // 全局变量声明
-            GlobalVariPtr g = GlobalVariable::get(std::move(node->attr), name);
+            GlobalVariPtr g = GlobalVariable::get(node->attr, name);
+            node->attr = nullptr;            // 防止反复释放
             module->addGlobalVar(g);         // 加入全局变量列表
             scoper->curTab()->newDeclVar(g); // 符号表中加入相应的声明
         }
         else
         {
             // 非全局变量声明
-            AllocaInstPtr alloca = AllocaInst::get(name, std::move(node->attr));
+            AllocaInstPtr alloca = AllocaInst::get(name, node->attr);
+            node->attr = nullptr;
             scoper->curTab()->newDeclVar(alloca);       //  将声明变量加入当前符号表中
             scoper->curFun()->insertAllocaInst(alloca); // 将allocaInst加入到指令基本块中
         }

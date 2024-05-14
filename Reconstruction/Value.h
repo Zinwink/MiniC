@@ -12,6 +12,7 @@
 
 #include "Type.h"
 #include <list>
+// #include <iostream>
 
 class User;
 class Value;
@@ -37,7 +38,7 @@ public:
     using User_iterator = std::list<UserPtr>::iterator;
 
 private:
-    Type *ty;                    // 类型
+    Type *ty = nullptr;          // 类型
     std::list<UserPtr> UserList; // 该Value被其他Value使用的记录列表
     SubClassID ValID;            // 标识
 
@@ -48,6 +49,7 @@ public:
     /// @brief 析构
     ~Value()
     {
+        // std::cout << "销毁" << std::endl;
         delete ty;
         ty = nullptr;
         UserList.clear();

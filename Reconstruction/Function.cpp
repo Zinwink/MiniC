@@ -40,6 +40,15 @@ Type *Function::getReturnTy()
     return funTy->getReturnType();
 }
 
+/// @brief 获取第 ord个参数的类型 从0开始
+/// @param ord
+/// @return
+Type *Function::getArgsTy(uint32_t ord)
+{
+    FunctionType *funTy = static_cast<FunctionType *>(getType());
+    return funTy->getParamType(ord);
+}
+
 /// @brief 构造
 /// @param _ty
 /// @return
@@ -103,5 +112,32 @@ BasicBlockPtr &Function::getExitBlock()
 void Function ::insertAllocaInst(InstPtr alloca)
 {
     assert(alloca->getOpcode() == Opcode::Alloca && "not allocaInst type!");
-    getEntryBlock()->insertInst(alloca, allocaIter);
+    allocaLists.push_back(alloca);
+}
+
+/// @brief 翻译得到函数对应的文本
+/// @param fun
+/// @param cnt
+/// @return
+string Function::toIRstr(FuncPtr fun, Counter *cnt)
+{
+    string str = "\ndefine " + fun->getReturnTy()->TypeStr() + string(" ") + string("@") + fun->getName() + string("(");
+    for (uint32_t i = 0; i < fun->getArgsList().size(); i++)
+    {
+        string paramStr = fun->getArgsTy(i)->TypeStr() + string(" ") + getllvmID(fun->getArgsList()[i], cnt);
+        str += paramStr;
+        if (i != (fun->getArgsList().size() - 1))
+        { // 不是最后一个形参
+            str += string(", ");
+        }
+    }
+    str += string(") {\n");
+    for (auto &blk : fun->getBasicBlocks())
+    {
+        str += BasicBlock::toIRstr(blk, cnt);
+        str += "\n";
+    }
+    str.pop_back();
+    str += "}";
+    return str;
 }

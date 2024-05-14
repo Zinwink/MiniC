@@ -34,6 +34,11 @@ string getllvmID(ValPtr val, Counter *cnt)
     {
         str = string("@") + val->getName();
     }
+    else if (val->getSubclassID() == Value::ArgumentVal)
+    {
+        int64_t ord = cnt->getCount(val);
+        str = string("%") + std::to_string(ord);
+    }
     else if (val->getSubclassID() == Value::GlobalVari)
     {
         str = string("@") + val->getName();
@@ -61,15 +66,8 @@ string getllvmID(ValPtr val, Counter *cnt)
     }
     else if (val->getSubclassID() == Value::InstructionVal)
     {
-        if (val->hasName())
-        {
-            str = string("%") + val->getName();
-        }
-        else
-        {
-            int64_t ord = cnt->getCount(val);
-            str = string("%") + std::to_string(ord);
-        }
+        int64_t ord = cnt->getCount(val);
+        str = string("%") + std::to_string(ord);
     }
     return str;
 }

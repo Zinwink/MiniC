@@ -16,13 +16,13 @@
 #include "Module.h"
 class IRGen;
 using IRGenPtr = std::shared_ptr<IRGen>;
-using LabelParams = std::initializer_list<BasicBlockPtr>;
+using LabelParams = std::vector<BasicBlockPtr>;
 class IRGen
 {
 private:
-    ast_node *ast_root; // AST根节点
-    ScopeMg *scoper;    // 作用域管理
-    ModulePtr module;   // module  存放全局变量列表，函数列表
+    ast_node *ast_root;        // AST根节点
+    ScopeMg *scoper = nullptr; // 作用域管理
+    ModulePtr module;          // module  存放全局变量列表，函数列表
     /// @brief AST的节点操作函数指针, 第二个参数用于传递基本快(用于条件语句，分支语句的使用,传递基本快参数指针)
     typedef bool (IRGen::*ast2ir_handler_t)(ast_node *, LabelParams blocks);
 

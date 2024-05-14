@@ -69,7 +69,14 @@ public:
 
     /// @brief 返回类型的字符串
     /// @return 虚函数 可重写
-    virtual string TypeStr() { return "Unknown"; }
+    virtual string TypeStr()
+    {
+        if (isVoidType())
+        {
+            return "void";
+        }
+        return "Unknown";
+    }
 
     /// @brief 获取子类存储的信息
     /// @return  Integer可以通过此设置位宽
