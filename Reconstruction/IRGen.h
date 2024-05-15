@@ -31,6 +31,8 @@ private:
 
     std::list<BasicBlockPtr> transmitBlocks; // 传递基本快参数  基本快流
 
+    bblockIter curUsedBlockIter; // 当前函数所使用的基本块指向迭代器(便于插入创建的基本块)
+
 public:
     /// @brief 析构函数
     ~IRGen();
@@ -56,8 +58,9 @@ private:
     BasicBlockPtr &getCurBlock();
 
     /// @brief 在当前block后面插入blocks,并在函数中对应的当前block后插入基本块
+    /// @param fun  基本块所需插入对应的的函数位置对象
     /// @param block
-    void insertAtCurBlockBack(LabelParams blocks);
+    void insertAtCurBlockBack(FuncPtr fun, LabelParams blocks);
 
     /// @brief 根据AST节点的类型查找相应的函数操作并执行
     /// @return nullptr表示运行失败，否则返回node指针
@@ -80,10 +83,22 @@ private:
     bool ir_func_formal_params(ast_node *node, LabelParams blocks);
 
     /// @brief if 语句
-    /// @param node 
-    /// @param blocks 
-    /// @return 
+    /// @param node
+    /// @param blocks
+    /// @return
     bool ir_if_Stmt(ast_node *node, LabelParams blocks);
+
+    /// @brief while语句
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_while_Stmt(ast_node *node, LabelParams blocks);
+
+    /// @brief do while语句
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_Dowhile_Stmt(ast_node *node, LabelParams blocks);
 
     /// @brief AST中block节点对应的函数操作
     /// @param node
@@ -134,6 +149,18 @@ private:
     /// @param node
     /// @return
     bool ir_mod(ast_node *node, LabelParams blocks);
+
+    /// @brief 条件或 || 翻译
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_Cond_OR(ast_node *node, LabelParams blocks);
+
+    /// @brief 条件 && 翻译
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_Cond_AND(ast_node *node, LabelParams blocks);
 
     /// @brief AST < 节点对应的操作
     /// @param node

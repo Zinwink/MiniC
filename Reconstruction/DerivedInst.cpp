@@ -51,6 +51,7 @@ StoreInstPtr StoreInst::create(ValPtr val, ValPtr Ptr, BasicBlockPtr atBack)
         src = load;
     }
     StoreInstPtr store = StoreInst::get(src, Ptr);
+    store->setBBlockParent(atBack);
     atBack->AddInstBack(store);
     return store;
 }
@@ -91,16 +92,19 @@ BinaryOperatorPtr BinaryOperator::create(Opcode _op, ValPtr val1, ValPtr val2, B
     {
         LoadInstPtr leftLoad = LoadInst::get(val1);
         atBack->AddInstBack(leftLoad);
+        leftLoad->setBBlockParent(atBack);
         left = leftLoad;
     }
     if (val2->getType()->isPointerType())
     {
         LoadInstPtr rightLoad = LoadInst::get(val2);
         atBack->AddInstBack(rightLoad);
+        rightLoad->setBBlockParent(atBack);
         right = rightLoad;
     }
     BinaryOperatorPtr binaryOp = BinaryOperator::get(_op, left, right);
     atBack->AddInstBack(binaryOp);
+    binaryOp->setBBlockParent(atBack);
     return binaryOp;
 }
 
@@ -118,6 +122,29 @@ RetInstPtr RetInst::get(ValPtr val)
 {
     RetInstPtr ret = std::make_shared<RetInst>(val);
     ret->updateUserList();
+    return ret;
+}
+
+/// @brief 在atBack后创建RetInst  一个函数只有一个retInst
+/// @param atBack
+/// @return
+RetInstPtr RetInst::create(BasicBlockPtr atBack)
+{
+    RetInstPtr ret = RetInst::get();
+    atBack->AddInstBack(ret);
+    ret->setBBlockParent(atBack);
+    return ret;
+}
+
+/// @brief
+/// @param val
+/// @param atBack
+/// @return
+RetInstPtr RetInst::create(ValPtr val, BasicBlockPtr atBack)
+{
+    RetInstPtr ret = RetInst::get(val);
+    atBack->AddInstBack(ret);
+    ret->setBBlockParent(atBack);
     return ret;
 }
 
@@ -192,6 +219,36 @@ ICmpInstPtr ICmpInst::get(Opcode _op, ValPtr val1, ValPtr val2)
     ICmpInstPtr cmp = std::make_shared<ICmpInst>(_op, val1, val2);
     cmp->updateUserList();
     return cmp;
+}
+
+/// @brief 带有判断条件的 比较语句 主要判断 val1,val2 是不是allocaInst(allocaInst是地址，需要load)
+/// @param _op
+/// @param val1
+/// @param val2
+/// @param atBack
+/// @return
+ICmpInstPtr ICmpInst::create(Opcode _op, ValPtr val1, ValPtr val2, BasicBlockPtr atBack)
+{
+    ValPtr left = val1;
+    ValPtr right = val2;
+    if (val1->getType()->isPointerType()) // 是指针类型(allocaInst)
+    {
+        LoadInstPtr leftLoad = LoadInst::get(val1);
+        atBack->AddInstBack(leftLoad);
+        leftLoad->setBBlockParent(atBack);
+        left = leftLoad;
+    }
+    if (val2->getType()->isPointerType())
+    {
+        LoadInstPtr rightLoad = LoadInst::get(val2);
+        atBack->AddInstBack(rightLoad);
+        rightLoad->setBBlockParent(atBack);
+        right = rightLoad;
+    }
+    ICmpInstPtr icmp = ICmpInst::get(_op, left, right);
+    atBack->AddInstBack(icmp);
+    icmp->setBBlockParent(atBack);
+    return icmp;
 }
 
 //******************** BranchInst ***********************

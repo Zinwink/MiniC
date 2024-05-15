@@ -43,7 +43,7 @@ private:
     SubClassID ValID;            // 标识
 
 protected:
-    unsigned HasName : 1;
+    unsigned HasName = 0;
 
 public:
     /// @brief 析构

@@ -65,8 +65,12 @@ IRGen::IRGen(ast_node *root, ModulePtr _module)
     ast2ir_handers[ast_node_type::AST_OP_DIV] = &IRGen::ir_div;
     ast2ir_handers[ast_node_type::AST_OP_MOD] = &IRGen::ir_mod;
 
-    // 条件相关的节点
+    // 条件相关的节点 if  while do while
     ast2ir_handers[ast_node_type::AST_OP_IFSTMT] = &IRGen::ir_if_Stmt;
+    ast2ir_handers[ast_node_type::AST_OP_WHILESTMT] = &IRGen::ir_while_Stmt;
+    ast2ir_handers[ast_node_type::AST_OP_DOWHILESTMT] = &IRGen::ir_Dowhile_Stmt;
+    ast2ir_handers[ast_node_type::AST_OP_COND_OR] = &IRGen::ir_Cond_OR;   //  ||
+    ast2ir_handers[ast_node_type::AST_OP_COND_AND] = &IRGen::ir_Cond_AND; // &&
     ast2ir_handers[ast_node_type::AST_OP_COND_LESS] = &IRGen::ir_cmp_less;
     ast2ir_handers[ast_node_type::AST_OP_COND_GREATER] = &IRGen::ir_cmp_greater;
     ast2ir_handers[ast_node_type::AST_OP_COND_EQU] = &IRGen::ir_cmp_equal;
@@ -93,16 +97,15 @@ BasicBlockPtr &IRGen::getCurBlock()
 
 /// @brief 在当前block后面插入blocks,并在函数中对应的当前block后插入基本块
 /// @param block
-void IRGen::insertAtCurBlockBack(LabelParams blocks)
+void IRGen::insertAtCurBlockBack(FuncPtr fun, LabelParams blocks)
 {
     assert(transmitBlocks.size() != 0 && "Error! the function has ended"); // 表示队列为空
     bblockIter transmitpos = std::next(transmitBlocks.begin());
     transmitBlocks.insert(transmitpos, blocks.begin(), blocks.end()); // 插入
-    // 查找FUnction中的插入位置
-
+    bblockIter funcBBlockpos = std::next(curUsedBlockIter);           // 插入位置为当前的下一个位置
+    fun->insertBBlock(blocks, funcBBlockpos);
     blocks.clear();
     blocks.shrink_to_fit();
-    // bblockIter pos = (transmitBlocks.begin())
 }
 
 /// @brief 根据AST节点的类型查找相应的函数操作并执行
@@ -186,14 +189,19 @@ bool IRGen::ir_func_define(ast_node *node, LabelParams blocks)
         Exit->AddInstBack(RetInst::get()); // 出口处加入ret指令
     }
     else
-    {                                                                               // 非void
-        fun->insertAllocaInst(AllocaInst::get("", Type::copy(fun->getReturnTy()))); // 加入创建的返回值临时变量
+    {
+        InstPtr allocaRet = AllocaInst::get("", Type::copy(fun->getReturnTy())); // 非void
+        fun->insertAllocaInst(allocaRet);                                        // 加入创建的返回值临时变量
+        InstPtr load = LoadInst::get(allocaRet);
+        Exit->AddInstBack(load);
+        RetInst::create(load, Exit); // 在Exit出口中加入ret 语句
     }
-    transmitBlocks.push_back(Entry); // 加入基本块流
-    transmitBlocks.push_back(Exit);
+    transmitBlocks.push_back(Entry); // 加入基本块流 不加函数出口
+    // transmitBlocks.push_back(Exit);
     // fun->AllocaIter() = Entry->begin(); // 设置函数的AllocaInst的插入点
-    scoper->curFun() = fun;          // 标记当前记录函数
-    scoper->pushTab(FuncTab::get()); // 创建函数的符号表并加入到管理器scoper中
+    scoper->curFun() = fun;                           // 标记当前记录函数
+    scoper->pushTab(FuncTab::get());                  // 创建函数的符号表并加入到管理器scoper中
+    curUsedBlockIter = fun->getBasicBlocks().begin(); // 记录当前函数基本块的迭代器
     for (auto &son : node->sons)
     {
         ast_node *result = ir_visit_astnode(son, {}); // 将函数基本块传参至下游节点
@@ -203,9 +211,19 @@ bool IRGen::ir_func_define(ast_node *node, LabelParams blocks)
             return false;
         }
     }
+    // 判断最后一个基本块(即当前基本快)
+    if (transmitBlocks.size() != 0)
+    {
+        assert(transmitBlocks.size() == 1 && ">>>Error!Basic block not aligned with corresponding program during program execution! file: IRGen.cpp");
+        // 基本块流中还存在基本块
+        // 函数无返回值  加入跳转至Exit指令
+        BranchInstPtr br = BranchInst::get(Exit);
+        getCurBlock()->AddInstBack(br);
+    }
     // 结束翻译函数时curFun赋值为nullptr,函数符号表弹出栈
     scoper->curFun() = nullptr;
-    scoper->popTab();       // 弹栈
+    scoper->popTab(); // 弹栈
+
     transmitBlocks.clear(); // 弹出函数中剩余的最后一个基本块   流队列的方式
     fun->mergeAllocaToEntry();
     return true;
@@ -254,7 +272,92 @@ bool IRGen::ir_func_formal_params(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_if_Stmt(ast_node *node, LabelParams blocks)
 {
-    
+    int blocksNum = node->sons.size(); // 创建的基本块数目
+    LabelParams jumps;                 // 创建基本块
+    for (int i = 0; i < blocksNum; i++)
+    {
+        jumps.push_back(BasicBlock::get(scoper->curFun()));
+    }
+    insertAtCurBlockBack(scoper->curFun(), jumps); // 加入基本块
+    // 遍历子节点
+    ast_node *cond = ir_visit_astnode(node->sons[0], {jumps[0], jumps[1]});
+    if (cond == nullptr)
+        return false;
+    ast_node *ifTrue = ir_visit_astnode(node->sons[1], {jumps.back()});
+    if (ifTrue == nullptr)
+        return false;
+    if (blocksNum == 3)
+    {
+        // 有假语句体
+        ast_node *ifFalse = ir_visit_astnode(node->sons[2], {jumps[2]});
+        if (ifFalse == nullptr)
+            return false;
+    }
+
+    return true;
+}
+
+/// @brief while语句
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_while_Stmt(ast_node *node, LabelParams blocks)
+{
+    LabelParams jumps;
+    // 创建三个口 循环入口 循环体入口 循环出口
+    BasicBlockPtr whileEntry = BasicBlock::get(scoper->curFun());
+    BasicBlockPtr blockEntry = BasicBlock::get(scoper->curFun());
+    BasicBlockPtr whileExit = BasicBlock::get(scoper->curFun());
+    jumps.push_back(whileEntry);
+    jumps.push_back(blockEntry);
+    jumps.push_back(whileExit);
+    insertAtCurBlockBack(scoper->curFun(), jumps); // 创建的基本快插入
+
+    // 进入翻译循环前需弹出前一个block, 因为循环在新的一个块开始
+    BranchInstPtr br = BranchInst::get(whileEntry);
+    getCurBlock()->AddInstBack(br);
+    transmitBlocks.pop_front();
+    curUsedBlockIter = std::next(curUsedBlockIter);
+
+    // 下面正式翻译循环
+    ast_node *cond = ir_visit_astnode(node->sons[0], {blockEntry, whileExit}); // 传入 循环体口，循环出口
+    if (cond == nullptr)
+        return false;
+    ast_node *whileBody = ir_visit_astnode(node->sons[1], {whileEntry}); // 传入循环入口
+    if (whileBody == nullptr)
+        return false;
+    return true;
+}
+
+/// @brief do while语句
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_Dowhile_Stmt(ast_node *node, LabelParams blocks)
+{
+    LabelParams jumps;
+    // 创建三个口 循环体循环入口(函数体) 条件与语句的基本块   循环出口
+    BasicBlockPtr whileEntry = BasicBlock::get(scoper->curFun());
+    // BasicBlockPtr condBlock = BasicBlock::get(scoper->curFun());
+    BasicBlockPtr whileExit = BasicBlock::get(scoper->curFun());
+    jumps.push_back(whileEntry);
+    // jumps.push_back(condBlock);
+    jumps.push_back(whileExit);
+    insertAtCurBlockBack(scoper->curFun(), jumps); // 创建的基本快插入
+
+    // 进入翻译循环前需弹出前一个block, 因为循环在新的一个块开始
+    BranchInstPtr br = BranchInst::get(whileEntry);
+    getCurBlock()->AddInstBack(br);
+    transmitBlocks.pop_front();
+    curUsedBlockIter = std::next(curUsedBlockIter);
+
+    // 下面正式翻译循环
+    ast_node *whileBody = ir_visit_astnode(node->sons[0], {}); // 传入循环入口
+    if (whileBody == nullptr)
+        return false;
+    ast_node *cond = ir_visit_astnode(node->sons[1], {whileEntry, whileExit}); // 传入 循环体口，循环出口
+    if (cond == nullptr)
+        return false;
     return true;
 }
 
@@ -292,6 +395,7 @@ bool IRGen::ir_block(ast_node *node, LabelParams blocks)
         // 有一个跳转块  goto无条件跳转
         getCurBlock()->AddInstBack(BranchInst::get(blocks[0]));
         transmitBlocks.pop_front(); // 当前基本块已完成  弹出 (使用的跳转基本快创建时会加入transmitBlocks队列流中)
+        curUsedBlockIter = std::next(curUsedBlockIter);
     }
     if (parentNodeTy != ast_node_type::AST_OP_FUNC_DEF)
     {
@@ -306,6 +410,36 @@ bool IRGen::ir_block(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_return(ast_node *node, LabelParams blocks)
 {
+    if (node->sons.size() == 0)
+    {
+        // 无返回值
+        if (!scoper->curFun()->getReturnTy()->isVoidType())
+        {
+            std::cout << ">>>Error! the function: " << scoper->curFun()->getName() << " has no return value!" << std::endl;
+            return false;
+        }
+    }
+    else
+    {
+        if (scoper->curFun()->getReturnTy()->isVoidType())
+        {
+            std::cout << ">>>Error! the function: " << scoper->curFun()->getName() << " is void type has no return value! " << std::endl;
+            return false;
+        }
+        ast_node *result = ir_visit_astnode(node->sons[0], {});
+        if (result == nullptr)
+        {
+            return false;
+        }
+        StoreInst::create(std::move(result->value), scoper->curFun()->getAllocaLists().front(), getCurBlock()); // 保存返回值
+    }
+    BranchInstPtr br = BranchInst::get(scoper->curFun()->getExitBlock());
+    getCurBlock()->AddInstBack(br);
+    // 创建一个基本块 防止后面还有代码，使transmitBlocks无法对齐情况
+    BasicBlockPtr blcok = BasicBlock::get(scoper->curFun());
+    insertAtCurBlockBack(scoper->curFun(), {blcok});
+    transmitBlocks.pop_front();                     // 弹出当前基本块
+    curUsedBlockIter = std::next(curUsedBlockIter); // 伴随pop 需要向后移动一次
 
     return true;
 }
@@ -452,11 +586,76 @@ bool IRGen::ir_mod(ast_node *node, LabelParams blocks)
     return true;
 }
 
+/// @brief 条件或 || 翻译
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_Cond_OR(ast_node *node, LabelParams blocks)
+{
+    // 目前翻译场景为 if while do-while 条件语句
+    // 对于 a= b||m  形式的赋值暂时不支持
+    assert(blocks.size() == 2 && "not support the usage, must be use in if,while,do-while condition statement");
+    if (blocks.size() == 2)
+    {
+        BasicBlockPtr condFalse = BasicBlock::get(scoper->curFun()); // 如果 a&&b  中第一个 a条件为真的跳转口
+        insertAtCurBlockBack(scoper->curFun(), {condFalse});         // 将创建的块 插入当前块之后 这将是后一个条件语句指令所在的块
+        ast_node *cond1 = ir_visit_astnode(node->sons[0], {blocks[0], condFalse});
+        if (cond1 == nullptr)
+            return false;
+        ast_node *cond2 = ir_visit_astnode(node->sons[1], blocks);
+        if (cond2 == nullptr)
+            return false;
+    }
+    return true;
+}
+
+/// @brief 条件 && 翻译
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_Cond_AND(ast_node *node, LabelParams blocks)
+{
+    // 目前翻译场景为 if while do-while 条件语句
+    // 对于 a= b&&m  形式的赋值暂时不支持
+    assert(blocks.size() == 2 && "not support the usage, must be use in if,while,do-while condition statement");
+    if (blocks.size() == 2)
+    {
+        BasicBlockPtr condTrue = BasicBlock::get(scoper->curFun()); // 如果 a&&b  中第一个 a条件为真的跳转口
+        insertAtCurBlockBack(scoper->curFun(), {condTrue});         // 将创建的块 插入当前块之后 这将是后一个条件语句指令所在的块
+        ast_node *cond1 = ir_visit_astnode(node->sons[0], {condTrue, blocks.back()});
+        if (cond1 == nullptr)
+            return false;
+        ast_node *cond2 = ir_visit_astnode(node->sons[1], blocks);
+        if (cond2 == nullptr)
+            return false;
+    }
+    return true;
+}
+
 /// @brief AST < 节点对应的操作
 /// @param node
 /// @return
 bool IRGen::ir_cmp_less(ast_node *node, LabelParams blocks)
 {
+    // 目前 条件比较只支持 if while do-while条件语句
+    // 对于其他场景 如  a=b<100;  这类赋值暂未支持  后继可扩展
+    if (blocks.size() != 0)
+    {
+        assert(blocks.size() == 2 && "Conditional statements typically pass two jump basic blocks!");
+        // 如果 < 是作为 if while 的判断条件 应该有两个跳转口
+        ast_node *left = ir_visit_astnode(node->sons[0], {});
+        if (left == nullptr)
+            return false;
+        ast_node *right = ir_visit_astnode(node->sons[1], {});
+        if (right == nullptr)
+            return false;
+        ICmpInstPtr icmp = ICmpInst::create(Opcode::LtIntegr, left->value, right->value, getCurBlock());
+        node->value = icmp;
+        BranchInstPtr br = BranchInst::get(icmp, blocks[0], blocks[1]);
+        getCurBlock()->AddInstBack(br); // 跳转指令
+        transmitBlocks.pop_front();
+        curUsedBlockIter = std::next(curUsedBlockIter);
+    }
     return true;
 }
 
@@ -583,7 +782,8 @@ bool IRGen::ir_leafNode_array(ast_node *node, LabelParams blocks)
             std::cout << ">>>Error:the array variable " << name << " is not declared! line:" << node->literal_val.line_no << std::endl;
             return false;
         }
-        node->value = val;
+        // node->value = val;
+        // 下面获取索引对应的偏移
     }
 
     return true;

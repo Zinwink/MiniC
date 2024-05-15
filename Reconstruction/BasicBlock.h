@@ -110,6 +110,10 @@ public:
     /// @param pos
     void insertInst(InstPtr inst, InstIterator posFront);
 
+    /// @brief 判断基本块是否完整
+    /// @return
+    bool isCompleted();
+
     /// @brief 得到基本块指针
     /// @param _parent
     /// @return
@@ -122,8 +126,8 @@ public:
     static BasicBlockPtr get(FuncPtr _parent, string _name);
 
     /// @brief 获取一个Block的文本表示
-    /// @param block 
-    /// @param cnt 
-    /// @return 
+    /// @param block
+    /// @param cnt
+    /// @return
     static string toIRstr(BasicBlockPtr block, Counter *cnt);
 };

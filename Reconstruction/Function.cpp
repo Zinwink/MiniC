@@ -91,6 +91,14 @@ void Function::insertBBlock(BasicBlockPtr block, BasicBlockPtr AtFront)
     }
 }
 
+/// @brief 在指定迭代器处插入BasciBlock (无检查)
+/// @param block 基本块列表
+/// @param iter 插入位置
+void Function::insertBBlock(LabelParams blocks, bblockIter iter)
+{
+    BlocksList.insert(iter, blocks.begin(), blocks.end());
+}
+
 /// @brief 获取函数的入口Block
 /// @return
 BasicBlockPtr &Function::getEntryBlock()
@@ -132,6 +140,11 @@ string Function::toIRstr(FuncPtr fun, Counter *cnt)
         }
     }
     str += string(") {\n");
+    for (auto &blk : fun->getBasicBlocks())
+    {
+        // 按顺序先为每个Label编号
+        getllvmID(blk, cnt);
+    }
     for (auto &blk : fun->getBasicBlocks())
     {
         str += BasicBlock::toIRstr(blk, cnt);

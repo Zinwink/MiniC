@@ -67,7 +67,7 @@ void Module::printIR(string filePath)
         for (auto &fun : funcList)
         {
             string str = Function::toIRstr(fun, cnt);
-            cnt->reset();  //翻译玩一个函数后重置
+            cnt->reset(); // 翻译玩一个函数后重置
             file << str;
             file << "\n";
         }
@@ -92,9 +92,18 @@ int64_t Counter::getCount(ValPtr val)
     }
     else
     { // 没到该编号
-        ord = ValCount;
-        countMap.emplace(val, ord); // 插入该记录
-        ValCount++;
+        if (val->getSubclassID() == Value::BasicBlockVal)
+        {
+            ord = LabelCount;
+            countMap.emplace(val, ord); // 插入该记录
+            LabelCount++;
+        }
+        else
+        {
+            ord = ValCount;
+            countMap.emplace(val, ord); // 插入该记录
+            ValCount++;
+        }
     }
     return ord;
 }

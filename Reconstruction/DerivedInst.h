@@ -227,6 +227,17 @@ public:
     /// @param val
     /// @return
     static RetInstPtr get(ValPtr val);
+
+    /// @brief 在atBack后创建RetInst  一个函数只有一个retInst
+    /// @param atBack
+    /// @return
+    static RetInstPtr create(BasicBlockPtr atBack);
+
+    /// @brief
+    /// @param val
+    /// @param atBack
+    /// @return
+    static RetInstPtr create(ValPtr val, BasicBlockPtr atBack);
 };
 
 class CallInst : public Instruction
@@ -278,6 +289,14 @@ public:
     /// @param val2
     /// @return
     static ICmpInstPtr get(Opcode _op, ValPtr val1, ValPtr val2);
+
+    /// @brief 带有判断条件的 比较语句 主要判断 val1,val2 是不是allocaInst(allocaInst是地址，需要load)
+    /// @param _op
+    /// @param val1
+    /// @param val2
+    /// @param atBack
+    /// @return
+    static ICmpInstPtr create(Opcode _op, ValPtr val1, ValPtr val2, BasicBlockPtr atBack);
 };
 
 /// @brief 无条件跳转

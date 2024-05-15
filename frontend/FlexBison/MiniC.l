@@ -52,7 +52,7 @@ white_line  [\r\n]
     printf("Line %d: Unterminated comment\n",yylineno);
     return 1190;  //词法识别错误
 }
-"//".*\n    {
+"//".*(\n)?    {
     ;   //忽略行注释
 }
 

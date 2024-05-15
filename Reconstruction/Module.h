@@ -63,7 +63,8 @@ public:
 class Counter
 {
 private:
-    int64_t ValCount = 0;                         // Value编号  Value是基类
+    int64_t ValCount = 0; // Value编号 不对BasicBlock编号 BasicBlock是Label
+    int64_t LabelCount = 0;
     std::unordered_map<ValPtr, int64_t> countMap; // 用于查找已有的编号
 public:
     /// @brief 析构函数

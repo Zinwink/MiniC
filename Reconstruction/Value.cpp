@@ -52,7 +52,7 @@ string getllvmID(ValPtr val, Counter *cnt)
         else
         {
             int64_t ord = cnt->getCount(val);
-            str = string("%") + std::to_string(ord);
+            str = string("%L") + std::to_string(ord);
         }
     }
     else if (val->getSubclassID() == Value::Constant)

@@ -95,6 +95,10 @@ public:
     /// @return
     string getOpcodeName();
 
+    /// @brief 判断是否是分支指令
+    /// @return
+    bool isBranchInst();
+
     /// @brief 获取指令的字符串翻译
     /// @param inst
     /// @param cnt
@@ -136,3 +140,15 @@ string RetInstStr(InstPtr ret, Counter *cnt);
 /// @param cnt
 /// @return
 string CallInstStr(InstPtr call, Counter *cnt);
+
+/// @brief branchInst输出文本
+/// @param br
+/// @param cnt
+/// @return
+string BranchInstStr(InstPtr br, Counter *cnt);
+
+/// @brief 比较语句文本
+/// @param icmp
+/// @param cnt
+/// @return
+string ICmpInstStr(InstPtr icmp, Counter *cnt);

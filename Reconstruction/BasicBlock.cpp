@@ -68,6 +68,25 @@ void BasicBlock::insertInst(InstPtr inst, InstPtr AtFront)
     }
 }
 
+/// @brief 判断基本块是否完整
+/// @return
+bool BasicBlock::isCompleted()
+{
+    // 无指令
+    if (InstLists.size() == 0)
+    {
+        return false;
+    }
+    else
+    {
+        if (InstLists.back()->isBranchInst())
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 /// @brief 获取一个Block的文本表示
 /// @param block
 /// @param cnt
@@ -82,7 +101,7 @@ string BasicBlock::toIRstr(BasicBlockPtr block, Counter *cnt)
     else
     {
         int id = cnt->getCount(block);
-        str = std::to_string(id);
+        str = string("L") + std::to_string(id);
     }
 
     str += string(":");

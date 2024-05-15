@@ -19,6 +19,7 @@ class BasicBlock;
 class Function;
 using FuncPtr = std::shared_ptr<Function>;
 using bblockIter = std::list<BasicBlockPtr>::iterator;
+using LabelParams = std::vector<BasicBlockPtr>;
 
 class Function : public Value
 {
@@ -92,6 +93,11 @@ public:
     /// @param AtFront
     void insertBBlock(BasicBlockPtr block, BasicBlockPtr AtFront);
 
+    /// @brief 在指定迭代器处插入BasciBlocks  (无检查)
+    /// @param blocks  基本块列表
+    /// @param iter 插入位置
+    void insertBBlock(LabelParams blocks, bblockIter iter);
+
     /// @brief 获取函数返回类型
     /// @return
     Type *getReturnTy();
@@ -109,9 +115,14 @@ public:
     /// @return
     BasicBlockPtr &getExitBlock();
 
+    /// @brief 获取AllocaLists
+    /// @return
+    std::list<InstPtr> &getAllocaLists() { return allocaLists; }
+
     /// @brief 插入allocaInst
     /// @param alloca
-    void insertAllocaInst(InstPtr alloca);
+    void
+    insertAllocaInst(InstPtr alloca);
 
     /// @brief  将AllocaInst加入到Entry入口
     void mergeAllocaToEntry()

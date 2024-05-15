@@ -55,12 +55,28 @@ string Instruction::getOpcodeName()
     case Opcode::ModInteger:
         name = string("mod");
         break;
+    case Opcode::GtInteger:
+        name = string("icmp sgt");
+        break;
+    case Opcode::EqInTeger:
+        name = string("icmp eq");
+        break;
+    case Opcode::LtIntegr:
+        name = string("icmp slt");
+        break;
 
     default:
-        name = string("Unknown");
+        name = string("UnknownOpcodeName");
         break;
     }
     return name;
+}
+
+/// @brief 判断是否是分支指令
+/// @return
+bool Instruction::isBranchInst()
+{
+    return op == Opcode::Goto || op == Opcode::ConditionBr;
 }
 
 /// @brief 获取指令的字符串翻译
@@ -93,6 +109,15 @@ string Instruction::toIRstr(InstPtr inst, Counter *cnt)
         break;
     case Opcode::Call:
         str = CallInstStr(inst, cnt);
+        break;
+    case Opcode::Goto:
+    case Opcode::ConditionBr:
+        str = BranchInstStr(inst, cnt);
+        break;
+    case Opcode::GtInteger:
+    case Opcode::LtIntegr:
+    case Opcode::EqInTeger:
+        str = ICmpInstStr(inst, cnt);
         break;
 
     default:
@@ -194,5 +219,42 @@ string CallInstStr(InstPtr call, Counter *cnt)
     {
         str = getllvmID(call, cnt) + string(" = ") + call->getOpcodeName() + string(" ") + call->getType()->TypeStr() + string(" ") + getllvmID(vfun, cnt) + string("(") + argsStr + string(")");
     }
+    return str;
+}
+
+/// @brief branchInst输出文本
+/// @param br
+/// @param cnt
+/// @return
+string BranchInstStr(InstPtr br, Counter *cnt)
+{
+    string str;
+    if (br->getOpcode() == Opcode::Goto)
+    {
+        // 无条件跳转
+        ValPtr ifTrue = br->getOperand(0); // br label %编号
+        str = br->getOpcodeName() + string(" label ") + getllvmID(ifTrue, cnt);
+    }
+    else
+    {
+        ValPtr cond = br->getOperand(0); // 条件
+        ValPtr ifTrue = br->getOperand(1);
+        ValPtr ifFalse = br->getOperand(2);
+        // 条件跳转
+        str = br->getOpcodeName() + string(" ") + cond->getType()->TypeStr() + string(" ") + getllvmID(cond, cnt) + string(", label ") + getllvmID(ifTrue, cnt) + string(", label ") + getllvmID(ifFalse, cnt);
+    }
+    return str;
+}
+
+/// @brief 比较语句文本
+/// @param icmp
+/// @param cnt
+/// @return
+string ICmpInstStr(InstPtr icmp, Counter *cnt)
+{
+    ValPtr left = icmp->getOperand(0);
+    ValPtr right = icmp->getOperand(1);
+    string str;
+    str = getllvmID(icmp, cnt) + string(" = ") + icmp->getOpcodeName() + string(" ") + left->getType()->TypeStr() + string(" ") + getllvmID(left, cnt) + string(", ") + getllvmID(right, cnt);
     return str;
 }
