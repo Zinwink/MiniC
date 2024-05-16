@@ -338,3 +338,5 @@ public:
     /// @return
     static BranchInstPtr get(ValPtr cond, ValPtr ifTrue, ValPtr ifFalse);
 };
+
+// class 

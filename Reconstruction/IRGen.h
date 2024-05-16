@@ -14,6 +14,7 @@
 #include "ScopeMg.h"
 #include "BasicBlock.h"
 #include "Module.h"
+#include <stack>
 class IRGen;
 using IRGenPtr = std::shared_ptr<IRGen>;
 using LabelParams = std::vector<BasicBlockPtr>;
@@ -32,6 +33,10 @@ private:
     std::list<BasicBlockPtr> transmitBlocks; // 传递基本快参数  基本快流
 
     bblockIter curUsedBlockIter; // 当前函数所使用的基本块指向迭代器(便于插入创建的基本块)
+
+    // 为了不改动大量代码  在此基础上实现 break, continue的翻译 故出此下策 使用两个栈维护  循环的入口 循环的出口， 以循环先进后出的形式实现对 break,continue翻译
+    std::stack<BasicBlockPtr> loopEntrys; // 循环入口 continue使用
+    std::stack<BasicBlockPtr> loopExits;  // 循环出口 break使用
 
 public:
     /// @brief 析构函数
@@ -100,6 +105,18 @@ private:
     /// @return
     bool ir_Dowhile_Stmt(ast_node *node, LabelParams blocks);
 
+    /// @brief 循环中 break语句的翻译
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_break(ast_node *node, LabelParams blocks);
+
+    /// @brief 循环中 continue语句的翻译
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_continue(ast_node *node, LabelParams blocks);
+
     /// @brief AST中block节点对应的函数操作
     /// @param node
     /// @return
@@ -124,6 +141,12 @@ private:
     /// @param node
     /// @return
     bool ir_assign(ast_node *node, LabelParams blocks);
+
+    /// @brief 取负号
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_Negative(ast_node *node, LabelParams blocks);
 
     /// @brief AST 加法操作节点对应的函数操作
     /// @param node
@@ -176,6 +199,24 @@ private:
     /// @param node
     /// @return
     bool ir_cmp_equal(ast_node *node, LabelParams blocks);
+
+    /// @brief AST  != 对应操作
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_cmp_notEqual(ast_node *node, LabelParams blocks);
+
+    /// @brief AST <=
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_cmp_lessEqual(ast_node *node, LabelParams blocks);
+
+    /// @brief AST  >=
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_cmp_greaterEqual(ast_node *node, LabelParams blocks);
 
     /// @brief 对于int字面量AST节点的操作 AST_LEAF_LITERAL_INT,
     /// @param node AST int字面量节点

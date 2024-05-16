@@ -31,6 +31,21 @@ std::string getNodeName(ast_node *node)
     case ast_node_type::AST_LEAF_VAR_ID:
         name = node->literal_val.digit.id;
         break;
+    case ast_node_type::AST_OP_NEG:
+        name = "negative";
+        break;
+    case ast_node_type::AST_OP_LEFT_SELF_SUB:
+        name = "left --";
+        break;
+    case ast_node_type::AST_OP_RIGHT_SELF_SUB:
+        name = "right --";
+        break;
+    case ast_node_type::AST_OP_LEFT_SELF_ADD:
+        name = "left ++";
+        break;
+    case ast_node_type::AST_OP_RIGHT_SELF_ADD:
+        name = "right ++";
+        break;
     case ast_node_type::AST_OP_ADD:
         name = "+";
         break;
@@ -84,6 +99,12 @@ std::string getNodeName(ast_node *node)
         break;
     case ast_node_type::AST_OP_RETURN_STATEMENT:
         name = "return";
+        break;
+    case ast_node_type::AST_OP_BREAK:
+        name = "break";
+        break;
+    case ast_node_type::AST_OP_CONTINUE:
+        name = "continue";
         break;
     case ast_node_type::AST_OP_FUNC_DEF:
         name = "func:" + std::string(node->literal_val.digit.id);

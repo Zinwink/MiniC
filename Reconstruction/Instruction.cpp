@@ -65,6 +65,16 @@ string Instruction::getOpcodeName()
         name = string("icmp slt");
         break;
 
+    case Opcode::GeInTeger:
+        name = string("icmp sge");
+        break;
+    case Opcode::LeInteger:
+        name = string("icmp sle");
+        break;
+    case Opcode::NotEqInteger:
+        name = string("icmp ne");
+        break;
+
     default:
         name = string("UnknownOpcodeName");
         break;
@@ -117,6 +127,9 @@ string Instruction::toIRstr(InstPtr inst, Counter *cnt)
     case Opcode::GtInteger:
     case Opcode::LtIntegr:
     case Opcode::EqInTeger:
+    case Opcode::GeInTeger:
+    case Opcode::LeInteger:
+    case Opcode::NotEqInteger:
         str = ICmpInstStr(inst, cnt);
         break;
 

@@ -502,18 +502,18 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  65
+#define YYFINAL  67
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   275
+#define YYLAST   274
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  39
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  28
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  82
+#define YYNRULES  83
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  166
+#define YYNSTATES  168
 
 /* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   293
@@ -569,12 +569,12 @@ static const yytype_int16 yyrline[] =
        0,    74,    74,    78,    81,    85,    91,    97,   107,   113,
      123,   129,   142,   145,   151,   156,   161,   171,   184,   188,
      195,   198,   204,   208,   212,   215,   218,   221,   224,   233,
-     236,   239,   242,   245,   251,   262,   278,   289,   301,   306,
-     309,   314,   317,   322,   325,   330,   333,   336,   342,   345,
-     348,   351,   354,   357,   363,   370,   378,   393,   412,   417,
-     422,   429,   436,   441,   450,   456,   460,   463,   469,   472,
-     475,   478,   484,   487,   493,   503,   508,   513,   516,   519,
-     526,   534,   537
+     236,   239,   244,   249,   255,   266,   282,   293,   305,   310,
+     313,   318,   321,   326,   329,   334,   337,   340,   346,   349,
+     352,   355,   358,   361,   367,   374,   382,   397,   416,   421,
+     426,   433,   440,   445,   454,   460,   464,   467,   473,   476,
+     479,   482,   488,   491,   498,   503,   522,   525,   528,   532,
+     538,   547,   555,   558
 };
 #endif
 
@@ -611,7 +611,7 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-88)
+#define YYPACT_NINF (-25)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -625,23 +625,23 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-     176,   -88,   -12,   -88,     2,    24,    28,    35,    33,    42,
-     242,    15,    55,    26,   198,    73,   154,   -88,   -88,   -88,
-     -88,   -88,   -88,    94,   103,   105,   -88,   -11,    71,   -88,
-       5,   -88,   111,    81,   -88,   -88,   125,    40,     6,    77,
-      82,   -88,   104,   132,    80,    84,   110,    73,    76,   -88,
-     104,   106,   -88,    73,   143,   143,   130,   -88,   -88,   -11,
-     -88,   220,   -88,   115,   117,   -88,   -88,   -88,   -88,    73,
-      73,    26,    26,    76,    76,    76,    76,    73,   147,    76,
-      76,    76,    76,    76,    73,   -88,   -88,    65,   119,   -88,
-      13,   143,   -88,    76,    22,   -88,    38,   118,   117,   -88,
-     122,   126,   120,   -88,   -88,   -88,   -88,   105,   -88,    71,
-      71,   -88,   -88,   -88,   -88,   138,   124,    81,    81,   -88,
-     -88,   -88,   139,   -88,    76,   -88,   159,   160,   152,    66,
-     -88,   -88,   -88,   152,    70,   152,    74,   242,   242,    73,
-     -88,   -88,   -88,   -88,   126,   104,   126,   104,   -88,   152,
-     116,   -88,   152,   -88,   152,   162,   -88,   150,   -88,   -88,
-     -88,   -88,   242,   148,   -88,   -88
+     156,   -25,     2,   -25,    65,    18,    45,    60,   -21,    29,
+     -17,   222,    -7,    48,    77,   178,   241,   102,   -25,   -25,
+     -25,   -25,   -25,   -25,    53,    69,    67,   -25,    54,   130,
+     -25,    -9,   -25,    97,    84,   -25,   -25,    91,    40,     4,
+     146,    83,   -25,   -25,    13,    94,   -25,    83,   115,    50,
+      99,   101,   241,   -25,   103,   241,   142,   142,   134,   -25,
+     -25,    54,   -25,   200,   -25,   124,   128,   -25,   -25,   -25,
+     -25,   241,   241,    77,    77,   146,   146,   146,   146,   241,
+     175,   146,   146,   146,   146,   146,   241,   -25,   -25,   -24,
+     144,   -25,   128,    17,   142,   -25,   146,    41,   -25,    66,
+     152,   -25,   154,   157,   161,   -25,   -25,   -25,   -25,    67,
+     -25,   130,   130,   -25,   -25,   -25,   -25,   164,   172,    84,
+      84,   -25,   -25,   -25,   176,   -25,   146,   -25,   212,   218,
+     192,   -10,   -25,   -25,   -25,   192,     5,   192,    24,   222,
+     222,   241,   -25,   -25,   -25,   -25,   157,    83,   157,    83,
+     -25,   192,   132,   -25,   192,   -25,   192,   208,   -25,   196,
+     -25,   -25,   -25,   -25,   222,   198,   -25,   -25
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -649,39 +649,39 @@ static const yytype_int16 yypact[] =
    means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       0,    75,    80,    76,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     2,    24,     4,
-      25,    26,    27,     0,    38,    39,    41,    44,    45,    28,
-      79,    48,    64,    65,    68,    72,    77,     0,     0,    80,
-       0,    56,    60,    58,    80,     0,     0,     0,     0,    23,
-      79,     0,    77,     0,     0,     0,     0,    31,    32,    43,
-      18,     0,    20,     0,    48,     1,     3,     5,    29,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,    74,    81,     0,     0,    62,
-       0,     0,    54,     0,     0,    55,     0,     0,     0,    22,
-       0,    80,     0,    19,    21,    53,    78,    40,    42,    46,
-      47,    49,    51,    50,    52,     0,     0,    66,    67,    70,
-      69,    71,     0,    73,     0,    61,     0,     0,     0,     0,
-      12,    57,    59,     0,     0,     0,     0,     0,     0,     0,
-      33,    63,    30,    82,    14,    16,    15,    17,     6,     0,
-       0,    10,     0,     8,     0,    34,    36,     0,     7,    13,
-      11,     9,     0,     0,    35,    37
+       0,    74,    81,    75,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     2,    24,
+       4,    25,    26,    27,     0,    38,    39,    41,    44,    45,
+      28,    78,    48,    64,    65,    68,    72,    76,     0,     0,
+       0,    78,    73,    76,    81,     0,    56,    60,    58,    81,
+       0,     0,     0,    23,     0,     0,     0,     0,     0,    31,
+      32,    43,    18,     0,    20,     0,    48,     1,     3,     5,
+      29,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,    80,    82,     0,
+       0,    62,     0,     0,     0,    54,     0,     0,    55,     0,
+       0,    22,     0,    81,     0,    19,    21,    53,    77,    40,
+      42,    46,    47,    49,    51,    50,    52,     0,     0,    66,
+      67,    70,    69,    71,     0,    79,     0,    61,     0,     0,
+       0,     0,    12,    57,    59,     0,     0,     0,     0,     0,
+       0,     0,    33,    63,    30,    83,    14,    16,    15,    17,
+       6,     0,     0,    10,     0,     8,     0,    34,    36,     0,
+       7,    13,    11,     9,     0,     0,    35,    37
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int16 yypgoto[] =
 {
-     -88,   -88,   182,    20,    49,   -87,   -88,     8,   -88,   -88,
-     -88,   -14,   -88,   123,   135,   187,    52,   -88,    -3,   121,
-       0,    12,   -88,    51,     1,   -88,     3,   -88
+     -25,   -25,   221,    27,   104,   117,   -25,     8,   -25,   -25,
+     -25,   -14,   -25,   180,   177,   243,    92,   -25,    -2,   165,
+       0,    12,   -25,   119,    28,   254,     3,   -25
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_uint8 yydefgoto[] =
 {
-       0,    16,    17,   129,   130,    18,    61,    19,    20,    21,
-      22,    23,    24,    25,    26,    27,    28,    29,    40,    41,
-      50,    31,    32,    33,    34,    35,    52,    87
+       0,    17,    18,   131,   132,    19,    63,    20,    21,    22,
+      23,    24,    25,    26,    27,    28,    29,    30,    45,    46,
+      41,    32,    33,    34,    35,    36,    43,    89
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -689,89 +689,89 @@ static const yytype_uint8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_uint8 yytable[] =
 {
-      30,    63,    45,    36,    42,    42,    39,    43,    43,    88,
-      30,    71,    72,    36,    30,    77,    30,    36,    56,    36,
-      51,    37,    62,    38,    67,   126,   127,    64,    44,     1,
-       2,     3,    46,    97,   126,   127,     1,     2,     3,   100,
-      78,   148,    89,     1,     2,     3,   151,   128,   153,    86,
-     126,   127,    45,    57,    42,    42,   133,    43,    43,    15,
-      98,    30,   158,   115,    36,   160,    48,   161,    47,   104,
-     122,    49,   135,    48,    85,    53,     1,     2,     3,     1,
-       2,     3,   119,   120,   121,   111,   112,   113,   114,    81,
-      82,    42,    83,    58,    43,    73,    74,    75,    76,   123,
-     149,    13,   124,   150,   152,   132,    15,   150,   154,    48,
-      90,   150,    38,    94,   134,    38,   136,    79,    80,    91,
-      92,    91,    95,   109,   110,   157,   145,   147,   126,   127,
-     117,   118,    68,    69,    70,    84,   143,    30,    30,    78,
-      36,    36,    93,    96,    99,   155,   156,   101,   102,   105,
-     116,   106,   137,   139,    65,   125,   138,     1,     2,     3,
-     141,    38,    30,   144,   146,    36,     4,     5,     6,     7,
-     164,     8,     9,    10,    11,    12,   140,   142,   162,     1,
-       2,     3,    13,    14,   163,    14,   165,    15,     4,     5,
-       6,     7,   107,     8,     9,    10,    11,    12,    66,   159,
-      59,     1,     2,     3,    13,   108,     0,    14,     0,    15,
-      54,    55,   131,     7,     0,     8,     9,    10,    11,    12,
-       0,     0,     0,     1,     2,     3,    13,     0,     0,    14,
-      60,    15,    54,    55,     0,     7,     0,     8,     9,    10,
-      11,    12,     0,     0,     0,     1,     2,     3,    13,     0,
-       0,    14,   103,    15,    54,    55,     0,     7,     0,     8,
-       9,    10,    11,    12,     0,     0,     0,     0,     0,     0,
-      13,     0,     0,    14,     0,    15
+      31,    79,    65,    37,    50,    47,    47,    90,    48,    48,
+     125,    31,    52,   126,    37,    31,    55,    31,    37,    58,
+      37,    54,    44,    64,   151,    69,    80,   152,    66,   128,
+     129,    59,     1,     2,     3,    38,     4,    39,   100,   154,
+      91,   102,   152,     1,     2,     3,    93,     4,    39,    49,
+      88,   130,    92,   128,   129,    50,    47,    47,   156,    48,
+      48,   152,    40,    31,    51,   117,    37,    53,     1,     2,
+       3,   106,   124,    40,    87,   135,    73,    74,   128,   129,
+       1,     2,     3,    97,     4,    39,    60,   113,   114,   115,
+     116,    70,    83,    84,    47,    85,    72,    48,    40,    71,
+     137,    86,    67,    81,    82,     1,     2,     3,   134,     4,
+      16,   121,   122,   123,     5,     6,     7,     8,    80,     9,
+      10,    11,    12,    13,   136,    96,   138,   159,   147,   149,
+      14,    94,    95,    15,    99,    16,    94,    98,   145,    31,
+      31,   101,    37,    37,   128,   129,   103,   157,   158,     1,
+       2,     3,   104,     4,    75,    76,    77,    78,   107,     1,
+       2,     3,   108,     4,    31,   111,   112,    37,     5,     6,
+       7,     8,   166,     9,    10,    11,    12,    13,   118,    40,
+     127,     1,     2,     3,    14,     4,   139,    15,   140,    16,
+      56,    57,    39,     8,   141,     9,    10,    11,    12,    13,
+     119,   120,   142,     1,     2,     3,    14,     4,   143,    15,
+      62,    16,    56,    57,   144,     8,   146,     9,    10,    11,
+      12,    13,   148,    15,   164,     1,     2,     3,    14,     4,
+     165,    15,   105,    16,    56,    57,   167,     8,    68,     9,
+      10,    11,    12,    13,     1,     2,     3,   150,     4,   110,
+      14,   109,   153,    15,   155,    16,   161,    61,    42,   133,
+       0,     0,     0,     0,     0,     0,     0,     0,   160,    14,
+       0,   162,     0,   163,    16
 };
 
 static const yytype_int16 yycheck[] =
 {
-       0,    15,     5,     0,     4,     5,     4,     4,     5,     3,
-      10,    22,    23,    10,    14,    10,    16,    14,    10,    16,
-       8,    33,    14,    35,    16,    12,    13,    15,     4,     3,
-       4,     5,     4,    47,    12,    13,     3,     4,     5,    53,
-      35,   128,    36,     3,     4,     5,   133,    34,   135,    37,
-      12,    13,    55,    38,    54,    55,    34,    54,    55,    33,
-      48,    61,   149,    77,    61,   152,    33,   154,    33,    61,
-      84,    38,    34,    33,    34,    33,     3,     4,     5,     3,
-       4,     5,    81,    82,    83,    73,    74,    75,    76,     8,
-       9,    91,    11,    38,    91,    24,    25,    26,    27,    34,
-      34,    28,    37,    37,    34,    93,    33,    37,    34,    33,
-      33,    37,    35,    33,    94,    35,    96,     6,     7,    37,
-      38,    37,    38,    71,    72,   139,   126,   127,    12,    13,
-      79,    80,    38,    30,    29,    10,   124,   137,   138,    35,
-     137,   138,    10,    33,    38,   137,   138,     4,    18,    34,
-       3,    34,    34,    33,     0,    36,    34,     3,     4,     5,
-      36,    35,   162,     4,     4,   162,    12,    13,    14,    15,
-     162,    17,    18,    19,    20,    21,    38,    38,    16,     3,
-       4,     5,    28,    31,    34,    31,    38,    33,    12,    13,
-      14,    15,    69,    17,    18,    19,    20,    21,    16,   150,
-      13,     3,     4,     5,    28,    70,    -1,    31,    -1,    33,
-      12,    13,    91,    15,    -1,    17,    18,    19,    20,    21,
-      -1,    -1,    -1,     3,     4,     5,    28,    -1,    -1,    31,
-      32,    33,    12,    13,    -1,    15,    -1,    17,    18,    19,
-      20,    21,    -1,    -1,    -1,     3,     4,     5,    28,    -1,
-      -1,    31,    32,    33,    12,    13,    -1,    15,    -1,    17,
-      18,    19,    20,    21,    -1,    -1,    -1,    -1,    -1,    -1,
-      28,    -1,    -1,    31,    -1,    33
+       0,    10,    16,     0,     6,     5,     6,     3,     5,     6,
+      34,    11,    33,    37,    11,    15,    33,    17,    15,    11,
+      17,     9,     4,    15,    34,    17,    35,    37,    16,    12,
+      13,    38,     3,     4,     5,    33,     7,    35,    52,    34,
+      36,    55,    37,     3,     4,     5,    33,     7,    35,     4,
+      38,    34,    40,    12,    13,    57,    56,    57,    34,    56,
+      57,    37,    33,    63,     4,    79,    63,    38,     3,     4,
+       5,    63,    86,    33,    34,    34,    22,    23,    12,    13,
+       3,     4,     5,    33,     7,    35,    38,    75,    76,    77,
+      78,    38,     8,     9,    94,    11,    29,    94,    33,    30,
+      34,    10,     0,     6,     7,     3,     4,     5,    96,     7,
+      33,    83,    84,    85,    12,    13,    14,    15,    35,    17,
+      18,    19,    20,    21,    97,    10,    99,   141,   128,   129,
+      28,    37,    38,    31,    33,    33,    37,    38,   126,   139,
+     140,    38,   139,   140,    12,    13,     4,   139,   140,     3,
+       4,     5,    18,     7,    24,    25,    26,    27,    34,     3,
+       4,     5,    34,     7,   164,    73,    74,   164,    12,    13,
+      14,    15,   164,    17,    18,    19,    20,    21,     3,    33,
+      36,     3,     4,     5,    28,     7,    34,    31,    34,    33,
+      12,    13,    35,    15,    33,    17,    18,    19,    20,    21,
+      81,    82,    38,     3,     4,     5,    28,     7,    36,    31,
+      32,    33,    12,    13,    38,    15,     4,    17,    18,    19,
+      20,    21,     4,    31,    16,     3,     4,     5,    28,     7,
+      34,    31,    32,    33,    12,    13,    38,    15,    17,    17,
+      18,    19,    20,    21,     3,     4,     5,   130,     7,    72,
+      28,    71,   135,    31,   137,    33,   152,    14,     4,    94,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,   151,    28,
+      -1,   154,    -1,   156,    33
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
    state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,     3,     4,     5,    12,    13,    14,    15,    17,    18,
-      19,    20,    21,    28,    31,    33,    40,    41,    44,    46,
-      47,    48,    49,    50,    51,    52,    53,    54,    55,    56,
-      59,    60,    61,    62,    63,    64,    65,    33,    35,     4,
-      57,    58,    59,    65,     4,    57,     4,    33,    33,    38,
-      59,    60,    65,    33,    12,    13,    46,    38,    38,    54,
-      32,    45,    46,    50,    60,     0,    41,    46,    38,    30,
-      29,    22,    23,    24,    25,    26,    27,    10,    35,     6,
-       7,     8,     9,    11,    10,    34,    60,    66,     3,    36,
-      33,    37,    38,    10,    33,    38,    33,    50,    60,    38,
-      50,     4,    18,    32,    46,    34,    34,    52,    53,    55,
-      55,    60,    60,    60,    60,    50,     3,    62,    62,    63,
-      63,    63,    50,    34,    37,    36,    12,    13,    34,    42,
-      43,    58,    60,    34,    42,    34,    42,    34,    34,    33,
-      38,    36,    38,    60,     4,    59,     4,    59,    44,    34,
-      37,    44,    34,    44,    34,    46,    46,    50,    44,    43,
-      44,    44,    16,    34,    46,    38
+       0,     3,     4,     5,     7,    12,    13,    14,    15,    17,
+      18,    19,    20,    21,    28,    31,    33,    40,    41,    44,
+      46,    47,    48,    49,    50,    51,    52,    53,    54,    55,
+      56,    59,    60,    61,    62,    63,    64,    65,    33,    35,
+      33,    59,    64,    65,     4,    57,    58,    59,    65,     4,
+      57,     4,    33,    38,    60,    33,    12,    13,    46,    38,
+      38,    54,    32,    45,    46,    50,    60,     0,    41,    46,
+      38,    30,    29,    22,    23,    24,    25,    26,    27,    10,
+      35,     6,     7,     8,     9,    11,    10,    34,    60,    66,
+       3,    36,    60,    33,    37,    38,    10,    33,    38,    33,
+      50,    38,    50,     4,    18,    32,    46,    34,    34,    52,
+      53,    55,    55,    60,    60,    60,    60,    50,     3,    62,
+      62,    63,    63,    63,    50,    34,    37,    36,    12,    13,
+      34,    42,    43,    58,    60,    34,    42,    34,    42,    34,
+      34,    33,    38,    36,    38,    60,     4,    59,     4,    59,
+      44,    34,    37,    44,    34,    44,    34,    46,    46,    50,
+      44,    43,    44,    44,    16,    34,    46,    38
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
@@ -784,8 +784,8 @@ static const yytype_int8 yyr1[] =
       51,    52,    52,    53,    53,    54,    54,    54,    55,    55,
       55,    55,    55,    55,    56,    56,    57,    57,    58,    58,
       58,    59,    59,    59,    60,    61,    61,    61,    62,    62,
-      62,    62,    63,    63,    63,    64,    64,    64,    64,    64,
-      65,    66,    66
+      62,    62,    63,    63,    64,    64,    64,    64,    64,    64,
+      64,    65,    66,    66
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
@@ -798,8 +798,8 @@ static const yytype_int8 yyr2[] =
        3,     1,     3,     2,     1,     1,     3,     3,     1,     3,
        3,     3,     3,     3,     3,     3,     1,     3,     1,     3,
        1,     4,     3,     4,     1,     1,     3,     3,     1,     3,
-       3,     3,     1,     4,     3,     1,     1,     1,     3,     1,
-       1,     1,     3
+       3,     3,     1,     2,     1,     1,     1,     3,     1,     4,
+       3,     1,     1,     3
 };
 
 
@@ -1551,29 +1551,33 @@ yyreduce:
   case 31: /* Statement: "break" ";"  */
 #line 239 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
               {
-    ; // break语句
+    (yyval.node)=new_ast_leaf_node(*(yyvsp[-1].literal),ast_node_type::AST_OP_BREAK);
+    delete (yyvsp[-1].literal); //释放内存
+    (yyvsp[-1].literal)=nullptr;
 }
-#line 1557 "MiniCBison.cpp"
+#line 1559 "MiniCBison.cpp"
     break;
 
   case 32: /* Statement: "continue" ";"  */
-#line 242 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 244 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                  {
-    ;  //continue语句
+    (yyval.node)=new_ast_leaf_node(*(yyvsp[-1].literal),ast_node_type::AST_OP_CONTINUE);  //continue语句
+    delete (yyvsp[-1].literal); //释放内存
+    (yyvsp[-1].literal)=nullptr;
 }
-#line 1565 "MiniCBison.cpp"
+#line 1569 "MiniCBison.cpp"
     break;
 
   case 33: /* Statement: Array "=" Condition ";"  */
-#line 245 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 249 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                          {
     (yyval.node)=new_ast_node(ast_node_type::AST_OP_ASSIGN,{(yyvsp[-3].node),(yyvsp[-1].node)});
 }
-#line 1573 "MiniCBison.cpp"
+#line 1577 "MiniCBison.cpp"
     break;
 
   case 34: /* IfStmt: "if" "(" Condition ")" Statement  */
-#line 251 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 255 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                                           {
     // statement 可以是block,也可以是单条语句，为了方便处理，这里需要进行判断，在AST抽象语法树上统一显示block
     if((yyvsp[0].node)->node_type!=ast_node_type::AST_OP_BLOCK){
@@ -1585,11 +1589,11 @@ yyreduce:
         (yyval.node)=new_ast_node(ast_node_type::AST_OP_IFSTMT,{(yyvsp[-2].node),(yyvsp[0].node)});
     }
 }
-#line 1589 "MiniCBison.cpp"
+#line 1593 "MiniCBison.cpp"
     break;
 
   case 35: /* IfStmt: "if" "(" Condition ")" Statement "else" Statement  */
-#line 262 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 266 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                                                     {
     if((yyvsp[-2].node)->node_type!=ast_node_type::AST_OP_BLOCK){
         // statement不是  Block类型，为了统一翻译  套上一层block
@@ -1603,11 +1607,11 @@ yyreduce:
     }
     (yyval.node)=new_ast_node(ast_node_type::AST_OP_IFSTMT,{(yyvsp[-4].node),(yyvsp[-2].node),(yyvsp[0].node)});
 }
-#line 1607 "MiniCBison.cpp"
+#line 1611 "MiniCBison.cpp"
     break;
 
   case 36: /* WhileStmt: "while" "(" Condition ")" Statement  */
-#line 278 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 282 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                                                 {
     if((yyvsp[0].node)->node_type!=ast_node_type::AST_OP_BLOCK){
         // statement不是  Block类型，为了统一翻译  套上一层block
@@ -1616,11 +1620,11 @@ yyreduce:
     }
     (yyval.node)=new_ast_node(ast_node_type::AST_OP_WHILESTMT,{(yyvsp[-2].node),(yyvsp[0].node)});
 }
-#line 1620 "MiniCBison.cpp"
+#line 1624 "MiniCBison.cpp"
     break;
 
   case 37: /* DowhileStmt: "do" Statement "while" "(" Condition ")" ";"  */
-#line 289 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 293 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                                                            {
      if((yyvsp[-5].node)->node_type!=ast_node_type::AST_OP_BLOCK){
         // statement不是  Block类型，为了统一翻译  套上一层block
@@ -1629,139 +1633,139 @@ yyreduce:
     }
     (yyval.node)=new_ast_node(ast_node_type::AST_OP_DOWHILESTMT,{(yyvsp[-5].node),(yyvsp[-2].node)});
 }
-#line 1633 "MiniCBison.cpp"
+#line 1637 "MiniCBison.cpp"
     break;
 
   case 38: /* Condition: OrCond  */
-#line 301 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 305 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                    {
     (yyval.node)=(yyvsp[0].node);
 }
-#line 1641 "MiniCBison.cpp"
+#line 1645 "MiniCBison.cpp"
     break;
 
   case 39: /* OrCond: AndCond  */
-#line 306 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 310 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                  {
     (yyval.node)=(yyvsp[0].node);
 }
-#line 1649 "MiniCBison.cpp"
+#line 1653 "MiniCBison.cpp"
     break;
 
   case 40: /* OrCond: OrCond "||" AndCond  */
-#line 309 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 313 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                       {
    (yyval.node)=new_ast_node(ast_node_type::AST_OP_COND_OR,{(yyvsp[-2].node),(yyvsp[0].node)});
 }
-#line 1657 "MiniCBison.cpp"
+#line 1661 "MiniCBison.cpp"
     break;
 
   case 41: /* AndCond: NotCond  */
-#line 314 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 318 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                   {
   (yyval.node)=(yyvsp[0].node);
 }
-#line 1665 "MiniCBison.cpp"
+#line 1669 "MiniCBison.cpp"
     break;
 
   case 42: /* AndCond: AndCond "&&" NotCond  */
-#line 317 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 321 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                        {
    (yyval.node)=new_ast_node(ast_node_type::AST_OP_COND_AND,{(yyvsp[-2].node),(yyvsp[0].node)});
 }
-#line 1673 "MiniCBison.cpp"
+#line 1677 "MiniCBison.cpp"
     break;
 
   case 43: /* NotCond: "!" EquCondTerm  */
-#line 322 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 326 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                           {
   (yyval.node)=new_ast_node(ast_node_type::AST_OP_COND_NOT,{(yyvsp[0].node)});
 }
-#line 1681 "MiniCBison.cpp"
+#line 1685 "MiniCBison.cpp"
     break;
 
   case 44: /* NotCond: EquCondTerm  */
-#line 325 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 329 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
               {
   (yyval.node)=(yyvsp[0].node);
 }
-#line 1689 "MiniCBison.cpp"
+#line 1693 "MiniCBison.cpp"
     break;
 
   case 45: /* EquCondTerm: LessCondTerm  */
-#line 330 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 334 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                            {
    (yyval.node)=(yyvsp[0].node);
 }
-#line 1697 "MiniCBison.cpp"
+#line 1701 "MiniCBison.cpp"
     break;
 
   case 46: /* EquCondTerm: EquCondTerm "==" LessCondTerm  */
-#line 333 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 337 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                                 {
    (yyval.node)=new_ast_node(ast_node_type::AST_OP_COND_EQU,{(yyvsp[-2].node),(yyvsp[0].node)});
 }
-#line 1705 "MiniCBison.cpp"
+#line 1709 "MiniCBison.cpp"
     break;
 
   case 47: /* EquCondTerm: EquCondTerm "!=" LessCondTerm  */
-#line 336 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 340 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                                 {
     (yyval.node)=new_ast_node(ast_node_type::AST_OP_COND_NOTEQU,{(yyvsp[-2].node),(yyvsp[0].node)});
 }
-#line 1713 "MiniCBison.cpp"
+#line 1717 "MiniCBison.cpp"
     break;
 
   case 48: /* LessCondTerm: Expr  */
-#line 342 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 346 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                     {
    (yyval.node)=(yyvsp[0].node);
 }
-#line 1721 "MiniCBison.cpp"
+#line 1725 "MiniCBison.cpp"
     break;
 
   case 49: /* LessCondTerm: LessCondTerm "<" Expr  */
-#line 345 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 349 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                         {
    (yyval.node)=new_ast_node(ast_node_type::AST_OP_COND_LESS,{(yyvsp[-2].node),(yyvsp[0].node)});
 }
-#line 1729 "MiniCBison.cpp"
+#line 1733 "MiniCBison.cpp"
     break;
 
   case 50: /* LessCondTerm: LessCondTerm "<=" Expr  */
-#line 348 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 352 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                          {
    (yyval.node)=new_ast_node(ast_node_type::AST_OP_COND_LESSEQU,{(yyvsp[-2].node),(yyvsp[0].node)});
 }
-#line 1737 "MiniCBison.cpp"
+#line 1741 "MiniCBison.cpp"
     break;
 
   case 51: /* LessCondTerm: LessCondTerm ">" Expr  */
-#line 351 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 355 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                         {
   (yyval.node)=new_ast_node(ast_node_type::AST_OP_COND_GREATER,{(yyvsp[-2].node),(yyvsp[0].node)});
 }
-#line 1745 "MiniCBison.cpp"
+#line 1749 "MiniCBison.cpp"
     break;
 
   case 52: /* LessCondTerm: LessCondTerm ">=" Expr  */
-#line 354 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 358 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                          {
   (yyval.node)=new_ast_node(ast_node_type::AST_OP_COND_GREATEREQU,{(yyvsp[-2].node),(yyvsp[0].node)});
 }
-#line 1753 "MiniCBison.cpp"
+#line 1757 "MiniCBison.cpp"
     break;
 
   case 53: /* LessCondTerm: "(" Condition ")"  */
-#line 357 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 361 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                     {
   (yyval.node)=(yyvsp[-1].node);
 }
-#line 1761 "MiniCBison.cpp"
+#line 1765 "MiniCBison.cpp"
     break;
 
   case 54: /* Declare: "int" DeclareItems ";"  */
-#line 363 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 367 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                                 {
     // 先指明DeclareItems下的值类型 ValueType  
     (yyvsp[-1].node)->attr=Type::getIntNType(32);
@@ -1769,21 +1773,21 @@ yyreduce:
     updateDeclTypes((yyvsp[-1].node)); //更新神名的变量 数组类型
 
 }
-#line 1773 "MiniCBison.cpp"
+#line 1777 "MiniCBison.cpp"
     break;
 
   case 55: /* Declare: "float" DeclareItems ";"  */
-#line 370 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 374 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                           {
     (yyvsp[-1].node)->attr=Type::getFloatType();
     (yyval.node)=(yyvsp[-1].node);
     updateDeclTypes((yyvsp[-1].node)); 
 }
-#line 1783 "MiniCBison.cpp"
+#line 1787 "MiniCBison.cpp"
     break;
 
   case 56: /* DeclareItems: DeclareItem  */
-#line 378 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 382 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                           {  
     if((yyvsp[0].node)->node_type==ast_node_type::AST_LEAF_VAR_ID){
         // $1->attr=$$->attr;
@@ -1799,11 +1803,11 @@ yyreduce:
         (yyval.node)=new_ast_node(ast_node_type::AST_OP_DECL_ITEMS,{left,(yyvsp[0].node)});
     }
 }
-#line 1803 "MiniCBison.cpp"
+#line 1807 "MiniCBison.cpp"
     break;
 
   case 57: /* DeclareItems: DeclareItems "," DeclareItem  */
-#line 393 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 397 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                               {
     if((yyvsp[0].node)->node_type==ast_node_type::AST_LEAF_VAR_ID){
         // $3->attr=$$->attr;
@@ -1821,39 +1825,39 @@ yyreduce:
     }
     
 }
-#line 1825 "MiniCBison.cpp"
+#line 1829 "MiniCBison.cpp"
     break;
 
   case 58: /* DeclareItem: var  */
-#line 412 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 416 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                  {
     // 无动作
     // $$=new_ast_node(ast_node_type::AST_OP_DECL_ITEM,1,$1);
     (yyval.node)=(yyvsp[0].node);
 }
-#line 1835 "MiniCBison.cpp"
+#line 1839 "MiniCBison.cpp"
     break;
 
   case 59: /* DeclareItem: var "=" Expr  */
-#line 417 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 421 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                {
     ast_node* node=new_ast_node(ast_node_type::AST_OP_ASSIGN,{(yyvsp[-2].node),(yyvsp[0].node)});
     (yyval.node)=node;
     // $$ = new_ast_node(ast_node_type::AST_OP_DECL_ITEM,1,node);
 }
-#line 1845 "MiniCBison.cpp"
+#line 1849 "MiniCBison.cpp"
     break;
 
   case 60: /* DeclareItem: Array  */
-#line 422 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 426 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
        {
     (yyval.node)=(yyvsp[0].node);
 }
-#line 1853 "MiniCBison.cpp"
+#line 1857 "MiniCBison.cpp"
     break;
 
   case 61: /* Array: DIGIT_ID "[" DIGIT_INT "]"  */
-#line 429 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 433 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                                  {
     (yyval.node)=new_ast_leaf_node(*(yyvsp[-3].literal),ast_node_type::AST_LEAF_ARRAY);
     int num=(yyvsp[-1].literal)->digit.int32_digit;
@@ -1861,198 +1865,206 @@ yyreduce:
     delete (yyvsp[-1].literal);
     (yyvsp[-1].literal)=nullptr;
 }
-#line 1865 "MiniCBison.cpp"
+#line 1869 "MiniCBison.cpp"
     break;
 
   case 62: /* Array: DIGIT_ID "[" "]"  */
-#line 436 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 440 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                    {
     (yyval.node)=new_ast_leaf_node(*(yyvsp[-2].literal),ast_node_type::AST_LEAF_ARRAY);
     int num=-1;
     (yyval.node)->ArraydimOrd.push_back(num);
 }
-#line 1875 "MiniCBison.cpp"
+#line 1879 "MiniCBison.cpp"
     break;
 
   case 63: /* Array: Array "[" DIGIT_INT "]"  */
-#line 441 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 445 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                          {
     int num=(yyvsp[-1].literal)->digit.int32_digit;
     (yyval.node)->ArraydimOrd.push_back(num);  //目前还不知道节点类型，所以都加入数值
     delete (yyvsp[-1].literal);
     (yyvsp[-1].literal)=nullptr;
 }
-#line 1886 "MiniCBison.cpp"
+#line 1890 "MiniCBison.cpp"
     break;
 
   case 64: /* Expr: AddExpr  */
-#line 450 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 454 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                {
     (yyval.node)=(yyvsp[0].node);
 }
-#line 1894 "MiniCBison.cpp"
+#line 1898 "MiniCBison.cpp"
     break;
 
   case 65: /* AddExpr: MulExpr  */
-#line 456 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 460 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                  {
     // MulExpr可以推导得到UnaryExpr  这样写保证乘除取余的优先级
     (yyval.node)=(yyvsp[0].node);
 }
-#line 1903 "MiniCBison.cpp"
+#line 1907 "MiniCBison.cpp"
     break;
 
   case 66: /* AddExpr: AddExpr "+" MulExpr  */
-#line 460 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 464 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                       {
     (yyval.node)=new_ast_node(ast_node_type::AST_OP_ADD,{(yyvsp[-2].node),(yyvsp[0].node)});
 }
-#line 1911 "MiniCBison.cpp"
+#line 1915 "MiniCBison.cpp"
     break;
 
   case 67: /* AddExpr: AddExpr "-" MulExpr  */
-#line 463 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 467 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                       {
     (yyval.node)=new_ast_node(ast_node_type::AST_OP_SUB,{(yyvsp[-2].node),(yyvsp[0].node)});
 }
-#line 1919 "MiniCBison.cpp"
+#line 1923 "MiniCBison.cpp"
     break;
 
   case 68: /* MulExpr: UnaryExpr  */
-#line 469 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 473 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                     {
     (yyval.node)=(yyvsp[0].node);
 }
-#line 1927 "MiniCBison.cpp"
+#line 1931 "MiniCBison.cpp"
     break;
 
   case 69: /* MulExpr: MulExpr "*" UnaryExpr  */
-#line 472 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 476 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                         {
     (yyval.node)=new_ast_node(ast_node_type::AST_OP_MUL,{(yyvsp[-2].node),(yyvsp[0].node)});
 }
-#line 1935 "MiniCBison.cpp"
+#line 1939 "MiniCBison.cpp"
     break;
 
   case 70: /* MulExpr: MulExpr "/" UnaryExpr  */
-#line 475 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 479 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                         {
     (yyval.node)=new_ast_node(ast_node_type::AST_OP_DIV,{(yyvsp[-2].node),(yyvsp[0].node)});
 }
-#line 1943 "MiniCBison.cpp"
+#line 1947 "MiniCBison.cpp"
     break;
 
   case 71: /* MulExpr: MulExpr "%" UnaryExpr  */
-#line 478 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 482 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                         {
     (yyval.node)=new_ast_node(ast_node_type::AST_OP_MOD,{(yyvsp[-2].node),(yyvsp[0].node)});
 }
-#line 1951 "MiniCBison.cpp"
+#line 1955 "MiniCBison.cpp"
     break;
 
   case 72: /* UnaryExpr: Term  */
-#line 484 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 488 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                  {
     (yyval.node)=(yyvsp[0].node);
 }
-#line 1959 "MiniCBison.cpp"
+#line 1963 "MiniCBison.cpp"
     break;
 
-  case 73: /* UnaryExpr: DIGIT_ID "(" FuncRealParams ")"  */
-#line 487 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
-                                  {
-    // 有参函数调用的值
-    (yyval.node)=create_fun_call(*(yyvsp[-3].literal),(yyvsp[-1].node));
-    delete (yyvsp[-3].literal); //释放内存
-    (yyvsp[-3].literal)=nullptr;
+  case 73: /* UnaryExpr: "-" Term  */
+#line 491 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+          {
+    (yyval.node)=new_ast_node(ast_node_type::AST_OP_NEG,{(yyvsp[0].node)});
 }
-#line 1970 "MiniCBison.cpp"
+#line 1971 "MiniCBison.cpp"
     break;
 
-  case 74: /* UnaryExpr: DIGIT_ID "(" ")"  */
-#line 493 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
-                   {
-    //无参函数调用的值
-    (yyval.node)=create_fun_call(*(yyvsp[-2].literal),nullptr);
-    delete (yyvsp[-2].literal); //释放内存
-    (yyvsp[-2].literal)=nullptr;
+  case 74: /* Term: DIGIT_INT  */
+#line 498 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+                 {
+    (yyval.node)=new_ast_leaf_node(*(yyvsp[0].literal),ast_node_type::AST_LEAF_LITERAL_INT);
+    delete (yyvsp[0].literal); //释放内存
+    (yyvsp[0].literal)=nullptr;
 }
 #line 1981 "MiniCBison.cpp"
     break;
 
-  case 75: /* Term: DIGIT_INT  */
+  case 75: /* Term: DIGIT_FLOAT  */
 #line 503 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
-                 {
-    (yyval.node)=new_ast_leaf_node(*(yyvsp[0].literal),ast_node_type::AST_LEAF_LITERAL_INT);
+              {
+    (yyval.node)=new_ast_leaf_node(*(yyvsp[0].literal),ast_node_type::AST_LEAF_LITERAL_FLOAT);
     delete (yyvsp[0].literal); //释放内存
     (yyvsp[0].literal)=nullptr;
 }
 #line 1991 "MiniCBison.cpp"
     break;
 
-  case 76: /* Term: DIGIT_FLOAT  */
-#line 508 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
-              {
-    (yyval.node)=new_ast_leaf_node(*(yyvsp[0].literal),ast_node_type::AST_LEAF_LITERAL_FLOAT);
-    delete (yyvsp[0].literal); //释放内存
-    (yyvsp[0].literal)=nullptr;
-}
-#line 2001 "MiniCBison.cpp"
-    break;
-
-  case 77: /* Term: var  */
-#line 513 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+  case 76: /* Term: var  */
+#line 522 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
       {
     (yyval.node)=(yyvsp[0].node);
 }
-#line 2009 "MiniCBison.cpp"
+#line 1999 "MiniCBison.cpp"
     break;
 
-  case 78: /* Term: "(" Expr ")"  */
-#line 516 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+  case 77: /* Term: "(" Expr ")"  */
+#line 525 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                {
     (yyval.node)=(yyvsp[-1].node);
 }
-#line 2017 "MiniCBison.cpp"
+#line 2007 "MiniCBison.cpp"
     break;
 
-  case 79: /* Term: Array  */
-#line 519 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+  case 78: /* Term: Array  */
+#line 528 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
         {
     // $1->ArrayDim.clear();
     (yyval.node)=(yyvsp[0].node);
 }
-#line 2026 "MiniCBison.cpp"
+#line 2016 "MiniCBison.cpp"
     break;
 
-  case 80: /* var: DIGIT_ID  */
-#line 526 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+  case 79: /* Term: DIGIT_ID "(" FuncRealParams ")"  */
+#line 532 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+                                  {
+    // 有参函数调用的值
+    (yyval.node)=create_fun_call(*(yyvsp[-3].literal),(yyvsp[-1].node));
+    delete (yyvsp[-3].literal); //释放内存
+    (yyvsp[-3].literal)=nullptr;
+}
+#line 2027 "MiniCBison.cpp"
+    break;
+
+  case 80: /* Term: DIGIT_ID "(" ")"  */
+#line 538 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+                   {
+    //无参函数调用的值
+    (yyval.node)=create_fun_call(*(yyvsp[-2].literal),nullptr);
+    delete (yyvsp[-2].literal); //释放内存
+    (yyvsp[-2].literal)=nullptr;
+}
+#line 2038 "MiniCBison.cpp"
+    break;
+
+  case 81: /* var: DIGIT_ID  */
+#line 547 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                {
     (yyval.node) = new_ast_leaf_node(*(yyvsp[0].literal),ast_node_type::AST_LEAF_VAR_ID);
     delete (yyvsp[0].literal); //释放内存
     (yyvsp[0].literal)=nullptr;
 }
-#line 2036 "MiniCBison.cpp"
+#line 2048 "MiniCBison.cpp"
     break;
 
-  case 81: /* FuncRealParams: Expr  */
-#line 534 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+  case 82: /* FuncRealParams: Expr  */
+#line 555 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                       {
     (yyval.node)=new_ast_node(ast_node_type::AST_OP_FUNC_REAL_PARAMS,{(yyvsp[0].node)});
 }
-#line 2044 "MiniCBison.cpp"
+#line 2056 "MiniCBison.cpp"
     break;
 
-  case 82: /* FuncRealParams: FuncRealParams "," Expr  */
-#line 537 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+  case 83: /* FuncRealParams: FuncRealParams "," Expr  */
+#line 558 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
                           {
     (yyval.node)=insert_ast_node((yyvsp[-2].node),(yyvsp[0].node));
 }
-#line 2052 "MiniCBison.cpp"
+#line 2064 "MiniCBison.cpp"
     break;
 
 
-#line 2056 "MiniCBison.cpp"
+#line 2068 "MiniCBison.cpp"
 
       default: break;
     }
@@ -2245,7 +2257,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 542 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 563 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
 
 
 // 语法分析时的错误信息

@@ -65,6 +65,8 @@ bool isLeafNodeType(ast_node_type _node_type)
     case ast_node_type::AST_LEAF_FUNC_FORMAL_PARAM:
     case ast_node_type::AST_LEAF_TYPE:
     case ast_node_type::AST_LEAF_ARRAY:
+    case ast_node_type::AST_OP_BREAK:
+    case ast_node_type::AST_OP_CONTINUE:
         isleaf = true;
         break;
     default:

@@ -59,21 +59,27 @@ IRGen::IRGen(ast_node *root, ModulePtr _module)
     ast2ir_handers[ast_node_type::AST_OP_ASSIGN] = &IRGen::ir_assign;
 
     // AST中的运算节点 + - *  / % 等等
+    ast2ir_handers[ast_node_type::AST_OP_NEG] = &IRGen::ir_Negative;
     ast2ir_handers[ast_node_type::AST_OP_ADD] = &IRGen::ir_add;
     ast2ir_handers[ast_node_type::AST_OP_SUB] = &IRGen::ir_sub;
     ast2ir_handers[ast_node_type::AST_OP_MUL] = &IRGen::ir_mul;
     ast2ir_handers[ast_node_type::AST_OP_DIV] = &IRGen::ir_div;
     ast2ir_handers[ast_node_type::AST_OP_MOD] = &IRGen::ir_mod;
 
-    // 条件相关的节点 if  while do while
+    // 条件相关的节点 if  while do while break continue
     ast2ir_handers[ast_node_type::AST_OP_IFSTMT] = &IRGen::ir_if_Stmt;
     ast2ir_handers[ast_node_type::AST_OP_WHILESTMT] = &IRGen::ir_while_Stmt;
+    ast2ir_handers[ast_node_type::AST_OP_BREAK] = &IRGen::ir_break;
+    ast2ir_handers[ast_node_type::AST_OP_CONTINUE] = &IRGen::ir_continue;
     ast2ir_handers[ast_node_type::AST_OP_DOWHILESTMT] = &IRGen::ir_Dowhile_Stmt;
     ast2ir_handers[ast_node_type::AST_OP_COND_OR] = &IRGen::ir_Cond_OR;   //  ||
     ast2ir_handers[ast_node_type::AST_OP_COND_AND] = &IRGen::ir_Cond_AND; // &&
     ast2ir_handers[ast_node_type::AST_OP_COND_LESS] = &IRGen::ir_cmp_less;
     ast2ir_handers[ast_node_type::AST_OP_COND_GREATER] = &IRGen::ir_cmp_greater;
     ast2ir_handers[ast_node_type::AST_OP_COND_EQU] = &IRGen::ir_cmp_equal;
+    ast2ir_handers[ast_node_type::AST_OP_COND_LESSEQU] = &IRGen::ir_cmp_lessEqual;
+    ast2ir_handers[ast_node_type::AST_OP_COND_NOTEQU] = &IRGen::ir_cmp_notEqual;
+    ast2ir_handers[ast_node_type::AST_OP_COND_GREATEREQU] = &IRGen::ir_cmp_greaterEqual;
 }
 
 /// @brief 创建IRGen对象
@@ -313,6 +319,10 @@ bool IRGen::ir_while_Stmt(ast_node *node, LabelParams blocks)
     jumps.push_back(whileExit);
     insertAtCurBlockBack(scoper->curFun(), jumps); // 创建的基本快插入
 
+    // 维护两个循环栈 供break,continue 使用
+    loopEntrys.push(whileEntry);
+    loopExits.push(whileExit);
+
     // 进入翻译循环前需弹出前一个block, 因为循环在新的一个块开始
     BranchInstPtr br = BranchInst::get(whileEntry);
     getCurBlock()->AddInstBack(br);
@@ -326,6 +336,10 @@ bool IRGen::ir_while_Stmt(ast_node *node, LabelParams blocks)
     ast_node *whileBody = ir_visit_astnode(node->sons[1], {whileEntry}); // 传入循环入口
     if (whileBody == nullptr)
         return false;
+    // 循环结束后 弹出 loopEntrys, loopExits 栈流(嵌套循环时重要)
+    loopEntrys.pop();
+    loopExits.pop();
+
     return true;
 }
 
@@ -345,6 +359,10 @@ bool IRGen::ir_Dowhile_Stmt(ast_node *node, LabelParams blocks)
     jumps.push_back(whileExit);
     insertAtCurBlockBack(scoper->curFun(), jumps); // 创建的基本快插入
 
+    // 维护两个循环栈 供break,continue 使用
+    loopEntrys.push(whileEntry);
+    loopExits.push(whileExit);
+
     // 进入翻译循环前需弹出前一个block, 因为循环在新的一个块开始
     BranchInstPtr br = BranchInst::get(whileEntry);
     getCurBlock()->AddInstBack(br);
@@ -358,6 +376,77 @@ bool IRGen::ir_Dowhile_Stmt(ast_node *node, LabelParams blocks)
     ast_node *cond = ir_visit_astnode(node->sons[1], {whileEntry, whileExit}); // 传入 循环体口，循环出口
     if (cond == nullptr)
         return false;
+
+    // 循环结束后 弹出 loopEntrys, loopExits 栈流(嵌套循环时重要)
+    loopEntrys.pop();
+    loopExits.pop();
+
+    return true;
+}
+
+/// @brief 循环中 break语句的翻译
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_break(ast_node *node, LabelParams blocks)
+{
+    // break 跳转到循环出口  使用 break 将判断是否在循环内 否则报错输出行号
+    // 判断是否在循环内 采用loopExits判断
+    int lino = node->literal_val.line_no; // 行号
+    if (loopExits.empty())
+    {
+        // 为空 说明不在循环中
+        std::cout << ">>>Error!: break statement not within loop or switch! line: " << lino << std::endl;
+        return false;
+    }
+    else
+    {
+        // 跳转
+        BasicBlockPtr jumpExit = loopExits.top();
+        BranchInstPtr br = BranchInst::get(jumpExit);
+        getCurBlock()->AddInstBack(br); // 加入跳转指令到基本快
+        // 当前基本块已经完毕 （末尾为跳转语句）
+        // 创建一个新的基本块(主要用于对齐transmitBlocks状态，虽然这样会将break后无用语句加入，但可后期删除无用基本快)
+        BasicBlockPtr block = BasicBlock::get(scoper->curFun());
+        // 将创建的块加入流中 以及函数基本快列表中
+        insertAtCurBlockBack(scoper->curFun(), {block});
+        // 弹出当前基本快  当前块已结束
+        transmitBlocks.pop_front();
+        curUsedBlockIter = std::next(curUsedBlockIter);
+    }
+    return true;
+}
+
+/// @brief 循环中 continue语句的翻译
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_continue(ast_node *node, LabelParams blocks)
+{
+    // continue 跳转到循环入口  使用 continue 将判断是否在循环内 否则报错输出行号
+    // 判断是否在循环内 采用loopEntrys判断
+    int lino = node->literal_val.line_no; // 行号
+    if (loopEntrys.empty())
+    {
+        // 为空 说明不在循环中
+        std::cout << ">>>Error!: continue statement not within loop or switch! line: " << lino << std::endl;
+        return false;
+    }
+    else
+    {
+        // 跳转
+        BasicBlockPtr jumpEntry = loopEntrys.top();
+        BranchInstPtr br = BranchInst::get(jumpEntry);
+        getCurBlock()->AddInstBack(br); //加入跳转指令到基本快
+        // 当前基本块已经完毕 （末尾为跳转语句）
+        // 创建一个新的基本块(主要用于对齐transmitBlocks状态，虽然这样会将continue后无用语句加入，但可后期删除无用基本快)
+        BasicBlockPtr block = BasicBlock::get(scoper->curFun());
+        // 将创建的块加入流中 以及函数基本快列表中
+        insertAtCurBlockBack(scoper->curFun(), {block});
+        // 弹出当前基本快  当前块已结束
+        transmitBlocks.pop_front();
+        curUsedBlockIter = std::next(curUsedBlockIter);
+    }
     return true;
 }
 
@@ -431,7 +520,7 @@ bool IRGen::ir_return(ast_node *node, LabelParams blocks)
         {
             return false;
         }
-        StoreInst::create(std::move(result->value), scoper->curFun()->getAllocaLists().front(), getCurBlock()); // 保存返回值
+        StoreInst::create(result->value, scoper->curFun()->getAllocaLists().front(), getCurBlock()); // 保存返回值
     }
     BranchInstPtr br = BranchInst::get(scoper->curFun()->getExitBlock());
     getCurBlock()->AddInstBack(br);
@@ -465,7 +554,7 @@ bool IRGen::ir_funcall(ast_node *node, LabelParams blocks)
         ast_node *result = ir_visit_astnode(son, {});
         if (result == nullptr)
             return false;
-        realArgs.push_back(std::move(result->value)); // 记录实参值Value
+        realArgs.push_back(result->value); // 记录实参值Value
     }
     CallInstPtr call = CallInst::create(fun, realArgs, getCurBlock());
     node->value = call; // 记录 value(对于有返回值的函数有作用)
@@ -522,11 +611,41 @@ bool IRGen::ir_declItems(ast_node *node, LabelParams blocks)
     return true;
 }
 
+/// @brief 取负号
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_Negative(ast_node *node, LabelParams blocks)
+{
+    ast_node *res = ir_visit_astnode(node->sons[0], blocks);
+    if (res == nullptr)
+        return false;
+    if (res->value->isConstant())
+    {
+        // 目前只有 int 故直接转int
+        ConstantIntPtr intCOnst = std::static_pointer_cast<ConstantInt>(res->value);
+        int num = intCOnst->getValue();
+        ConstantIntPtr resConst = ConstantInt::get(32);
+        resConst->setValue(-num);
+        node->value = std::move(resConst);
+    }
+    else
+    {
+        // 不是常数  则使用 sub 二元操作  左操作数为0
+        ConstantIntPtr leftConst = ConstantInt::get(32);
+        leftConst->setValue(0);
+        BinaryOperatorPtr negValue = BinaryOperator::create(Opcode::SubInteger, leftConst, res->value, getCurBlock());
+        node->value = negValue;
+    }
+    return true;
+}
+
 /// @brief AST 加法操作节点对应的函数操作
 /// @param node
 /// @return
 bool IRGen::ir_add(ast_node *node, LabelParams blocks)
 {
+    // 遍历Ast  时进行初步的优化
     ast_node *left = ir_visit_astnode(node->sons[0], blocks);
     if (left == nullptr)
     {
@@ -544,12 +663,29 @@ bool IRGen::ir_add(ast_node *node, LabelParams blocks)
         ConstantIntPtr resPtr = ConstantInt::get(32);
         resPtr->setValue(res); // 设置常数值
         node->value = resPtr;
+        return true;
     }
-    else
-    { // 不都是常数
-        BinaryOperatorPtr binaryOp = BinaryOperator::create(Opcode::AddInteger, left->value, right->value, getCurBlock());
-        node->value = binaryOp;
+    else if (left->value->isConstant())
+    {
+        ConstantIntPtr left_const = std::static_pointer_cast<ConstantInt>(left->value);
+        if (left_const->getValue() == 0)
+        {
+            node->value = right->value;
+            return true;
+        }
     }
+    else if (right->value->isConstant())
+    {
+        ConstantIntPtr right_const = std::static_pointer_cast<ConstantInt>(right->value);
+        if (right_const->getValue() == 0)
+        {
+            node->value = left->value;
+            return true;
+        }
+    }
+    // 不都是常数
+    BinaryOperatorPtr binaryOp = BinaryOperator::create(Opcode::AddInteger, left->value, right->value, getCurBlock());
+    node->value = binaryOp;
 
     return true;
 }
@@ -559,6 +695,39 @@ bool IRGen::ir_add(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_sub(ast_node *node, LabelParams blocks)
 {
+    // 遍历Ast  时进行初步的优化
+    ast_node *left = ir_visit_astnode(node->sons[0], blocks);
+    if (left == nullptr)
+    {
+        return false;
+    }
+    ast_node *right = ir_visit_astnode(node->sons[1], blocks);
+    if (right == nullptr)
+        return false;
+    if (left->value->isConstant() && right->value->isConstant())
+    {
+        // 如果加法的两者均为常数 则直接相加运算 (目前默认只实现整数的加法运算)
+        ConstantIntPtr left_const = std::static_pointer_cast<ConstantInt>(left->value);
+        ConstantIntPtr right_const = std::static_pointer_cast<ConstantInt>(right->value);
+        int res = left_const->getValue() - right_const->getValue();
+        ConstantIntPtr resPtr = ConstantInt::get(32);
+        resPtr->setValue(res); // 设置常数值
+        node->value = std::move(resPtr);
+        return true;
+    }
+    else if (right->value->isConstant())
+    {
+        ConstantIntPtr right_const = std::static_pointer_cast<ConstantInt>(right->value);
+        if (right_const->getValue() == 0)
+        {
+            node->value = left->value;
+            return true;
+        }
+    }
+    // 不都是常数
+    BinaryOperatorPtr binaryOp = BinaryOperator::create(Opcode::SubInteger, left->value, right->value, getCurBlock());
+    node->value = binaryOp;
+
     return true;
 }
 
@@ -567,6 +736,63 @@ bool IRGen::ir_sub(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_mul(ast_node *node, LabelParams blocks)
 {
+    // 遍历Ast  时进行初步的优化
+    ast_node *left = ir_visit_astnode(node->sons[0], blocks);
+    if (left == nullptr)
+    {
+        return false;
+    }
+    ast_node *right = ir_visit_astnode(node->sons[1], blocks);
+    if (right == nullptr)
+        return false;
+    if (left->value->isConstant() && right->value->isConstant())
+    {
+        // 如果加法的两者均为常数 则直接相加运算 (目前默认只实现整数的加法运算)
+        ConstantIntPtr left_const = std::static_pointer_cast<ConstantInt>(left->value);
+        ConstantIntPtr right_const = std::static_pointer_cast<ConstantInt>(right->value);
+        int res = left_const->getValue() * right_const->getValue();
+        ConstantIntPtr resPtr = ConstantInt::get(32);
+        resPtr->setValue(res); // 设置常数值
+        node->value = resPtr;
+        return true;
+    }
+    else if (left->value->isConstant())
+    {
+        ConstantIntPtr left_const = std::static_pointer_cast<ConstantInt>(left->value);
+        if (left_const->getValue() == 0)
+        {
+            ConstantIntPtr resPtr = ConstantInt::get(32);
+            resPtr->setValue(0); // 设置常数值
+            node->value = resPtr;
+            return true;
+        }
+        else if (left_const->getValue() == 1)
+        {
+            node->value = right->value;
+            return true;
+        }
+    }
+    else if (right->value->isConstant())
+    {
+        ConstantIntPtr right_const = std::static_pointer_cast<ConstantInt>(right->value);
+        if (right_const->getValue() == 1)
+        {
+            node->value = left->value;
+            return true;
+        }
+        else if (right_const->getValue() == 0)
+        {
+            ConstantIntPtr resPtr = ConstantInt::get(32);
+            resPtr->setValue(0); // 设置常数值
+            node->value = resPtr;
+            return true;
+        }
+    }
+
+    // 不都是常数
+    BinaryOperatorPtr binaryOp = BinaryOperator::create(Opcode::MulInteger, left->value, right->value, getCurBlock());
+    node->value = binaryOp;
+
     return true;
 }
 
@@ -575,6 +801,40 @@ bool IRGen::ir_mul(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_div(ast_node *node, LabelParams blocks)
 {
+    // 遍历Ast  时进行初步的优化
+    ast_node *left = ir_visit_astnode(node->sons[0], blocks);
+    if (left == nullptr)
+    {
+        return false;
+    }
+    ast_node *right = ir_visit_astnode(node->sons[1], blocks);
+    if (right == nullptr)
+        return false;
+    if (left->value->isConstant() && right->value->isConstant())
+    {
+        // 如果加法的两者均为常数 则直接相加运算 (目前默认只实现整数的加法运算)
+        ConstantIntPtr left_const = std::static_pointer_cast<ConstantInt>(left->value);
+        ConstantIntPtr right_const = std::static_pointer_cast<ConstantInt>(right->value);
+        int res = left_const->getValue() / right_const->getValue();
+        ConstantIntPtr resPtr = ConstantInt::get(32);
+        resPtr->setValue(res); // 设置常数值
+        node->value = resPtr;
+        return true;
+    }
+    else if (right->value->isConstant())
+    {
+        ConstantIntPtr right_const = std::static_pointer_cast<ConstantInt>(right->value);
+        if (right_const->getValue() == 1)
+        {
+            node->value = left->value;
+            return true;
+        }
+    }
+
+    // 不都是常数
+    BinaryOperatorPtr binaryOp = BinaryOperator::create(Opcode::DivInteger, left->value, right->value, getCurBlock());
+    node->value = binaryOp;
+
     return true;
 }
 
@@ -583,6 +843,53 @@ bool IRGen::ir_div(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_mod(ast_node *node, LabelParams blocks)
 {
+    // 遍历Ast  时进行初步的优化
+    ast_node *left = ir_visit_astnode(node->sons[0], blocks);
+    if (left == nullptr)
+    {
+        return false;
+    }
+    ast_node *right = ir_visit_astnode(node->sons[1], blocks);
+    if (right == nullptr)
+        return false;
+    if (left->value->isConstant() && right->value->isConstant())
+    {
+        // 如果加法的两者均为常数 则直接相加运算 (目前默认只实现整数的加法运算)
+        ConstantIntPtr left_const = std::static_pointer_cast<ConstantInt>(left->value);
+        ConstantIntPtr right_const = std::static_pointer_cast<ConstantInt>(right->value);
+        int res = left_const->getValue() % right_const->getValue();
+        ConstantIntPtr resPtr = ConstantInt::get(32);
+        resPtr->setValue(res); // 设置常数值
+        node->value = std::move(resPtr);
+        return true;
+    }
+    else if (left->value->isConstant())
+    {
+        ConstantIntPtr left_const = std::static_pointer_cast<ConstantInt>(left->value);
+        if (left_const->getValue() == 0)
+        {
+            ConstantIntPtr resPtr = ConstantInt::get(32);
+            resPtr->setValue(0); // 设置常数值
+            node->value = resPtr;
+            return true;
+        }
+    }
+    else if (right->value->isConstant())
+    {
+        ConstantIntPtr right_const = std::static_pointer_cast<ConstantInt>(right->value);
+        if (right_const->getValue() == 1)
+        {
+            ConstantIntPtr resPtr = ConstantInt::get(32);
+            resPtr->setValue(0); // 设置常数值
+            node->value = resPtr;
+            return true;
+        }
+    }
+
+    // 不都是常数
+    BinaryOperatorPtr binaryOp = BinaryOperator::create(Opcode::ModInteger, left->value, right->value, getCurBlock());
+    node->value = binaryOp;
+
     return true;
 }
 
@@ -664,6 +971,25 @@ bool IRGen::ir_cmp_less(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_cmp_greater(ast_node *node, LabelParams blocks)
 {
+    // 目前 条件比较只支持 if while do-while条件语句
+    // 对于其他场景 如  a=b>100;  这类赋值暂未支持  后继可扩展
+    if (blocks.size() != 0)
+    {
+        assert(blocks.size() == 2 && "Conditional statements typically pass two jump basic blocks!");
+        // 如果 < 是作为 if while 的判断条件 应该有两个跳转口
+        ast_node *left = ir_visit_astnode(node->sons[0], {});
+        if (left == nullptr)
+            return false;
+        ast_node *right = ir_visit_astnode(node->sons[1], {});
+        if (right == nullptr)
+            return false;
+        ICmpInstPtr icmp = ICmpInst::create(Opcode::GtInteger, left->value, right->value, getCurBlock());
+        node->value = icmp;
+        BranchInstPtr br = BranchInst::get(icmp, blocks[0], blocks[1]);
+        getCurBlock()->AddInstBack(br); // 跳转指令
+        transmitBlocks.pop_front();
+        curUsedBlockIter = std::next(curUsedBlockIter);
+    }
     return true;
 }
 
@@ -672,6 +998,112 @@ bool IRGen::ir_cmp_greater(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_cmp_equal(ast_node *node, LabelParams blocks)
 {
+    // 目前 条件比较只支持 if while do-while条件语句
+    // 对于其他场景 如  a=b==100;  这类赋值暂未支持  后继可扩展
+    if (blocks.size() != 0)
+    {
+        assert(blocks.size() == 2 && "Conditional statements typically pass two jump basic blocks!");
+        // 如果 < 是作为 if while 的判断条件 应该有两个跳转口
+        ast_node *left = ir_visit_astnode(node->sons[0], {});
+        if (left == nullptr)
+            return false;
+        ast_node *right = ir_visit_astnode(node->sons[1], {});
+        if (right == nullptr)
+            return false;
+        ICmpInstPtr icmp = ICmpInst::create(Opcode::EqInTeger, left->value, right->value, getCurBlock());
+        node->value = icmp;
+        BranchInstPtr br = BranchInst::get(icmp, blocks[0], blocks[1]);
+        getCurBlock()->AddInstBack(br); // 跳转指令
+        transmitBlocks.pop_front();
+        curUsedBlockIter = std::next(curUsedBlockIter);
+    }
+    return true;
+}
+
+/// @brief AST  != 对应操作
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_cmp_notEqual(ast_node *node, LabelParams blocks)
+{
+
+    // 目前 条件比较只支持 if while do-while条件语句
+    // 对于其他场景 如  a=b==100;  这类赋值暂未支持  后继可扩展
+    if (blocks.size() != 0)
+    {
+        assert(blocks.size() == 2 && "Conditional statements typically pass two jump basic blocks!");
+        // 如果 < 是作为 if while 的判断条件 应该有两个跳转口
+        ast_node *left = ir_visit_astnode(node->sons[0], {});
+        if (left == nullptr)
+            return false;
+        ast_node *right = ir_visit_astnode(node->sons[1], {});
+        if (right == nullptr)
+            return false;
+        ICmpInstPtr icmp = ICmpInst::create(Opcode::NotEqInteger, left->value, right->value, getCurBlock());
+        node->value = icmp;
+        BranchInstPtr br = BranchInst::get(icmp, blocks[0], blocks[1]);
+        getCurBlock()->AddInstBack(br); // 跳转指令
+        transmitBlocks.pop_front();
+        curUsedBlockIter = std::next(curUsedBlockIter);
+    }
+    return true;
+}
+
+/// @brief AST <=
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_cmp_lessEqual(ast_node *node, LabelParams blocks)
+{
+
+    // 目前 条件比较只支持 if while do-while条件语句
+    // 对于其他场景 如  a=b==100;  这类赋值暂未支持  后继可扩展
+    if (blocks.size() != 0)
+    {
+        assert(blocks.size() == 2 && "Conditional statements typically pass two jump basic blocks!");
+        // 如果 < 是作为 if while 的判断条件 应该有两个跳转口
+        ast_node *left = ir_visit_astnode(node->sons[0], {});
+        if (left == nullptr)
+            return false;
+        ast_node *right = ir_visit_astnode(node->sons[1], {});
+        if (right == nullptr)
+            return false;
+        ICmpInstPtr icmp = ICmpInst::create(Opcode::LeInteger, left->value, right->value, getCurBlock());
+        node->value = icmp;
+        BranchInstPtr br = BranchInst::get(icmp, blocks[0], blocks[1]);
+        getCurBlock()->AddInstBack(br); // 跳转指令
+        transmitBlocks.pop_front();
+        curUsedBlockIter = std::next(curUsedBlockIter);
+    }
+    return true;
+}
+
+/// @brief AST  >=
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_cmp_greaterEqual(ast_node *node, LabelParams blocks)
+{
+
+    // 目前 条件比较只支持 if while do-while条件语句
+    // 对于其他场景 如  a=b==100;  这类赋值暂未支持  后继可扩展
+    if (blocks.size() != 0)
+    {
+        assert(blocks.size() == 2 && "Conditional statements typically pass two jump basic blocks!");
+        // 如果 < 是作为 if while 的判断条件 应该有两个跳转口
+        ast_node *left = ir_visit_astnode(node->sons[0], {});
+        if (left == nullptr)
+            return false;
+        ast_node *right = ir_visit_astnode(node->sons[1], {});
+        if (right == nullptr)
+            return false;
+        ICmpInstPtr icmp = ICmpInst::create(Opcode::GeInTeger, left->value, right->value, getCurBlock());
+        node->value = icmp;
+        BranchInstPtr br = BranchInst::get(icmp, blocks[0], blocks[1]);
+        getCurBlock()->AddInstBack(br); // 跳转指令
+        transmitBlocks.pop_front();
+        curUsedBlockIter = std::next(curUsedBlockIter);
+    }
     return true;
 }
 

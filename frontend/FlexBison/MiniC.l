@@ -24,12 +24,16 @@
 %x COMMENT
 /* 一些辅助定义式 */
 
-/* 整数 */
-int_digit       (-?[1-9][0-9]*)|0
+/* 整数(十进制)  对于 负数在后面的 MiniC.y 中定义一元运算符负号  */
+int_digit       ([1-9][0-9]*)|0
+/* 八进制数  */
+Octal        0[0-7]+
+/* 十六进制数 */
+Hex  0[xX][0-9a-fA-F]+
 /* 标识符 */
 identifer       [a-zA-Z_][0-9a-zA-Z_]* 
 /* 小数 */
-decimal         -?([0-9]+"."[0-9])*|-?("."[0-9]+)
+decimal         ([0-9]+"."[0-9])*|-?("."[0-9]+)
 /* 空白 */
 white           [\t\040]
 /* 空白行 */
@@ -67,8 +71,14 @@ white_line  [\r\n]
 
 "while"     {return T_WHILE;}
 "do"        {return T_DO;}
-"break"     {return T_BREAK;}
-"continue"  {return T_CONTINUE;}
+"break"   { 
+    yylval.literal=new Literal_Val(strdup(yytext),yylineno);
+    return T_BREAK;
+}
+"continue"  {
+    yylval.literal=new Literal_Val(strdup(yytext),yylineno);
+    return T_CONTINUE;
+}
 
 "+"         {return T_ADD;}
 "/"         {return T_DIV;}
@@ -100,6 +110,16 @@ white_line  [\r\n]
 {int_digit} {
     //识别整数
     yylval.literal=new Literal_Val(std::stoi(yytext),yylineno);
+    return DIGIT_INT;
+}
+
+{Octal}  {
+    yylval.literal=new Literal_Val(std::stoi(yytext,nullptr,8),yylineno);
+    return DIGIT_INT;
+}
+
+{Hex} {
+    yylval.literal=new Literal_Val(std::stoi(yytext,nullptr,16),yylineno);
     return DIGIT_INT;
 }
 

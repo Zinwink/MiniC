@@ -22,12 +22,12 @@ void yyerror(const char* msg);
 %start CompileUnit
 
 // 指定文法终结符号 字面量
-%token <literal> DIGIT_INT  DIGIT_ID   DIGIT_FLOAT
+%token <literal> DIGIT_INT  DIGIT_ID   DIGIT_FLOAT 
 // 运算符
 %token T_ADD "+" T_SUB "-" T_DIV "/" T_MUL "*" T_ASSIGN "=" T_MOD "%"
 // 关键字
 %token T_INT "int" T_FLOAT "float" T_VOID "void" T_IF "if" T_ELSE "else" T_RETURN "return" T_WHILE "while" T_DO "do"
-%token T_BREAK "break" T_CONTINUE "continue"
+%token <literal> T_BREAK "break" T_CONTINUE "continue"
 // 条件运算
 %token T_EQUAL "==" T_NOT_EQU "!=" T_LESS "<" T_GREATER ">" T_LESS_EQU "<=" T_GREATER_EQU ">=" T_NOT "!" T_AND "&&" T_OR "||"
 // 括弧
@@ -237,10 +237,14 @@ Statement : "return" Expr ";" {
     $$ = new_ast_node(ast_node_type::AST_OP_ASSIGN,{$1,$3});
 }
 | "break" ";" {
-    ; // break语句
+    $$=new_ast_leaf_node(*$1,ast_node_type::AST_OP_BREAK);
+    delete $1; //释放内存
+    $1=nullptr;
 }
 | "continue" ";" {
-    ;  //continue语句
+    $$=new_ast_leaf_node(*$1,ast_node_type::AST_OP_CONTINUE);  //continue语句
+    delete $1; //释放内存
+    $1=nullptr;
 }
 | Array "=" Condition ";"{
     $$=new_ast_node(ast_node_type::AST_OP_ASSIGN,{$1,$3});
@@ -484,17 +488,8 @@ MulExpr : UnaryExpr {
 UnaryExpr : Term {
     $$=$1;
 }
-| DIGIT_ID "(" FuncRealParams ")" {
-    // 有参函数调用的值
-    $$=create_fun_call(*$1,$3);
-    delete $1; //释放内存
-    $1=nullptr;
-}
-| DIGIT_ID "(" ")" {
-    //无参函数调用的值
-    $$=create_fun_call(*$1,nullptr);
-    delete $1; //释放内存
-    $1=nullptr;
+| "-" Term{
+    $$=new_ast_node(ast_node_type::AST_OP_NEG,{$2});
 }
 ;
 
@@ -510,6 +505,20 @@ Term :  DIGIT_INT{
     delete $1; //释放内存
     $1=nullptr;
 }
+/* | "-" DIGIT_FLOAT {
+    float num=$2->digit.float_digit;
+    $2->digit.float_digit=-num;
+    $$=new_ast_leaf_node(*$2,ast_node_type::AST_LEAF_LITERAL_FLOAT);
+    delete $2; //释放内存
+    $2=nullptr;
+}
+| "-" DIGIT_INT{
+    int num=$2->digit.int32_digit;
+    $2->digit.int32_digit=-num;
+    $$=new_ast_leaf_node(*$2,ast_node_type::AST_LEAF_LITERAL_INT);
+    delete $2; //释放内存
+    $2=nullptr;
+} */
 | var {
     $$=$1;
 }
@@ -520,6 +529,18 @@ Term :  DIGIT_INT{
     // $1->ArrayDim.clear();
     $$=$1;
 }
+| DIGIT_ID "(" FuncRealParams ")" {
+    // 有参函数调用的值
+    $$=create_fun_call(*$1,$3);
+    delete $1; //释放内存
+    $1=nullptr;
+}
+| DIGIT_ID "(" ")" {
+    //无参函数调用的值
+    $$=create_fun_call(*$1,nullptr);
+    delete $1; //释放内存
+    $1=nullptr;
+} 
 ;
 
 /* 变量 暂时无数组类型 */

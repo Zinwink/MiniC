@@ -48,6 +48,21 @@ enum class ast_node_type : int
     /// @brief 文件编译单元运算符， 可包含函数定义，语句块，表达式等
     AST_OP_COMPILE_UNIT,
 
+    /// @brief 左自减
+    AST_OP_LEFT_SELF_SUB,
+
+    /// @brief 右自减
+    AST_OP_RIGHT_SELF_SUB,
+
+    /// @brief 左自增
+    AST_OP_LEFT_SELF_ADD,
+
+    /// @brief 右自增
+    AST_OP_RIGHT_SELF_ADD,
+
+    /// @brief 一元运算符  负数
+    AST_OP_NEG,
+
     ///@brief 二元运算符 +
     AST_OP_ADD,
 
@@ -105,6 +120,9 @@ enum class ast_node_type : int
     /// @brief return 语句运算符
     AST_OP_RETURN_STATEMENT,
 
+    /// @brief 函数声明 （用于）
+    AST_OP_FUNC_DECLARE,
+
     /// @brief 函数定义运算符，节点属性包括函数名，返回值类型，其孩子节点：函数形式参数列表运算符节点，代码块运算符
     AST_OP_FUNC_DEF,
 
@@ -131,6 +149,12 @@ enum class ast_node_type : int
 
     /// @brief do_while循环
     AST_OP_DOWHILESTMT,
+
+    /// @brief break;
+    AST_OP_BREAK,
+
+    /// @brief continue
+    AST_OP_CONTINUE,
 
     /// @brief 非法运算符
     AST_ILLEGAL,
@@ -209,6 +233,7 @@ bool isLeafNode(ast_node *node);
 /// @param _sons  孩子节点指针列表
 /// @return 创建节点的指针
 ast_node *new_ast_node(ast_node_type type, std::initializer_list<ast_node *> _sons);
+
 
 /// @brief 向父节点插入一个节点
 /// @param parent 父节点

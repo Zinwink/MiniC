@@ -11,6 +11,7 @@
 #include "DerivedTypes.h"
 #include <cassert>
 
+//********************************* IntegerType ***********************************
 /// @brief 拷贝副本
 /// @param copied
 /// @return
@@ -34,6 +35,7 @@ FunctionType::FunctionType(Type *result, std::vector<Type *> &argTys) : Type(Typ
     }
 }
 
+// *********************************  FunctionType *************************************
 /// @brief 构造函数
 /// @param result 返回类型
 FunctionType::FunctionType(Type *result) : Type(Type::FunctionTyID)
@@ -57,6 +59,7 @@ FunctionType *FunctionType::copy(FunctionType *copied)
     return funTy;
 }
 
+// ************************* ArrayType ******************************
 /// @brief 拷贝生成副本
 /// @param copied
 /// @return
@@ -69,6 +72,23 @@ ArrayType *ArrayType::copy(ArrayType *copied)
     return arrTy;
 }
 
+/// @brief 获取该数组类型每一个维度的数值
+/// @return
+std::vector<int> ArrayType::getDimValues()
+{
+    std::vector<int> dims;
+    dims.push_back(NumElems);
+    Type *nextTy = ContainedTy;
+    while (nextTy->isArrayType())
+    { // 迭代获取
+        ArrayType *arr = static_cast<ArrayType *>(nextTy);
+        dims.push_back(arr->NumElems);
+        nextTy = arr->ContainedTy;
+    }
+    return dims;
+}
+
+//********************************* PointerType ****************************************
 /// @brief 拷贝生成副本
 /// @param copied
 /// @return

@@ -19,21 +19,24 @@ using BasicBlockPtr = std::shared_ptr<BasicBlock>;
 /// @brief 指令操作码
 enum class Opcode
 {
-    Alloca,      // AllocaInst
-    Store,       // StoreInst
-    Ret,         // RetInst
-    Load,        // LoadInst
-    Call,        // CallInst 函数调用
-    Goto,        // 无条件跳转  BranchInst  br label ..
-    ConditionBr, // 有条件跳转 br condition,label t, label f
-    AddInteger,  // 整数加法
-    SubInteger,  // 整数减法
-    DivInteger,  // 整数除法
-    MulInteger,  // 整数乘法
-    ModInteger,  // 整数取余
-    GtInteger,   // 大于 icmp sgt/ugt
-    LtIntegr,    // 小于  icmp slt/ult
-    EqInTeger,   // ==  icmp eq
+    Alloca,       // AllocaInst
+    Store,        // StoreInst
+    Ret,          // RetInst
+    Load,         // LoadInst
+    Call,         // CallInst 函数调用
+    Goto,         // 无条件跳转  BranchInst  br label ..
+    ConditionBr,  // 有条件跳转 br condition,label t, label f
+    AddInteger,   // 整数加法
+    SubInteger,   // 整数减法
+    DivInteger,   // 整数除法
+    MulInteger,   // 整数乘法
+    ModInteger,   // 整数取余
+    GtInteger,    // 大于 icmp sgt/ugt
+    LtIntegr,     // 小于  icmp slt/ult
+    EqInTeger,    // ==  icmp eq
+    GeInTeger,    // >=
+    LeInteger,    // <=
+    NotEqInteger, // !=
 
     Unknown // 未知
 };

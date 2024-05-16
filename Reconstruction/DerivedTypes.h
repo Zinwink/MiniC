@@ -164,6 +164,10 @@ public:
         NumElems = numElems;
     }
 
+    /// @brief 获取该数组类型每一个维度的数值
+    /// @return
+    std::vector<int> getDimValues();
+
     /// @brief 更新设置元素类型
     /// @param _ty
     void setContaintedTy(Type *_ty)
