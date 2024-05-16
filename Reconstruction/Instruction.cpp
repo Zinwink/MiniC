@@ -37,6 +37,9 @@ string Instruction::getOpcodeName()
     case Opcode::ConditionBr:
         name = string("br");
         break;
+    case Opcode::GetelementPtr:
+        name = string("getelementptr");
+        break;
     case Opcode::Load:
         name = string("load");
         break;
@@ -131,6 +134,9 @@ string Instruction::toIRstr(InstPtr inst, Counter *cnt)
     case Opcode::LeInteger:
     case Opcode::NotEqInteger:
         str = ICmpInstStr(inst, cnt);
+        break;
+    case Opcode::GetelementPtr:
+        str = GetelementInstStr(inst, cnt);
         break;
 
     default:
@@ -269,5 +275,27 @@ string ICmpInstStr(InstPtr icmp, Counter *cnt)
     ValPtr right = icmp->getOperand(1);
     string str;
     str = getllvmID(icmp, cnt) + string(" = ") + icmp->getOpcodeName() + string(" ") + left->getType()->TypeStr() + string(" ") + getllvmID(left, cnt) + string(", ") + getllvmID(right, cnt);
+    return str;
+}
+
+/// @brief getelementptr指令翻译
+/// @param getelem
+/// @param cnt
+/// @return
+string GetelementInstStr(InstPtr getelem, Counter *cnt)
+{
+    string str;
+    ValPtr arrayBase = getelem->getOperand(0); // 数组基质
+    ValPtr offset = getelem->getOperand(1);
+    PointerType *arrTy = static_cast<PointerType *>(arrayBase->getType());
+    getelemInstPtr elemptr = std::static_pointer_cast<getelementptrInst>(getelem);
+    int gain = elemptr->getgainDim();
+    string gapstr = "";
+    for (int i = 0; i < gain; i++)
+    {
+        gapstr += "i32 0, ";
+    }
+
+    str = getllvmID(getelem, cnt) + string(" = ") + getelem->getOpcodeName() + string(" ") + arrTy->getElemntTy()->TypeStr() + string(", ") + arrayBase->getType()->TypeStr() + string(" ") + getllvmID(arrayBase, cnt) + string(", ") + gapstr + offset->getType()->TypeStr() + string(" ") + getllvmID(offset, cnt);
     return str;
 }

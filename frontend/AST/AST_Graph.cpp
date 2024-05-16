@@ -140,8 +140,12 @@ std::string getNodeName(ast_node *node)
         name = "Do-while";
         break;
 
-    case ast_node_type::AST_LEAF_ARRAY:
+    case ast_node_type::AST_OP_ARRAY:
         name = getNameofArray(node);
+        break;
+
+    case ast_node_type::AST_NULL:
+        name = "[ ]";
         break;
 
     default:

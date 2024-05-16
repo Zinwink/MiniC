@@ -36,7 +36,7 @@ enum class ast_node_type : int
     AST_LEAF_VAR_ID,
 
     /// @brief 数组节点,可能是声明处，也可能是取址处，也可能是函数形参
-    AST_LEAF_ARRAY,
+    AST_OP_ARRAY,
 
     /// @brief 单个函数形参运算符节点 属性包含名字与类型
     AST_LEAF_FUNC_FORMAL_PARAM,
@@ -162,6 +162,9 @@ enum class ast_node_type : int
     /// @brief 未知类型
     AST_UNKONN,
 
+    /// @brief 空节点类型
+    AST_NULL,
+
 };
 
 /// @brief 抽象语法树AST节点描述类
@@ -185,9 +188,6 @@ public: // 属性
 
     /// @brief 对应的Value
     ValPtr value = nullptr;
-
-    /// @brief 数组维度下标值  在 DeclareItem下表示声明的大小，其他情况为索引取值, -1表示该维为空(可能出现在函数参数的情形下)
-    std::vector<int> ArraydimOrd;
 
 public:
     /// @brief 析构函数
@@ -234,6 +234,11 @@ bool isLeafNode(ast_node *node);
 /// @return 创建节点的指针
 ast_node *new_ast_node(ast_node_type type, std::initializer_list<ast_node *> _sons);
 
+/// @brief 创建指定节点类型的节点
+/// @param type 节点类型
+/// @param _sons  孩子节点指针列表
+/// @return 创建节点的指针
+ast_node *new_ast_node(Literal_Val &literal, ast_node_type type, std::initializer_list<ast_node *> _sons);
 
 /// @brief 向父节点插入一个节点
 /// @param parent 父节点
@@ -275,3 +280,8 @@ void updateDeclTypes(ast_node *parent);
 /// @param arr
 /// @return
 std::string getNameofArray(ast_node *arr);
+
+/// @brief 获取数组的维度数据(如果该维度为空节点，则赋值为-1， 一般这种情况出现在函数形参中)
+/// @param arr 
+/// @return 
+std::vector<int> getArrayDimOrd(ast_node *arr);

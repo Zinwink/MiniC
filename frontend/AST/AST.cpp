@@ -14,6 +14,9 @@
 #include <cassert>
 #include "Type.h"
 #include "DerivedTypes.h"
+#include "AST_Graph.h"
+#include <iostream>
+#include <stdexcept>
 
 /// @brief 整个AST的叶子节点
 ast_node *ast_root = nullptr;
@@ -62,9 +65,8 @@ bool isLeafNodeType(ast_node_type _node_type)
     case ast_node_type::AST_LEAF_LITERAL_FLOAT:
     case ast_node_type::AST_LEAF_LITERAL_UINT:
     case ast_node_type::AST_LEAF_VAR_ID:
-    case ast_node_type::AST_LEAF_FUNC_FORMAL_PARAM:
+    // case ast_node_type::AST_LEAF_FUNC_FORMAL_PARAM:
     case ast_node_type::AST_LEAF_TYPE:
-    case ast_node_type::AST_LEAF_ARRAY:
     case ast_node_type::AST_OP_BREAK:
     case ast_node_type::AST_OP_CONTINUE:
         isleaf = true;
@@ -90,6 +92,21 @@ bool isLeafNode(ast_node *node)
 ast_node *new_ast_node(ast_node_type type, std::initializer_list<ast_node *> _sons)
 {
     ast_node *parent_node = new ast_node(type);
+    for (auto &son : _sons)
+    {
+        parent_node->sons.push_back(son);
+        son->parent = parent_node;
+    }
+    return parent_node;
+}
+
+/// @brief 创建指定节点类型的节点
+/// @param type 节点类型
+/// @param _sons  孩子节点指针列表
+/// @return 创建节点的指针
+ast_node *new_ast_node(Literal_Val &literal, ast_node_type type, std::initializer_list<ast_node *> _sons)
+{
+    ast_node *parent_node = new ast_node(literal, type);
     for (auto &son : _sons)
     {
         parent_node->sons.push_back(son);
@@ -182,14 +199,18 @@ ast_node *create_fun_call(Literal_Val &literal, ast_node *params)
 void updateDeclTypes(ast_node *parent)
 {
     // 这里主要针对  int declareItems使用 对于数组类型特殊处理，其余在MiniC.y顺带处理
-    assert(parent->node_type == ast_node_type::AST_OP_DECL_ITEMS && "Error!");
+    assert(parent->node_type == ast_node_type::AST_OP_DECL_ITEMS && "Error! file:AST.cpp");
     for (auto &son : parent->sons)
     {
 
-        if (son->node_type == ast_node_type::AST_LEAF_ARRAY) // 子节点为数组类型较为特殊
+        if (son->node_type == ast_node_type::AST_OP_ARRAY) // 子节点为数组类型较为特殊
         {
+            // 先获取 数组节点声明的各个维度数值
+            std::vector<int> dims;
+            dims = getArrayDimOrd(son);
+
             Type *ty = Type::copy(parent->attr);
-            son->attr = ArrayType::get(son->ArraydimOrd, ty);
+            son->attr = ArrayType::get(dims, ty);
         }
         else if (son->node_type == ast_node_type::AST_LEAF_VAR_ID)
         {
@@ -204,16 +225,50 @@ void updateDeclTypes(ast_node *parent)
 /// @return
 std::string getNameofArray(ast_node *arr)
 {
-    assert(arr->node_type == ast_node_type::AST_LEAF_ARRAY && "Error, not array type");
-    std::string name = arr->literal_val.digit.id;
-    for (auto &num : arr->ArraydimOrd)
+    assert(arr->node_type == ast_node_type::AST_OP_ARRAY && "Error, not array type");
+    string name = arr->literal_val.digit.id;
+    if (arr->parent->node_type == ast_node_type::AST_OP_DECL_ITEMS)
     {
-        name += std::string("[");
-        if (num != -1)
-        {
-            name += std::to_string(num);
-        }
-        name += std::string("]");
+        name += ": " + arr->attr->TypeStr();
+    }
+    else
+    {
+        name += ": Array";
     }
     return name;
+}
+
+/// @brief 获取数组的维度数据(如果该维度为空节点，则赋值为-1， 一般这种情况出现在函数形参中)
+/// @param arr 数组类型AST节点
+/// @return
+std::vector<int> getArrayDimOrd(ast_node *arr)
+{
+    // 先获取 数组节点声明的各个维度数值
+    std::vector<int> dims;
+    for (auto &son : arr->sons)
+    {
+        int num;
+        if (son->node_type == ast_node_type::AST_NULL)
+        {
+            num = -1;
+        }
+        else if (son->node_type == ast_node_type::AST_LEAF_LITERAL_INT)
+        {
+            num = son->literal_val.digit.int32_digit;
+        }
+        else if (son->node_type == ast_node_type::AST_LEAF_LITERAL_UINT)
+        {
+            num = son->literal_val.digit.int32_digit;
+        }
+        else
+        {
+            // 声明时数组的各维度一定要为整数 有符号 或无符号
+            int lino = arr->literal_val.line_no;
+            std::string errormsg = ">>>Error!: the array declare size must be const int! line: " + std::to_string(lino);
+            throw std::invalid_argument(errormsg);
+        }
+
+        dims.push_back(num);
+    }
+    return dims;
 }

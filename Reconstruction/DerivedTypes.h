@@ -168,6 +168,10 @@ public:
     /// @return
     std::vector<int> getDimValues();
 
+    /// @brief 获取数组的维度
+    /// @return
+    int getDims();
+
     /// @brief 更新设置元素类型
     /// @param _ty
     void setContaintedTy(Type *_ty)

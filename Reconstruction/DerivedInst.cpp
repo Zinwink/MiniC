@@ -13,6 +13,7 @@
 #include "BasicBlock.h"
 #include "Argument.h"
 #include "Function.h"
+#include "Constant.h"
 
 /// @brief 静态函数  获取指令对象指针
 /// @param name
@@ -201,6 +202,17 @@ CallInstPtr CallInst::create(ValPtr fun, std::vector<ValPtr> &relArgs, BasicBloc
                 atBack->AddInstBack(load); // 加入loadInst
                 relArgs[i] = load;         // 替换修正为LoadInst
             }
+            else
+            {
+                // 形参也为指针
+                // 当前情形下，形参为指针只能是数组类型 i32*, [4 x i32]* 等
+                // 为了判断方便 假设调用时实参的维度符合条件 则只需取实参的
+                ConstantIntPtr offset = ConstantInt::get(32);
+                offset->setValue(0);
+                getelemInstPtr getele = getelementptrInst::get(relArgs[i], 1, offset);
+                relArgs[i] = getele;
+                atBack->AddInstBack(getele);
+            }
         }
     }
     CallInstPtr call = CallInst::get(fun, relArgs); // relArgs修正完毕
@@ -273,4 +285,124 @@ BranchInstPtr BranchInst::get(ValPtr cond, ValPtr ifTrue, ValPtr ifFalse)
     BranchInstPtr br = std::make_shared<BranchInst>(cond, ifTrue, ifFalse);
     br->updateUserList();
     return br;
+}
+
+//******************** getelementptrInst ************************
+
+/// @brief 构造函数
+/// @param arrayBaseAdress
+/// @param gainDim
+/// @param offset
+getelementptrInst::getelementptrInst(ValPtr arrayBaseAdress, int _gainDim, ValPtr offset)
+{
+    assert(arrayBaseAdress->getType()->isPointerType() && ">>>Error! file: DerivedInst.cpp");
+
+    setgainDim(_gainDim);
+    setOpcode(Opcode::GetelementPtr);
+    operands.push_back(arrayBaseAdress);
+    operands.push_back(offset);
+
+    PointerType *ptrTy = static_cast<PointerType *>(arrayBaseAdress->getType());
+    assert((ptrTy->getElemntTy()->isArrayType() || ptrTy->getElemntTy()->isIntegerType()) && "Error!");
+    if (ptrTy->getElemntTy()->isIntegerType())
+    {
+        // 设置为 Int 因为只支持int
+        setType(PointerType::get(Type::getIntNType(32)));
+        gainDim = 0; // 一定为0
+    }
+    else
+    {
+        // 根据gainDim 判定类型 0 则为arrayBaseAdress
+        // 1 则为 arrayBaseAdress 的element 元素* 指针
+        ArrayType *arrTy = static_cast<ArrayType *>(ptrTy->getElemntTy());
+        assert(_gainDim <= arrTy->getDims() && ">>>Error!: ");
+        Type *curElemTy = arrTy;
+        for (int i = 0; i < _gainDim; i++)
+        {
+            if (curElemTy->isArrayType())
+            {
+                ArrayType *tmp = static_cast<ArrayType *>(curElemTy);
+                curElemTy = tmp->getContainedTy();
+            }
+        }
+        setType(PointerType::get(Type::copy(curElemTy))); // 设置类型
+    }
+}
+
+/// @brief 创建指令
+/// @param arrayBaseAdress
+/// @param offset
+/// @return
+getelemInstPtr getelementptrInst::get(ValPtr arrayBaseAdress, int _gainDim, ValPtr offset)
+{
+    getelemInstPtr getelemPtr = std::make_shared<getelementptrInst>(arrayBaseAdress, _gainDim, offset);
+
+    getelemPtr->updateUserList();
+    return getelemPtr;
+}
+
+/// @brief 具有判断功能的指令创建(如判断arrayBaseAdress是数组基地址还是基地址的位置 )
+/// @param arrayBaseAdress 数组基址
+/// @param dims 数组各个维度的索引值 包含表达式 变量
+/// @param atBack 插入指令到尾部
+/// @return
+getelemInstPtr getelementptrInst::create(ValPtr arrayBaseAdress, std::vector<ValPtr> dims, BasicBlockPtr atBack)
+{
+    assert(arrayBaseAdress->getType()->isPointerType() && "arrayBaseAdress is not a pointerType");
+    PointerType *arrptr = static_cast<PointerType *>(arrayBaseAdress->getType());
+
+    if (arrptr->getElemntTy()->isPointerType())
+    { //  **
+        PointerType *elemTy = static_cast<PointerType *>(arrptr->getElemntTy());
+        // 目前的情况看 说明这是对形参的 Alloca  因此是指针的指针
+        LoadInstPtr load = LoadInst::get(arrayBaseAdress);
+        atBack->AddInstBack(load); // 加入load指令
+        if (elemTy->getElemntTy()->isArrayType())
+        {
+            ArrayType *arrty = static_cast<ArrayType *>(elemTy->getElemntTy());
+
+            std::vector<int> dimsOrd = arrty->getDimValues(); // 获取维度数据
+            assert((dimsOrd.size() + 1) >= dims.size() && " logic error! large than the array dim! ");
+            // 下面使用乘加指令
+            ValPtr mulAdd = dims[0];
+            for (size_t i = 0; i < dimsOrd.size(); i++)
+            {
+                ConstantIntPtr cont = ConstantInt::get(32);
+                cont->setValue(dimsOrd[i]);
+                BinaryOperatorPtr mul = BinaryOperator::create(Opcode::MulInteger, mulAdd, cont, atBack);
+
+                BinaryOperatorPtr add = BinaryOperator::create(Opcode::AddInteger, mul, dims[i + 1], atBack);
+                mulAdd = add; // 迭代
+            }
+            getelemInstPtr getelem = getelementptrInst::get(load, dims.size() - 1, mulAdd);
+            atBack->AddInstBack(getelem);
+            return getelem;
+        }
+        else
+        {
+            // 一维形参数组 Alloca  i32**  只有1维
+            getelemInstPtr getelem = getelementptrInst::get(load, 0, dims[0]);
+            atBack->AddInstBack(getelem);
+            return getelem;
+        }
+    }
+    else
+    {
+        // elemet 维数组类型  [8 x i32]*  等  非函数形参数组地址拷贝
+        // 下面使用乘加指令
+        ArrayType *arrty = static_cast<ArrayType *>(arrptr->getElemntTy());
+        ValPtr mulAdd = dims[0];
+        std::vector<int> dimsOrd = arrty->getDimValues(); // 获取维度数据
+        for (size_t i = 1; i < dimsOrd.size(); i++)
+        { //  非函数形参拷贝 可获得声明数组的完整大小 因此从第二位开始
+            ConstantIntPtr cont = ConstantInt::get(32);
+            cont->setValue(dimsOrd[i]);
+            BinaryOperatorPtr mul = BinaryOperator::create(Opcode::MulInteger, mulAdd, cont, atBack);
+            BinaryOperatorPtr add = BinaryOperator::create(Opcode::AddInteger, mul, dims[i], atBack);
+            mulAdd = add; // 迭代
+        }
+        getelemInstPtr getelem = getelementptrInst::get(arrayBaseAdress, dims.size(), mulAdd);
+        atBack->AddInstBack(getelem);
+        return getelem;
+    }
 }

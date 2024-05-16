@@ -160,7 +160,8 @@ FuncFormalParam : "int" DIGIT_ID{
 }
 | "int" Array{
     $2->node_type=ast_node_type::AST_LEAF_FUNC_FORMAL_PARAM;
-    ArrayType* temp=ArrayType::get($2->ArraydimOrd,Type::getIntNType(32));
+    std::vector<int> dims=getArrayDimOrd($2);
+    ArrayType* temp=ArrayType::get(dims,Type::getIntNType(32));
     Type* containedTy=temp->getContainedTy();
     temp->getContainedTy()=nullptr;
     delete temp;
@@ -170,7 +171,8 @@ FuncFormalParam : "int" DIGIT_ID{
 }
 | "float" Array{
     $2->node_type=ast_node_type::AST_LEAF_FUNC_FORMAL_PARAM;
-    ArrayType* temp=ArrayType::get($2->ArraydimOrd,Type::getFloatType());
+    std::vector<int> dims=getArrayDimOrd($2);
+    ArrayType* temp=ArrayType::get(dims,Type::getFloatType());
     Type* containedTy=temp->getContainedTy();
     temp->getContainedTy()=nullptr;
     delete temp;
@@ -384,7 +386,7 @@ DeclareItems : DeclareItem{
         // $1->attr=$$->attr;
         $$=new_ast_node(ast_node_type::AST_OP_DECL_ITEMS,{$1});
     }
-    else if($1->node_type==ast_node_type::AST_LEAF_ARRAY){
+    else if($1->node_type==ast_node_type::AST_OP_ARRAY){
         $$=new_ast_node(ast_node_type::AST_OP_DECL_ITEMS,{$1});
     }
     else{
@@ -399,7 +401,7 @@ DeclareItems : DeclareItem{
         // $3->attr=$$->attr;
         $$=insert_ast_node($1,$3);  // DeclareItem是变量类型
     }
-    else if($3->node_type==ast_node_type::AST_LEAF_ARRAY){
+    else if($3->node_type==ast_node_type::AST_OP_ARRAY){
         $$=insert_ast_node($1,$3);
     }
     else{
@@ -430,23 +432,15 @@ DeclareItem : var{
 
 
 /* 数组******************************* */
-Array: DIGIT_ID "[" DIGIT_INT "]"{
-    $$=new_ast_leaf_node(*$1,ast_node_type::AST_LEAF_ARRAY);
-    int num=$3->digit.int32_digit;
-    $$->ArraydimOrd.push_back(num);
-    delete $3;
-    $3=nullptr;
+Array: DIGIT_ID "[" Expr "]"{
+    $$=new_ast_node(*$1,ast_node_type::AST_OP_ARRAY,{$3});
 }
 | DIGIT_ID "[" "]" {
-    $$=new_ast_leaf_node(*$1,ast_node_type::AST_LEAF_ARRAY);
-    int num=-1;
-    $$->ArraydimOrd.push_back(num);
+    ast_node* nullNode=new ast_node(ast_node_type::AST_NULL); //创建一个空节点
+    $$=new_ast_node(*$1,ast_node_type::AST_OP_ARRAY,{nullNode});
 }
-|Array "[" DIGIT_INT "]" {
-    int num=$3->digit.int32_digit;
-    $$->ArraydimOrd.push_back(num);  //目前还不知道节点类型，所以都加入数值
-    delete $3;
-    $3=nullptr;
+|Array "[" Expr "]" {
+    $$=insert_ast_node($1,$3);
 } 
 ;
 

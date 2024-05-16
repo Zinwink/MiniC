@@ -23,6 +23,7 @@ class RetInst;
 class CallInst;
 class ICmpInst;
 class BranchInst;
+class getelementptrInst;
 
 using AllocaInstPtr = std::shared_ptr<AllocaInst>;
 using StoreInstPtr = std::shared_ptr<StoreInst>;
@@ -32,6 +33,7 @@ using RetInstPtr = std::shared_ptr<RetInst>;
 using CallInstPtr = std::shared_ptr<CallInst>;
 using ICmpInstPtr = std::shared_ptr<ICmpInst>;
 using BranchInstPtr = std::shared_ptr<BranchInst>;
+using getelemInstPtr = std::shared_ptr<getelementptrInst>;
 
 /// @brief AllocaInst (将充当变量)(AllocaInst本身的Type是指针类型)
 class AllocaInst : public Instruction
@@ -339,4 +341,45 @@ public:
     static BranchInstPtr get(ValPtr cond, ValPtr ifTrue, ValPtr ifFalse);
 };
 
-// class 
+/// @brief 获取数组偏移指针的指令
+/// 实际上 该指令具有较多功能，在这里仅仅用于数组指针偏移  因此只有两个操作数 一个为数组的基地址，一个为偏移的大小(没有乘元素的字节数)
+class getelementptrInst : public Instruction
+{
+private:
+    int gainDim = -1; // 获取所在维度的偏移指针  指定维度(从0开始)
+    // 如 对于 [8 x i32]*  若gainDim为0 则得到 [8 x i32]* 指针
+    // 瑞gainDim为1，则得到i32*, 上面示例中gainDim 的大小最多为 1
+    // gainDim只是一个标记 不作为操作数
+    // 操作数为 数组基质 和 偏移(非字节偏移)
+
+public:
+    /// @brief 析构函数
+    ~getelementptrInst() = default;
+
+    /// @brief 设置 gainDim
+    /// @param dim
+    void setgainDim(int dim) { gainDim = dim; };
+
+    /// @brief 获取 gainDim
+    /// @return
+    int getgainDim() { return gainDim; }
+
+    /// @brief 构造函数
+    /// @param arrayBaseAdress
+    /// @param gainDim
+    /// @param offset
+    getelementptrInst(ValPtr arrayBaseAdress, int _gainDim, ValPtr offset);
+
+    /// @brief 创建指令
+    /// @param arrayBaseAdress
+    /// @param offset
+    /// @return
+    static getelemInstPtr get(ValPtr arrayBaseAdress, int _gainDim, ValPtr offset);
+
+    /// @brief 具有判断功能的指令创建(如判断arrayBaseAdress是数组基地址还是基地址的位置 根据arrayBaseAdress类型和dim数组结合判断指令的类型)
+    /// @param arrayBaseAdress 数组基址
+    /// @param dims 数组各个维度的索引值 包含表达式 变量
+    /// @param atBack 插入指令到尾部
+    /// @return
+    static getelemInstPtr create(ValPtr arrayBaseAdress, std::vector<ValPtr> dims, BasicBlockPtr atBack);
+};

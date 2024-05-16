@@ -47,7 +47,7 @@ IRGen::IRGen(ast_node *root, ModulePtr _module)
     ast2ir_handers[ast_node_type::AST_LEAF_LITERAL_INT] = &IRGen::ir_leafNode_int;
     ast2ir_handers[ast_node_type::AST_LEAF_LITERAL_FLOAT] = &IRGen::ir_leafNode_float;
     ast2ir_handers[ast_node_type::AST_LEAF_VAR_ID] = &IRGen::ir_leafNode_var;
-    ast2ir_handers[ast_node_type::AST_LEAF_ARRAY] = &IRGen::ir_leafNode_array;
+    ast2ir_handers[ast_node_type::AST_OP_ARRAY] = &IRGen::ir_leafNode_array;
 
     // AST中的block节点
     ast2ir_handers[ast_node_type::AST_OP_BLOCK] = &IRGen::IRGen::ir_block;
@@ -437,7 +437,7 @@ bool IRGen::ir_continue(ast_node *node, LabelParams blocks)
         // 跳转
         BasicBlockPtr jumpEntry = loopEntrys.top();
         BranchInstPtr br = BranchInst::get(jumpEntry);
-        getCurBlock()->AddInstBack(br); //加入跳转指令到基本快
+        getCurBlock()->AddInstBack(br); // 加入跳转指令到基本快
         // 当前基本块已经完毕 （末尾为跳转语句）
         // 创建一个新的基本块(主要用于对齐transmitBlocks状态，虽然这样会将continue后无用语句加入，但可后期删除无用基本快)
         BasicBlockPtr block = BasicBlock::get(scoper->curFun());
@@ -1214,8 +1214,19 @@ bool IRGen::ir_leafNode_array(ast_node *node, LabelParams blocks)
             std::cout << ">>>Error:the array variable " << name << " is not declared! line:" << node->literal_val.line_no << std::endl;
             return false;
         }
-        // node->value = val;
-        // 下面获取索引对应的偏移
+        std::vector<ValPtr> indexs;
+        for (auto &son : node->sons)
+        {
+            ast_node *dim = ir_visit_astnode(son, {});
+            if (dim == nullptr)
+            {
+                return false;
+            }
+            indexs.push_back(dim->value);
+        }
+        // 创建 getelementptr指令
+        getelemInstPtr getelem = getelementptrInst::create(val, indexs, getCurBlock());
+        node->value = getelem;
     }
 
     return true;

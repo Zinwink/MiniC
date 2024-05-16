@@ -88,6 +88,22 @@ std::vector<int> ArrayType::getDimValues()
     return dims;
 }
 
+/// @brief 获取数组的维度
+/// @return
+int ArrayType::getDims()
+{
+    int reuslt = 1;
+    Type *nextTy = ContainedTy;
+    while (nextTy->isArrayType())
+    {
+        // 迭代获取
+        ArrayType *arr = static_cast<ArrayType *>(nextTy);
+        reuslt += 1;
+        nextTy = arr->ContainedTy;
+    }
+    return reuslt;
+}
+
 //********************************* PointerType ****************************************
 /// @brief 拷贝生成副本
 /// @param copied
