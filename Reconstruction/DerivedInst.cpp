@@ -335,6 +335,8 @@ getelementptrInst::getelementptrInst(ValPtr arrayBaseAdress, int _gainDim, ValPt
 /// @return
 getelemInstPtr getelementptrInst::get(ValPtr arrayBaseAdress, int _gainDim, ValPtr offset)
 {
+    // 目前情况下 offset一定非指针  是 i32 等类型
+    assert(!offset->getType()->isPointerType() && ">>>>Error! file: DerivedInst.cpp");
     getelemInstPtr getelemPtr = std::make_shared<getelementptrInst>(arrayBaseAdress, _gainDim, offset);
 
     getelemPtr->updateUserList();
@@ -365,6 +367,13 @@ getelemInstPtr getelementptrInst::create(ValPtr arrayBaseAdress, std::vector<Val
             assert((dimsOrd.size() + 1) >= dims.size() && " logic error! large than the array dim! ");
             // 下面使用乘加指令
             ValPtr mulAdd = dims[0];
+            if (mulAdd->getType()->isPointerType())
+            {
+                //  在单维数组中可能出现的情况 单位数组的索引可能使用一个 allocaInst 变量 那是i32*
+                LoadInstPtr mulAddLoad = LoadInst::get(mulAdd);
+                atBack->AddInstBack(mulAddLoad);
+                mulAdd = mulAddLoad;
+            }
             for (size_t i = 0; i < dimsOrd.size(); i++)
             {
                 ConstantIntPtr cont = ConstantInt::get(32);
@@ -381,7 +390,14 @@ getelemInstPtr getelementptrInst::create(ValPtr arrayBaseAdress, std::vector<Val
         else
         {
             // 一维形参数组 Alloca  i32**  只有1维
-            getelemInstPtr getelem = getelementptrInst::get(load, 0, dims[0]);
+            ValPtr offset = dims[0];
+            if (offset->getType()->isPointerType())
+            {
+                LoadInstPtr loadoff = LoadInst::get(offset);
+                atBack->AddInstBack(loadoff);
+                offset = loadoff;
+            }
+            getelemInstPtr getelem = getelementptrInst::get(load, 0, offset);
             atBack->AddInstBack(getelem);
             return getelem;
         }
@@ -392,6 +408,13 @@ getelemInstPtr getelementptrInst::create(ValPtr arrayBaseAdress, std::vector<Val
         // 下面使用乘加指令
         ArrayType *arrty = static_cast<ArrayType *>(arrptr->getElemntTy());
         ValPtr mulAdd = dims[0];
+        if (mulAdd->getType()->isPointerType())
+        {
+            // 索引不是 i32 而是指针  这种情况出现在  索引是变量(AllocaInst)地址  如 A   A代表地址
+            LoadInstPtr load = LoadInst::get(mulAdd);
+            atBack->AddInstBack(load);
+            mulAdd = load;
+        }
         std::vector<int> dimsOrd = arrty->getDimValues(); // 获取维度数据
         for (size_t i = 1; i < dimsOrd.size(); i++)
         { //  非函数形参拷贝 可获得声明数组的完整大小 因此从第二位开始
