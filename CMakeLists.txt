@@ -99,7 +99,7 @@ add_custom_command(
     OUTPUT
     ${BISON_OUTPUT}
     COMMAND
-    ${BISON_EXECUTABLE} -d --debug -o MiniCBison.cpp ${BISON_HEADFILE_OPTION}=MiniCBison.h ${BISON_INPUT}
+    ${BISON_EXECUTABLE} -v -Wcounterexamples -d --debug -o MiniCBison.cpp ${BISON_HEADFILE_OPTION}=MiniCBison.h ${BISON_INPUT}
     DEPENDS
     ${BISON_INPUT}
     WORKING_DIRECTORY

@@ -38,6 +38,7 @@ IRGen::IRGen(ast_node *root, ModulePtr _module)
     ast2ir_handers[ast_node_type::AST_OP_COMPILE_UNIT] = &IRGen::ir_CompileUnit;
 
     // 函数定义， 函数形参, return, call函数调用
+    ast2ir_handers[ast_node_type::AST_OP_FUNC_DECLARE] = &IRGen::ir_func_declare;
     ast2ir_handers[ast_node_type::AST_OP_FUNC_DEF] = &IRGen::ir_func_define;
     ast2ir_handers[ast_node_type::AST_OP_FUNC_FORMAL_PARAMS] = &IRGen::ir_func_formal_params;
     ast2ir_handers[ast_node_type::AST_OP_RETURN_STATEMENT] = &IRGen::ir_return;
@@ -72,6 +73,7 @@ IRGen::IRGen(ast_node *root, ModulePtr _module)
     ast2ir_handers[ast_node_type::AST_OP_BREAK] = &IRGen::ir_break;
     ast2ir_handers[ast_node_type::AST_OP_CONTINUE] = &IRGen::ir_continue;
     ast2ir_handers[ast_node_type::AST_OP_DOWHILESTMT] = &IRGen::ir_Dowhile_Stmt;
+    ast2ir_handers[ast_node_type::AST_OP_COND_NOT] = &IRGen::ir_Cond_NOT;
     ast2ir_handers[ast_node_type::AST_OP_COND_OR] = &IRGen::ir_Cond_OR;   //  ||
     ast2ir_handers[ast_node_type::AST_OP_COND_AND] = &IRGen::ir_Cond_AND; // &&
     ast2ir_handers[ast_node_type::AST_OP_COND_LESS] = &IRGen::ir_cmp_less;
@@ -232,6 +234,34 @@ bool IRGen::ir_func_define(ast_node *node, LabelParams blocks)
 
     transmitBlocks.clear(); // 弹出函数中剩余的最后一个基本块   流队列的方式
     fun->mergeAllocaToEntry();
+    return true;
+}
+
+/// @brief AST 函数声明节点
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_func_declare(ast_node *node, LabelParams blocks)
+{
+    string funcname = node->literal_val.digit.id; // 函数名
+    uint64_t lineno = node->literal_val.line_no;  // 行号
+    // 先查找符号表中有没有对应的函数声明
+    ValPtr vfun = scoper->globalTab()->findDeclVar(funcname);
+    if (vfun == nullptr)
+    {
+        // 未查找到 则创建
+        FuncPtr funp = Function::get(node->attr, funcname);
+        node->attr = nullptr;
+        // 添加到 Extern表中 默认是外部
+        module->addExternFunction(funp);
+        scoper->globalTab()->newDeclVar(funp); // 加入到表中
+    }
+    else
+    {
+        // 查找到  重复声明 报错
+        std::cout << ">>>>Error!: not supported function redeclared! function:" << funcname << " line: " << lineno << std::endl;
+        return false;
+    }
     return true;
 }
 
@@ -544,7 +574,7 @@ bool IRGen::ir_funcall(ast_node *node, LabelParams blocks)
     if (fun == nullptr)
     {
         // 未找到 报错  退出
-        std::cout << ">>>Error: no such function:" << funcname << "line: " << lineno << std::endl;
+        std::cout << ">>>Error: no such function:" << funcname << " line: " << lineno << std::endl;
         return false;
     }
     ast_node *realParams = node->sons[0]; // 实参列表
@@ -893,6 +923,24 @@ bool IRGen::ir_mod(ast_node *node, LabelParams blocks)
     return true;
 }
 
+/// @brief AST ! 条件非对应的操作
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_Cond_NOT(ast_node *node, LabelParams blocks)
+{
+    // 对于 not 节点目前只支持 在 if else ,while do while条件体中或者||，&& 等条件分支使用 因此 此处的blocks一定会传递两个块
+    // 不支持 a=!condition 等用于非 if,while,do while总体条件块下的该操作 目前
+    // not 无实际作用 只需交换跳转快的顺序并往下传递即可；
+    assert(blocks.size() == 2 && "not support the usage currently!");
+    // not 肯定只有一个子节点
+    ast_node *result = ir_visit_astnode(node->sons[0], {blocks[1], blocks[0]}); // 交换真假出口
+    if (result == nullptr)
+        return false;
+
+    return true;
+}
+
 /// @brief 条件或 || 翻译
 /// @param node
 /// @param blocks
@@ -1147,7 +1195,27 @@ bool IRGen::ir_leafNode_var(ast_node *node, LabelParams blocks)
             std::cout << ">>>Error:the variable " << name << " is not declared! line:" << node->literal_val.line_no << std::endl;
             return false;
         }
-        node->value = val;
+        // node->value = val;
+        // 如果有传递的跳转块 (目前跳转块 只能是 由if  while || ! && 传递  而且一定传递两个块)
+        if (blocks.size() == 0)
+        {
+            node->value = val;
+        }
+        else
+        {
+            assert(blocks.size() == 2 && "not support usage currently! file: IRGen.cpp line: 1184!");
+            // 对于一个Value 判断语句是 !=0
+            // 先创建 ！=0 的icmp 语句
+            ConstantIntPtr zero = ConstantInt::get(32);
+            zero->setValue(0); // 和0比较
+            ICmpInstPtr notZero = ICmpInst::create(Opcode::NotEqInteger, val, zero, getCurBlock());
+            // 再创建条件跳转语句
+            BranchInstPtr br = BranchInst::get(notZero, blocks[0], blocks[1]);
+            getCurBlock()->AddInstBack(br);
+            // 创建跳转语句后 当前块完毕  更新基本块队列以及当前块迭代器
+            transmitBlocks.pop_front();
+            curUsedBlockIter = std::next(curUsedBlockIter);
+        }
     }
 
     return true;
@@ -1161,7 +1229,27 @@ bool IRGen::ir_leafNode_int(ast_node *node, LabelParams blocks)
     int num = node->literal_val.digit.int32_digit; // 获取常数数值
     ConstantIntPtr conInt = ConstantInt::get(32, true);
     conInt->setValue(num);
-    node->value = std::move(conInt);
+
+    if (blocks.size() == 0)
+    {
+        node->value = conInt;
+    }
+    else
+    {
+        assert(blocks.size() == 2 && "not support usage currently! file: IRGen.cpp line: 1239!");
+        // 对于一个Value 判断语句是 !=0
+        // 先创建 ！=0 的icmp 语句
+        ConstantIntPtr zero = ConstantInt::get(32);
+        zero->setValue(0); // 和0比较
+        ICmpInstPtr notZero = ICmpInst::create(Opcode::NotEqInteger, conInt, zero, getCurBlock());
+        // 再创建条件跳转语句
+        BranchInstPtr br = BranchInst::get(notZero, blocks[0], blocks[1]);
+        getCurBlock()->AddInstBack(br);
+        // 创建跳转语句后 当前块完毕  更新基本块队列以及当前块迭代器
+        transmitBlocks.pop_front();
+        curUsedBlockIter = std::next(curUsedBlockIter);
+    }
+
     return true;
 }
 
@@ -1226,7 +1314,26 @@ bool IRGen::ir_leafNode_array(ast_node *node, LabelParams blocks)
         }
         // 创建 getelementptr指令
         getelemInstPtr getelem = getelementptrInst::create(val, indexs, getCurBlock());
-        node->value = getelem;
+        // node->value = getelem;
+        if (blocks.size() == 0)
+        {
+            node->value = getelem;
+        }
+        else
+        {
+            assert(blocks.size() == 2 && "not support usage currently! file: IRGen.cpp line: 1239!");
+            // 对于一个Value 判断语句是 !=0
+            // 先创建 ！=0 的icmp 语句
+            ConstantIntPtr zero = ConstantInt::get(32);
+            zero->setValue(0); // 和0比较
+            ICmpInstPtr notZero = ICmpInst::create(Opcode::NotEqInteger, getelem, zero, getCurBlock());
+            // 再创建条件跳转语句
+            BranchInstPtr br = BranchInst::get(notZero, blocks[0], blocks[1]);
+            getCurBlock()->AddInstBack(br);
+            // 创建跳转语句后 当前块完毕  更新基本块队列以及当前块迭代器
+            transmitBlocks.pop_front();
+            curUsedBlockIter = std::next(curUsedBlockIter);
+        }
     }
 
     return true;

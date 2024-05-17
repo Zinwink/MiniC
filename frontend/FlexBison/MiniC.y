@@ -40,8 +40,11 @@ void yyerror(const char* msg);
 %left T_EQUAL T_NOT_EQU T_LESS T_LESS_EQU T_GREATER T_GREATER_EQU T_AND T_OR
 %right T_NOT
 
+
+
 %type <node> CompileUnit
 %type <node> FuncDef
+%type <node> FuncDeclare
 %type <node> FuncFormalParams
 %type <node> FuncFormalParam
 %type <node> FuncRealParams
@@ -83,6 +86,13 @@ CompileUnit : FuncDef{
     ast_root=$$;
 }
 | CompileUnit Statement{
+    $$=insert_ast_node($1,$2);
+}
+| FuncDeclare{
+    $$=new_ast_node(ast_node_type::AST_OP_COMPILE_UNIT,{$1});
+    ast_root=$$;
+}
+| CompileUnit FuncDeclare{
     $$=insert_ast_node($1,$2);
 }
 ;
@@ -133,6 +143,56 @@ FuncDef : "int" DIGIT_ID "(" ")" Block{
     }
     Type* funType=FunctionType::get(Type::getFloatType(),argsTy);
     $$=create_fun_def(*$2,funType,$4,$6);
+    delete $2; //释放内存
+    $2=nullptr;
+}
+;
+
+FuncDeclare: "int" DIGIT_ID "(" ")" ";"{
+    Type* funType=FunctionType::get(Type::getIntNType(32));
+    $$=create_fun_declare(*$2,funType,nullptr);
+    delete $2; //释放内存
+    $2=nullptr;
+}
+| "int" DIGIT_ID "(" FuncFormalParams ")" ";"{
+    std::vector<Type*> argsTy;
+    for(auto& son:$4->sons){
+        argsTy.push_back(Type::copy(son->attr));
+    }
+    Type* funType=FunctionType::get(Type::getIntNType(32),argsTy);
+    $$=create_fun_declare(*$2,funType,$4);
+    delete $2; //释放内存
+    $2=nullptr;
+}
+| "void" DIGIT_ID "(" ")" ";"{
+    Type* funType=FunctionType::get(Type::getVoidType());
+    $$=create_fun_declare(*$2,funType,nullptr);
+    delete $2; //释放内存
+    $2=nullptr;
+}
+| "void" DIGIT_ID "(" FuncFormalParams ")" ";"{
+    std::vector<Type*> argsTy;
+    for(auto& son:$4->sons){
+        argsTy.push_back(Type::copy(son->attr));
+    }
+    Type* funType=FunctionType::get(Type::getVoidType(),argsTy);
+    $$=create_fun_declare(*$2,funType,$4);
+    delete $2; //释放内存
+    $2=nullptr;
+}
+| "float" DIGIT_ID "(" ")" ";"{
+    Type* funType=FunctionType::get(Type::getFloatType());
+    $$=create_fun_declare(*$2,funType,nullptr);
+    delete $2; //释放内存
+    $2=nullptr;
+}
+| "float" DIGIT_ID "(" FuncFormalParams ")" ";"{
+    std::vector<Type*> argsTy;
+    for(auto& son:$4->sons){
+        argsTy.push_back(Type::copy(son->attr));
+    }
+    Type* funType=FunctionType::get(Type::getFloatType(),argsTy);
+    $$=create_fun_declare(*$2,funType,$4);
     delete $2; //释放内存
     $2=nullptr;
 }
@@ -252,6 +312,7 @@ Statement : "return" Expr ";" {
     $$=new_ast_node(ast_node_type::AST_OP_ASSIGN,{$1,$3});
 }
 ;
+
 
 /* 条件if else *************** */
 IfStmt : "if" "(" Condition ")" Statement {

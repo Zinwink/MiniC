@@ -24,8 +24,11 @@ private:
     /// @brief 全局变量表
     std::deque<GlobalVariPtr> globalVarList;
 
-    /// @brief 函数列表
+    /// @brief 函数列表 本文件中定义的函数
     std::deque<FuncPtr> funcList;
+
+    /// @brief 本文件中使用的外部函数 不在本文件中定义
+    std::deque<FuncPtr> funcDeclareExtern;
 
     Counter *cnt = nullptr;
 
@@ -50,6 +53,10 @@ public:
     /// @param fun
     void addFunction(FuncPtr fun) { funcList.push_back(fun); }
 
+    /// @brief 添加非本文件定义的函数
+    /// @param fun
+    void addExternFunction(FuncPtr fun) { funcDeclareExtern.push_back(fun); }
+
     /// @brief 将IR指令打印至文件中
     /// @param filePath
     void printIR(string filePath);
@@ -58,6 +65,11 @@ public:
     /// @return
     static ModulePtr get();
 };
+
+/// @brief 获取delcare 声明外部函数的文本表示
+/// @param fun
+/// @return
+string DeclareFunStr(FuncPtr fun);
 
 /// @brief 翻译为文本时所需使用的计数器
 class Counter

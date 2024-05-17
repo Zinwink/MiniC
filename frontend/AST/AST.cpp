@@ -167,6 +167,26 @@ ast_node *create_fun_def(Literal_Val &literal, Type *ret_type, ast_node *params,
     return fun_def_node;
 }
 
+/// @brief 创建函数声明
+/// @param literal
+/// @param ret_type
+/// @param params
+/// @return
+ast_node *create_fun_declare(Literal_Val &literal, Type *ret_type, ast_node *params)
+{
+    ast_node *fun_declare = new ast_node(literal, ast_node_type::AST_OP_FUNC_DECLARE);
+    fun_declare->attr = ret_type;
+    // 若没有参数，则创建参数节点
+    if (params == nullptr)
+    {
+        params = new ast_node(ast_node_type::AST_OP_FUNC_FORMAL_PARAMS);
+    }
+    fun_declare->sons.push_back(params);
+    params->parent = fun_declare;
+
+    return fun_declare;
+}
+
 /// @brief 创建函数形参节点
 /// @param literal 字面量 包含行号 形参名
 /// @param _type 参数的值类型

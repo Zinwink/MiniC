@@ -13,6 +13,7 @@
 #include "Instruction.h"
 #include "BasicBlock.h"
 #include "GlobalVariable.h"
+#include "DerivedTypes.h"
 #include <cassert>
 #include <fstream>
 #include <iostream>
@@ -56,6 +57,13 @@ void Module::printIR(string filePath)
     std::ofstream file(filePath);
     if (file.is_open())
     {
+        // 外部函数声明
+        for (auto &externfun : funcDeclareExtern)
+        {
+            string str = DeclareFunStr(externfun);
+            file << str;
+            file << "\n";
+        }
         // 全局变量翻译
         for (auto &gloabV : globalVarList)
         {
@@ -78,6 +86,34 @@ void Module::printIR(string filePath)
         std::cerr << "output IR instruction to" << filePath << " failed!" << std::endl;
     }
 }
+
+/// @brief 获取delcare 声明外部函数的文本表示
+/// @param
+/// @return
+string DeclareFunStr(FuncPtr fun)
+{
+    string str = "declare ";
+    str += fun->getReturnTy()->TypeStr();
+    str += " ";
+    str += "@" + fun->getName();
+    str += "(";
+    // 循环获取形参类型
+    Type *funTy = fun->getType();
+    FunctionType *funTyConvert = static_cast<FunctionType *>(funTy);
+    for (uint32_t i = 0; i < funTyConvert->getNumParams(); i++)
+    {
+        string paramStr = funTyConvert->getParamType(i)->TypeStr();
+        str += paramStr;
+        if (i != (funTyConvert->getNumParams() - 1))
+        { // 不是最后一个形参
+            str += string(", ");
+        }
+    }
+    str += ")";
+    return str;
+}
+
+//************************* Counter类 **************************
 
 /// @brief 获取Val的编号 val 一定是需要编号的变量 对于常量无需编号不行
 /// @param val

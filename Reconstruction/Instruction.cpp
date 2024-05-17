@@ -53,10 +53,10 @@ string Instruction::getOpcodeName()
         name = string("mul");
         break;
     case Opcode::DivInteger:
-        name = string("div");
+        name = string("sdiv");
         break;
     case Opcode::ModInteger:
-        name = string("mod");
+        name = string("srem");
         break;
     case Opcode::GtInteger:
         name = string("icmp sgt");

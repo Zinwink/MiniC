@@ -107,7 +107,10 @@ std::string getNodeName(ast_node *node)
         name = "continue";
         break;
     case ast_node_type::AST_OP_FUNC_DEF:
-        name = "func:" + std::string(node->literal_val.digit.id);
+        name = "funcDef:" + std::string(node->literal_val.digit.id);
+        break;
+    case ast_node_type::AST_OP_FUNC_DECLARE:
+        name = "funcDeclare:" + std::string(node->literal_val.digit.id);
         break;
     case ast_node_type::AST_OP_FUNC_FORMAL_PARAMS:
         name = "formal-params";

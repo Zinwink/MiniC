@@ -57,6 +57,12 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "cinttypes": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "fstream": "cpp",
+        "list": "cpp"
     },
+    "cody.autocomplete.experimental.ollamaOptions": {
+        "url": "http://127.0.0.1:11434",
+        "model": "stable-code:3b"
+    }
 }

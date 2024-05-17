@@ -255,10 +255,17 @@ ast_node *new_ast_leaf_node(Literal_Val &literal, ast_node_type _node_type = ast
 /// @brief 创建函数定义节点  中间节点
 /// @param literal 字面量 包含行号,函数名信息
 /// @param params 函数形参列表节点,可以为空(未指定则默认参数为nullptr)
-/// @param block   block块节点
+/// @param block   block块节点 如果没有
 /// @param ret_type 函数定义节点的值类型(返回类型) 未指定则默认为TYPE__VOID
 /// @return 创建函数定义节点指针
 ast_node *create_fun_def(Literal_Val &literal, Type *ret_type, ast_node *params = nullptr, ast_node *block = nullptr);
+
+/// @brief 创建函数声明
+/// @param literal 
+/// @param ret_type 
+/// @param params 
+/// @return 
+ast_node *create_fun_declare(Literal_Val &literal, Type *ret_type, ast_node *params = nullptr);
 
 /// @brief 创建函数形参节点
 /// @param literal 字面量 包含行号 形参名
@@ -282,6 +289,6 @@ void updateDeclTypes(ast_node *parent);
 std::string getNameofArray(ast_node *arr);
 
 /// @brief 获取数组的维度数据(如果该维度为空节点，则赋值为-1， 一般这种情况出现在函数形参中)
-/// @param arr 
-/// @return 
+/// @param arr
+/// @return
 std::vector<int> getArrayDimOrd(ast_node *arr);

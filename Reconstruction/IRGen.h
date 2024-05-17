@@ -82,6 +82,12 @@ private:
     /// @return
     bool ir_func_define(ast_node *node, LabelParams blocks);
 
+    /// @brief AST 函数声明节点
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_func_declare(ast_node *node, LabelParams blocks);
+
     /// @brief AST  函数形参列表节点对应的操作函数
     /// @param node
     /// @return
@@ -172,6 +178,12 @@ private:
     /// @param node
     /// @return
     bool ir_mod(ast_node *node, LabelParams blocks);
+
+    /// @brief AST ! 条件非对应的操作
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_Cond_NOT(ast_node *node, LabelParams blocks);
 
     /// @brief 条件或 || 翻译
     /// @param node
