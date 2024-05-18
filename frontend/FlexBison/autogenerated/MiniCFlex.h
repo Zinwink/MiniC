@@ -470,7 +470,7 @@ extern int yylex (void);
 #undef yyTABLES_NAME
 #endif
 
-#line 147 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 148 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 
 
 #line 477 "MiniCFlex.h"

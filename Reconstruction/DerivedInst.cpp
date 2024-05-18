@@ -45,6 +45,11 @@ StoreInstPtr StoreInst::get(ValPtr val, ValPtr Ptr)
 StoreInstPtr StoreInst::create(ValPtr val, ValPtr Ptr, BasicBlockPtr atBack)
 {
     ValPtr src = val;
+    if (val == Ptr)
+    {
+        // 对于 a=a 这样的不做操作
+        return nullptr;
+    }
     if (val->getType()->isPointerType())
     {
         LoadInstPtr load = LoadInst::get(val);

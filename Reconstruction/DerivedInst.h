@@ -383,3 +383,7 @@ public:
     /// @return
     static getelemInstPtr create(ValPtr arrayBaseAdress, std::vector<ValPtr> dims, BasicBlockPtr atBack);
 };
+
+class ZextInst : public Instruction
+{
+};

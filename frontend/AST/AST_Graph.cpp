@@ -31,6 +31,15 @@ std::string getNodeName(ast_node *node)
     case ast_node_type::AST_LEAF_VAR_ID:
         name = node->literal_val.digit.id;
         break;
+    case ast_node_type::AST_LEAF_CONST_VAR_ID:
+        name = node->literal_val.digit.id;
+        break;
+    case ast_node_type::AST_OP_VAR_DEF:
+        name = "=";
+        break;
+    case ast_node_type::AST_OP_CONST_VAR_DEF:
+        name = "=";
+        break;
     case ast_node_type::AST_OP_NEG:
         name = "negative";
         break;
@@ -117,7 +126,7 @@ std::string getNodeName(ast_node *node)
         break;
     case ast_node_type::AST_LEAF_FUNC_FORMAL_PARAM:
         name = node->literal_val.digit.id;
-        name = node->attr->TypeStr() + string(": ") + string(name);
+        // name = node->attr->TypeStr() + string(": ") + string(name);
         break;
     case ast_node_type::AST_OP_COMPILE_UNIT:
         name = "CompileUnit";
@@ -132,6 +141,10 @@ std::string getNodeName(ast_node *node)
         name = "DeclarationItems";
         name = string(name) + string(": ") + node->attr->TypeStr();
         break;
+    case ast_node_type::AST_OP_CONST_DECL_ITEMS:
+        name = "Const-DeclarationItems";
+        name += string(": ") + node->attr->TypeStr();
+        break;
     case ast_node_type::AST_OP_IFSTMT:
         name = "If-stmt";
         break;
@@ -144,7 +157,11 @@ std::string getNodeName(ast_node *node)
         break;
 
     case ast_node_type::AST_OP_ARRAY:
-        name = getNameofArray(node);
+        name = node->literal_val.digit.id;
+        name += ": array";
+        break;
+    case ast_node_type::AST_OP_ARRAY_INDEX:
+        name = "array-index";
         break;
 
     case ast_node_type::AST_NULL:

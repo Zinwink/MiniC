@@ -1,7 +1,3 @@
-State 67 conflicts: 1 shift/reduce
-State 162 conflicts: 1 shift/reduce
-
-
 Grammar
 
     0 $accept: CompileUnit $end
@@ -32,229 +28,287 @@ Grammar
 
    21 FuncFormalParam: "int" DIGIT_ID
    22                | "float" DIGIT_ID
-   23                | "int" Array
-   24                | "float" Array
+   23                | "int" DIGIT_ID "[" "]"
+   24                | "int" DIGIT_ID ArrayIndexs
+   25                | "int" DIGIT_ID "[" "]" ArrayIndexs
 
-   25 Block: "{" "}"
-   26      | "{" BlockItemList "}"
+   26 Block: "{" "}"
+   27      | "{" BlockItemList "}"
 
-   27 BlockItemList: Statement
-   28              | BlockItemList Statement
+   28 BlockItemList: Statement
+   29              | BlockItemList Statement
 
-   29 Statement: "return" Expr ";"
-   30          | "return" ";"
-   31          | Block
-   32          | IfStmt
-   33          | WhileStmt
-   34          | DowhileStmt
-   35          | Declare
-   36          | Condition ";"
-   37          | var "=" Condition ";"
-   38          | "break" ";"
-   39          | "continue" ";"
-   40          | Array "=" Condition ";"
+   30 Statement: "return" Expr ";"
+   31          | "return" ";"
+   32          | Block
+   33          | IfStmt
+   34          | WhileStmt
+   35          | DowhileStmt
+   36          | "break" ";"
+   37          | "continue" ";"
+   38          | AssignStmt
+   39          | DeclStmt
+   40          | Expr ";"
+   41          | ";"
 
-   41 IfStmt: "if" "(" Condition ")" Statement
-   42       | "if" "(" Condition ")" Statement "else" Statement
+   42 AssignStmt: Lval "=" Expr ";"
 
-   43 WhileStmt: "while" "(" Condition ")" Statement
+   43 DeclStmt: ConstDecl
+   44         | VarlDecl
 
-   44 DowhileStmt: "do" Statement "while" "(" Condition ")" ";"
+   45 VarlDecl: "int" VarDefList ";"
+   46         | "float" VarDefList ";"
 
-   45 Condition: OrCond
+   47 VarDefList: VarDef
+   48           | VarDefList "," VarDef
 
-   46 OrCond: AndCond
-   47       | OrCond "||" AndCond
+   49 VarDef: DIGIT_ID
+   50       | DIGIT_ID "=" VarInitVal
+   51       | DIGIT_ID ArrayIndexs
+   52       | DIGIT_ID ArrayIndexs "=" VarInitVal
 
-   48 AndCond: NotCond
-   49        | AndCond "&&" NotCond
+   53 VarInitVal: Expr
+   54           | "{" "}"
+   55           | "{" VarInitValList "}"
 
-   50 NotCond: "!" EquCondTerm
-   51        | EquCondTerm
+   56 VarInitValList: VarInitVal
+   57               | VarInitValList "," VarInitVal
 
-   52 EquCondTerm: LessCondTerm
-   53            | EquCondTerm "==" LessCondTerm
-   54            | EquCondTerm "!=" LessCondTerm
+   58 ConstDecl: "const" "int" ConstDefList ";"
+   59          | "const" "float" ConstDefList ";"
 
-   55 LessCondTerm: Expr
-   56             | LessCondTerm "<" Expr
-   57             | LessCondTerm "<=" Expr
-   58             | LessCondTerm ">" Expr
-   59             | LessCondTerm ">=" Expr
-   60             | "(" Condition ")"
+   60 ConstDefList: ConstDef
+   61             | ConstDefList "," ConstDef
 
-   61 Declare: "int" DeclareItems ";"
-   62        | "float" DeclareItems ";"
+   62 ConstDef: DIGIT_ID "=" ConstInitVal
+   63         | DIGIT_ID ArrayIndexs "=" ConstInitVal
 
-   63 DeclareItems: DeclareItem
-   64             | DeclareItems "," DeclareItem
+   64 ConstInitVal: ConstExp
+   65             | "{" "}"
+   66             | "{" ConstInitvalList "}"
 
-   65 DeclareItem: var
-   66            | var "=" Expr
-   67            | Array
+   67 ConstInitvalList: ConstInitVal
+   68                 | ConstInitvalList "," ConstInitVal
 
-   68 Array: DIGIT_ID "[" Expr "]"
-   69      | DIGIT_ID "[" "]"
-   70      | Array "[" Expr "]"
+   69 IfStmt: "if" "(" Condition ")" Statement
+   70       | "if" "(" Condition ")" Statement "else" Statement
 
-   71 Expr: AddExpr
+   71 WhileStmt: "while" "(" Condition ")" Statement
 
-   72 AddExpr: MulExpr
-   73        | AddExpr "+" MulExpr
-   74        | AddExpr "-" MulExpr
+   72 DowhileStmt: "do" Statement "while" "(" Condition ")" ";"
 
-   75 MulExpr: UnaryExpr
-   76        | MulExpr "*" UnaryExpr
-   77        | MulExpr "/" UnaryExpr
-   78        | MulExpr "%" UnaryExpr
+   73 ArrayIndexs: "[" Expr "]"
+   74            | ArrayIndexs "[" Expr "]"
 
-   79 UnaryExpr: Term
-   80          | "-" Term
+   75 Expr: AddExpr
 
-   81 Term: DIGIT_INT
-   82     | DIGIT_FLOAT
-   83     | var
-   84     | "(" Expr ")"
-   85     | Array
-   86     | DIGIT_ID "(" FuncRealParams ")"
-   87     | DIGIT_ID "(" ")"
+   76 ConstExp: AddExpr
 
-   88 var: DIGIT_ID
+   77 AddExpr: MulExpr
+   78        | AddExpr "+" MulExpr
+   79        | AddExpr "-" MulExpr
 
-   89 FuncRealParams: Expr
-   90               | FuncRealParams "," Expr
+   80 MulExpr: UnaryExpr
+   81        | MulExpr "*" UnaryExpr
+   82        | MulExpr "/" UnaryExpr
+   83        | MulExpr "%" UnaryExpr
+
+   84 Condition: OrCond
+
+   85 OrCond: AndCond
+   86       | OrCond "||" AndCond
+
+   87 AndCond: EquCondTerm
+   88        | AndCond "&&" EquCondTerm
+
+   89 EquCondTerm: LessCondTerm
+   90            | EquCondTerm "==" LessCondTerm
+   91            | EquCondTerm "!=" LessCondTerm
+
+   92 LessCondTerm: Expr
+   93             | LessCondTerm "<" Expr
+   94             | LessCondTerm "<=" Expr
+   95             | LessCondTerm ">" Expr
+   96             | LessCondTerm ">=" Expr
+
+   97 UnaryExpr: PrimaryExp
+   98          | "+" UnaryExpr
+   99          | "-" UnaryExpr
+  100          | "!" UnaryExpr
+
+  101 PrimaryExp: Lval
+  102           | "(" OrCond ")"
+  103           | DIGIT_INT
+  104           | DIGIT_FLOAT
+  105           | DIGIT_ID "(" FuncRealParams ")"
+  106           | DIGIT_ID "(" ")"
+
+  107 Lval: DIGIT_ID
+  108     | DIGIT_ID ArrayIndexs
+
+  109 FuncRealParams: Expr
+  110               | FuncRealParams "," Expr
 
 
 Terminals, with rules where they appear
 
     $end (0) 0
     error (256)
-    DIGIT_INT <literal> (258) 81
-    DIGIT_ID <literal> (259) 7 8 9 10 11 12 13 14 15 16 17 18 21 22 68 69 86 87 88
-    DIGIT_FLOAT <literal> (260) 82
-    "+" (261) 73
-    "-" (262) 74 80
-    "/" (263) 77
-    "*" (264) 76
-    "=" (265) 37 40 66
-    "%" (266) 78
-    "int" (267) 7 8 13 14 21 23 61
-    "float" (268) 11 12 17 18 22 24 62
+    DIGIT_INT <literal> (258) 103
+    DIGIT_ID <literal> (259) 7 8 9 10 11 12 13 14 15 16 17 18 21 22 23 24 25 49 50 51 52 62 63 105 106 107 108
+    DIGIT_FLOAT <literal> (260) 104
+    "+" (261) 78 98
+    "-" (262) 79 99
+    "/" (263) 82
+    "*" (264) 81
+    "=" (265) 42 50 52 62 63
+    "%" (266) 83
+    "int" (267) 7 8 13 14 21 23 24 25 45 58
+    "float" (268) 11 12 17 18 22 46 59
     "void" (269) 9 10 15 16
-    "if" (270) 41 42
-    "else" (271) 42
-    "return" (272) 29 30
-    "while" (273) 43 44
-    "do" (274) 44
-    "break" <literal> (275) 38
-    "continue" <literal> (276) 39
-    "==" (277) 53
-    "!=" (278) 54
-    "<" (279) 56
-    ">" (280) 58
-    "<=" (281) 57
-    ">=" (282) 59
-    "!" (283) 50
-    "&&" (284) 49
-    "||" (285) 47
-    "{" (286) 25 26
-    "}" (287) 25 26
-    "(" (288) 7 8 9 10 11 12 13 14 15 16 17 18 41 42 43 44 60 84 86 87
-    ")" (289) 7 8 9 10 11 12 13 14 15 16 17 18 41 42 43 44 60 84 86 87
-    "[" (290) 68 69 70
-    "]" (291) 68 69 70
-    "," (292) 20 64 90
-    ";" (293) 13 14 15 16 17 18 29 30 36 37 38 39 40 44 61 62
+    "if" (270) 69 70
+    "else" (271) 70
+    "return" (272) 30 31
+    "while" (273) 71 72
+    "do" (274) 72
+    "const" (275) 58 59
+    "break" <literal> (276) 36
+    "continue" <literal> (277) 37
+    "==" (278) 90
+    "!=" (279) 91
+    "<" (280) 93
+    ">" (281) 95
+    "<=" (282) 94
+    ">=" (283) 96
+    "!" (284) 100
+    "&&" (285) 88
+    "||" (286) 86
+    "{" (287) 26 27 54 55 65 66
+    "}" (288) 26 27 54 55 65 66
+    "(" (289) 7 8 9 10 11 12 13 14 15 16 17 18 69 70 71 72 102 105 106
+    ")" (290) 7 8 9 10 11 12 13 14 15 16 17 18 69 70 71 72 102 105 106
+    "[" (291) 23 25 73 74
+    "]" (292) 23 25 73 74
+    "," (293) 20 48 57 61 68 110
+    ";" (294) 13 14 15 16 17 18 30 31 36 37 40 41 42 45 46 58 59 72
+    THEN (295)
 
 
 Nonterminals, with rules where they appear
 
-    $accept (39)
+    $accept (41)
         on left: 0
-    CompileUnit <node> (40)
+    CompileUnit <node> (42)
         on left: 1 2 3 4 5 6
         on right: 0 2 4 6
-    FuncDef <node> (41)
+    FuncDef <node> (43)
         on left: 7 8 9 10 11 12
         on right: 1 2
-    FuncDeclare <node> (42)
+    FuncDeclare <node> (44)
         on left: 13 14 15 16 17 18
         on right: 5 6
-    FuncFormalParams <node> (43)
+    FuncFormalParams <node> (45)
         on left: 19 20
         on right: 8 10 12 14 16 18 20
-    FuncFormalParam <node> (44)
-        on left: 21 22 23 24
+    FuncFormalParam <node> (46)
+        on left: 21 22 23 24 25
         on right: 19 20
-    Block <node> (45)
-        on left: 25 26
-        on right: 7 8 9 10 11 12 31
-    BlockItemList <node> (46)
-        on left: 27 28
-        on right: 26 28
-    Statement <node> (47)
-        on left: 29 30 31 32 33 34 35 36 37 38 39 40
-        on right: 3 4 27 28 41 42 43 44
-    IfStmt <node> (48)
-        on left: 41 42
-        on right: 32
-    WhileStmt <node> (49)
-        on left: 43
+    Block <node> (47)
+        on left: 26 27
+        on right: 7 8 9 10 11 12 32
+    BlockItemList <node> (48)
+        on left: 28 29
+        on right: 27 29
+    Statement <node> (49)
+        on left: 30 31 32 33 34 35 36 37 38 39 40 41
+        on right: 3 4 28 29 69 70 71 72
+    AssignStmt <node> (50)
+        on left: 42
+        on right: 38
+    DeclStmt <node> (51)
+        on left: 43 44
+        on right: 39
+    VarlDecl <node> (52)
+        on left: 45 46
+        on right: 44
+    VarDefList <node> (53)
+        on left: 47 48
+        on right: 45 46 48
+    VarDef <node> (54)
+        on left: 49 50 51 52
+        on right: 47 48
+    VarInitVal <node> (55)
+        on left: 53 54 55
+        on right: 50 52 56 57
+    VarInitValList <node> (56)
+        on left: 56 57
+        on right: 55 57
+    ConstDecl <node> (57)
+        on left: 58 59
+        on right: 43
+    ConstDefList <node> (58)
+        on left: 60 61
+        on right: 58 59 61
+    ConstDef <node> (59)
+        on left: 62 63
+        on right: 60 61
+    ConstInitVal <node> (60)
+        on left: 64 65 66
+        on right: 62 63 67 68
+    ConstInitvalList <node> (61)
+        on left: 67 68
+        on right: 66 68
+    IfStmt <node> (62)
+        on left: 69 70
         on right: 33
-    DowhileStmt <node> (50)
-        on left: 44
-        on right: 34
-    Condition <node> (51)
-        on left: 45
-        on right: 36 37 40 41 42 43 44 60
-    OrCond <node> (52)
-        on left: 46 47
-        on right: 45 47
-    AndCond <node> (53)
-        on left: 48 49
-        on right: 46 47 49
-    NotCond <node> (54)
-        on left: 50 51
-        on right: 48 49
-    EquCondTerm <node> (55)
-        on left: 52 53 54
-        on right: 50 51 53 54
-    LessCondTerm <node> (56)
-        on left: 55 56 57 58 59 60
-        on right: 52 53 54 56 57 58 59
-    Declare <node> (57)
-        on left: 61 62
-        on right: 35
-    DeclareItems <node> (58)
-        on left: 63 64
-        on right: 61 62 64
-    DeclareItem <node> (59)
-        on left: 65 66 67
-        on right: 63 64
-    Array <node> (60)
-        on left: 68 69 70
-        on right: 23 24 40 67 70 85
-    Expr <node> (61)
+    WhileStmt <node> (63)
         on left: 71
-        on right: 29 55 56 57 58 59 66 68 70 84 89 90
-    AddExpr <node> (62)
-        on left: 72 73 74
-        on right: 71 73 74
-    MulExpr <node> (63)
-        on left: 75 76 77 78
-        on right: 72 73 74 76 77 78
-    UnaryExpr <node> (64)
-        on left: 79 80
-        on right: 75 76 77 78
-    Term <node> (65)
-        on left: 81 82 83 84 85 86 87
-        on right: 79 80
-    var <node> (66)
-        on left: 88
-        on right: 37 65 66 83
-    FuncRealParams <node> (67)
-        on left: 89 90
-        on right: 86 90
+        on right: 34
+    DowhileStmt <node> (64)
+        on left: 72
+        on right: 35
+    ArrayIndexs <node> (65)
+        on left: 73 74
+        on right: 24 25 51 52 63 74 108
+    Expr <node> (66)
+        on left: 75
+        on right: 30 40 42 53 73 74 92 93 94 95 96 109 110
+    ConstExp <node> (67)
+        on left: 76
+        on right: 64
+    AddExpr <node> (68)
+        on left: 77 78 79
+        on right: 75 76 78 79
+    MulExpr <node> (69)
+        on left: 80 81 82 83
+        on right: 77 78 79 81 82 83
+    Condition <node> (70)
+        on left: 84
+        on right: 69 70 71 72
+    OrCond <node> (71)
+        on left: 85 86
+        on right: 84 86 102
+    AndCond <node> (72)
+        on left: 87 88
+        on right: 85 86 88
+    EquCondTerm <node> (73)
+        on left: 89 90 91
+        on right: 87 88 90 91
+    LessCondTerm <node> (74)
+        on left: 92 93 94 95 96
+        on right: 89 90 91 93 94 95 96
+    UnaryExpr <node> (75)
+        on left: 97 98 99 100
+        on right: 80 81 82 83 98 99 100
+    PrimaryExp <node> (76)
+        on left: 101 102 103 104 105 106
+        on right: 97
+    Lval <node> (77)
+        on left: 107 108
+        on right: 42 101
+    FuncRealParams <node> (78)
+        on left: 109 110
+        on right: 105 110
 
 
 State 0
@@ -264,2188 +318,2497 @@ State 0
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "int"        shift, and go to state 5
-    "float"      shift, and go to state 6
-    "void"       shift, and go to state 7
-    "if"         shift, and go to state 8
-    "return"     shift, and go to state 9
-    "while"      shift, and go to state 10
-    "do"         shift, and go to state 11
-    "break"      shift, and go to state 12
-    "continue"   shift, and go to state 13
-    "!"          shift, and go to state 14
-    "{"          shift, and go to state 15
-    "("          shift, and go to state 16
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "int"        shift, and go to state 6
+    "float"      shift, and go to state 7
+    "void"       shift, and go to state 8
+    "if"         shift, and go to state 9
+    "return"     shift, and go to state 10
+    "while"      shift, and go to state 11
+    "do"         shift, and go to state 12
+    "const"      shift, and go to state 13
+    "break"      shift, and go to state 14
+    "continue"   shift, and go to state 15
+    "!"          shift, and go to state 16
+    "{"          shift, and go to state 17
+    "("          shift, and go to state 18
+    ";"          shift, and go to state 19
 
-    CompileUnit   go to state 17
-    FuncDef       go to state 18
-    FuncDeclare   go to state 19
-    Block         go to state 20
-    Statement     go to state 21
-    IfStmt        go to state 22
-    WhileStmt     go to state 23
-    DowhileStmt   go to state 24
-    Condition     go to state 25
-    OrCond        go to state 26
-    AndCond       go to state 27
-    NotCond       go to state 28
-    EquCondTerm   go to state 29
-    LessCondTerm  go to state 30
-    Declare       go to state 31
-    Array         go to state 32
-    Expr          go to state 33
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 38
+    CompileUnit  go to state 20
+    FuncDef      go to state 21
+    FuncDeclare  go to state 22
+    Block        go to state 23
+    Statement    go to state 24
+    AssignStmt   go to state 25
+    DeclStmt     go to state 26
+    VarlDecl     go to state 27
+    ConstDecl    go to state 28
+    IfStmt       go to state 29
+    WhileStmt    go to state 30
+    DowhileStmt  go to state 31
+    Expr         go to state 32
+    AddExpr      go to state 33
+    MulExpr      go to state 34
+    UnaryExpr    go to state 35
+    PrimaryExp   go to state 36
+    Lval         go to state 37
 
 
 State 1
 
-   81 Term: DIGIT_INT •
+  103 PrimaryExp: DIGIT_INT •
 
-    $default  reduce using rule 81 (Term)
+    $default  reduce using rule 103 (PrimaryExp)
 
 
 State 2
 
-   68 Array: DIGIT_ID • "[" Expr "]"
-   69      | DIGIT_ID • "[" "]"
-   86 Term: DIGIT_ID • "(" FuncRealParams ")"
-   87     | DIGIT_ID • "(" ")"
-   88 var: DIGIT_ID •
+  105 PrimaryExp: DIGIT_ID • "(" FuncRealParams ")"
+  106           | DIGIT_ID • "(" ")"
+  107 Lval: DIGIT_ID •
+  108     | DIGIT_ID • ArrayIndexs
 
-    "("  shift, and go to state 39
-    "["  shift, and go to state 40
+    "("  shift, and go to state 38
+    "["  shift, and go to state 39
 
-    $default  reduce using rule 88 (var)
+    $default  reduce using rule 107 (Lval)
+
+    ArrayIndexs  go to state 40
 
 
 State 3
 
-   82 Term: DIGIT_FLOAT •
+  104 PrimaryExp: DIGIT_FLOAT •
 
-    $default  reduce using rule 82 (Term)
+    $default  reduce using rule 104 (PrimaryExp)
 
 
 State 4
 
-   80 UnaryExpr: "-" • Term
+   98 UnaryExpr: "+" • UnaryExpr
 
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "("          shift, and go to state 41
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
 
-    Array  go to state 42
-    Term   go to state 43
-    var    go to state 44
+    UnaryExpr   go to state 41
+    PrimaryExp  go to state 36
+    Lval        go to state 42
 
 
 State 5
+
+   99 UnaryExpr: "-" • UnaryExpr
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
+
+    UnaryExpr   go to state 43
+    PrimaryExp  go to state 36
+    Lval        go to state 42
+
+
+State 6
 
     7 FuncDef: "int" • DIGIT_ID "(" ")" Block
     8        | "int" • DIGIT_ID "(" FuncFormalParams ")" Block
    13 FuncDeclare: "int" • DIGIT_ID "(" ")" ";"
    14            | "int" • DIGIT_ID "(" FuncFormalParams ")" ";"
-   61 Declare: "int" • DeclareItems ";"
+   45 VarlDecl: "int" • VarDefList ";"
 
-    DIGIT_ID  shift, and go to state 45
+    DIGIT_ID  shift, and go to state 44
 
-    DeclareItems  go to state 46
-    DeclareItem   go to state 47
-    Array         go to state 48
-    var           go to state 49
+    VarDefList  go to state 45
+    VarDef      go to state 46
 
 
-State 6
+State 7
 
    11 FuncDef: "float" • DIGIT_ID "(" ")" Block
    12        | "float" • DIGIT_ID "(" FuncFormalParams ")" Block
    17 FuncDeclare: "float" • DIGIT_ID "(" ")" ";"
    18            | "float" • DIGIT_ID "(" FuncFormalParams ")" ";"
-   62 Declare: "float" • DeclareItems ";"
+   46 VarlDecl: "float" • VarDefList ";"
 
-    DIGIT_ID  shift, and go to state 50
+    DIGIT_ID  shift, and go to state 47
 
-    DeclareItems  go to state 51
-    DeclareItem   go to state 47
-    Array         go to state 48
-    var           go to state 49
+    VarDefList  go to state 48
+    VarDef      go to state 46
 
 
-State 7
+State 8
 
     9 FuncDef: "void" • DIGIT_ID "(" ")" Block
    10        | "void" • DIGIT_ID "(" FuncFormalParams ")" Block
    15 FuncDeclare: "void" • DIGIT_ID "(" ")" ";"
    16            | "void" • DIGIT_ID "(" FuncFormalParams ")" ";"
 
-    DIGIT_ID  shift, and go to state 52
-
-
-State 8
-
-   41 IfStmt: "if" • "(" Condition ")" Statement
-   42       | "if" • "(" Condition ")" Statement "else" Statement
-
-    "("  shift, and go to state 53
+    DIGIT_ID  shift, and go to state 49
 
 
 State 9
 
-   29 Statement: "return" • Expr ";"
-   30          | "return" • ";"
+   69 IfStmt: "if" • "(" Condition ")" Statement
+   70       | "if" • "(" Condition ")" Statement "else" Statement
 
-    DIGIT_INT    shift, and go to state 1
-    DIGIT_ID     shift, and go to state 2
-    DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 41
-    ";"          shift, and go to state 54
-
-    Array      go to state 42
-    Expr       go to state 55
-    AddExpr    go to state 34
-    MulExpr    go to state 35
-    UnaryExpr  go to state 36
-    Term       go to state 37
-    var        go to state 44
+    "("  shift, and go to state 50
 
 
 State 10
 
-   43 WhileStmt: "while" • "(" Condition ")" Statement
+   30 Statement: "return" • Expr ";"
+   31          | "return" • ";"
 
-    "("  shift, and go to state 56
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
+    ";"          shift, and go to state 51
+
+    Expr        go to state 52
+    AddExpr     go to state 33
+    MulExpr     go to state 34
+    UnaryExpr   go to state 35
+    PrimaryExp  go to state 36
+    Lval        go to state 42
 
 
 State 11
 
-   44 DowhileStmt: "do" • Statement "while" "(" Condition ")" ";"
+   71 WhileStmt: "while" • "(" Condition ")" Statement
 
-    DIGIT_INT    shift, and go to state 1
-    DIGIT_ID     shift, and go to state 2
-    DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "int"        shift, and go to state 57
-    "float"      shift, and go to state 58
-    "if"         shift, and go to state 8
-    "return"     shift, and go to state 9
-    "while"      shift, and go to state 10
-    "do"         shift, and go to state 11
-    "break"      shift, and go to state 12
-    "continue"   shift, and go to state 13
-    "!"          shift, and go to state 14
-    "{"          shift, and go to state 15
-    "("          shift, and go to state 16
-
-    Block         go to state 20
-    Statement     go to state 59
-    IfStmt        go to state 22
-    WhileStmt     go to state 23
-    DowhileStmt   go to state 24
-    Condition     go to state 25
-    OrCond        go to state 26
-    AndCond       go to state 27
-    NotCond       go to state 28
-    EquCondTerm   go to state 29
-    LessCondTerm  go to state 30
-    Declare       go to state 31
-    Array         go to state 32
-    Expr          go to state 33
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 38
+    "("  shift, and go to state 53
 
 
 State 12
 
-   38 Statement: "break" • ";"
+   72 DowhileStmt: "do" • Statement "while" "(" Condition ")" ";"
 
-    ";"  shift, and go to state 60
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "int"        shift, and go to state 54
+    "float"      shift, and go to state 55
+    "if"         shift, and go to state 9
+    "return"     shift, and go to state 10
+    "while"      shift, and go to state 11
+    "do"         shift, and go to state 12
+    "const"      shift, and go to state 13
+    "break"      shift, and go to state 14
+    "continue"   shift, and go to state 15
+    "!"          shift, and go to state 16
+    "{"          shift, and go to state 17
+    "("          shift, and go to state 18
+    ";"          shift, and go to state 19
+
+    Block        go to state 23
+    Statement    go to state 56
+    AssignStmt   go to state 25
+    DeclStmt     go to state 26
+    VarlDecl     go to state 27
+    ConstDecl    go to state 28
+    IfStmt       go to state 29
+    WhileStmt    go to state 30
+    DowhileStmt  go to state 31
+    Expr         go to state 32
+    AddExpr      go to state 33
+    MulExpr      go to state 34
+    UnaryExpr    go to state 35
+    PrimaryExp   go to state 36
+    Lval         go to state 37
 
 
 State 13
 
-   39 Statement: "continue" • ";"
+   58 ConstDecl: "const" • "int" ConstDefList ";"
+   59          | "const" • "float" ConstDefList ";"
 
-    ";"  shift, and go to state 61
+    "int"    shift, and go to state 57
+    "float"  shift, and go to state 58
 
 
 State 14
 
-   50 NotCond: "!" • EquCondTerm
+   36 Statement: "break" • ";"
 
-    DIGIT_INT    shift, and go to state 1
-    DIGIT_ID     shift, and go to state 2
-    DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 16
-
-    EquCondTerm   go to state 62
-    LessCondTerm  go to state 30
-    Array         go to state 42
-    Expr          go to state 33
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 44
+    ";"  shift, and go to state 59
 
 
 State 15
 
-   25 Block: "{" • "}"
-   26      | "{" • BlockItemList "}"
+   37 Statement: "continue" • ";"
 
-    DIGIT_INT    shift, and go to state 1
-    DIGIT_ID     shift, and go to state 2
-    DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "int"        shift, and go to state 57
-    "float"      shift, and go to state 58
-    "if"         shift, and go to state 8
-    "return"     shift, and go to state 9
-    "while"      shift, and go to state 10
-    "do"         shift, and go to state 11
-    "break"      shift, and go to state 12
-    "continue"   shift, and go to state 13
-    "!"          shift, and go to state 14
-    "{"          shift, and go to state 15
-    "}"          shift, and go to state 63
-    "("          shift, and go to state 16
-
-    Block          go to state 20
-    BlockItemList  go to state 64
-    Statement      go to state 65
-    IfStmt         go to state 22
-    WhileStmt      go to state 23
-    DowhileStmt    go to state 24
-    Condition      go to state 25
-    OrCond         go to state 26
-    AndCond        go to state 27
-    NotCond        go to state 28
-    EquCondTerm    go to state 29
-    LessCondTerm   go to state 30
-    Declare        go to state 31
-    Array          go to state 32
-    Expr           go to state 33
-    AddExpr        go to state 34
-    MulExpr        go to state 35
-    UnaryExpr      go to state 36
-    Term           go to state 37
-    var            go to state 38
+    ";"  shift, and go to state 60
 
 
 State 16
 
-   60 LessCondTerm: "(" • Condition ")"
-   84 Term: "(" • Expr ")"
+  100 UnaryExpr: "!" • UnaryExpr
 
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "!"          shift, and go to state 14
-    "("          shift, and go to state 16
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
 
-    Condition     go to state 66
-    OrCond        go to state 26
-    AndCond       go to state 27
-    NotCond       go to state 28
-    EquCondTerm   go to state 29
-    LessCondTerm  go to state 30
-    Array         go to state 42
-    Expr          go to state 67
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 44
+    UnaryExpr   go to state 61
+    PrimaryExp  go to state 36
+    Lval        go to state 42
 
 
 State 17
+
+   26 Block: "{" • "}"
+   27      | "{" • BlockItemList "}"
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "int"        shift, and go to state 54
+    "float"      shift, and go to state 55
+    "if"         shift, and go to state 9
+    "return"     shift, and go to state 10
+    "while"      shift, and go to state 11
+    "do"         shift, and go to state 12
+    "const"      shift, and go to state 13
+    "break"      shift, and go to state 14
+    "continue"   shift, and go to state 15
+    "!"          shift, and go to state 16
+    "{"          shift, and go to state 17
+    "}"          shift, and go to state 62
+    "("          shift, and go to state 18
+    ";"          shift, and go to state 19
+
+    Block          go to state 23
+    BlockItemList  go to state 63
+    Statement      go to state 64
+    AssignStmt     go to state 25
+    DeclStmt       go to state 26
+    VarlDecl       go to state 27
+    ConstDecl      go to state 28
+    IfStmt         go to state 29
+    WhileStmt      go to state 30
+    DowhileStmt    go to state 31
+    Expr           go to state 32
+    AddExpr        go to state 33
+    MulExpr        go to state 34
+    UnaryExpr      go to state 35
+    PrimaryExp     go to state 36
+    Lval           go to state 37
+
+
+State 18
+
+  102 PrimaryExp: "(" • OrCond ")"
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
+
+    Expr          go to state 65
+    AddExpr       go to state 33
+    MulExpr       go to state 34
+    OrCond        go to state 66
+    AndCond       go to state 67
+    EquCondTerm   go to state 68
+    LessCondTerm  go to state 69
+    UnaryExpr     go to state 35
+    PrimaryExp    go to state 36
+    Lval          go to state 42
+
+
+State 19
+
+   41 Statement: ";" •
+
+    $default  reduce using rule 41 (Statement)
+
+
+State 20
 
     0 $accept: CompileUnit • $end
     2 CompileUnit: CompileUnit • FuncDef
     4            | CompileUnit • Statement
     6            | CompileUnit • FuncDeclare
 
-    $end         shift, and go to state 68
+    $end         shift, and go to state 70
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "int"        shift, and go to state 5
-    "float"      shift, and go to state 6
-    "void"       shift, and go to state 7
-    "if"         shift, and go to state 8
-    "return"     shift, and go to state 9
-    "while"      shift, and go to state 10
-    "do"         shift, and go to state 11
-    "break"      shift, and go to state 12
-    "continue"   shift, and go to state 13
-    "!"          shift, and go to state 14
-    "{"          shift, and go to state 15
-    "("          shift, and go to state 16
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "int"        shift, and go to state 6
+    "float"      shift, and go to state 7
+    "void"       shift, and go to state 8
+    "if"         shift, and go to state 9
+    "return"     shift, and go to state 10
+    "while"      shift, and go to state 11
+    "do"         shift, and go to state 12
+    "const"      shift, and go to state 13
+    "break"      shift, and go to state 14
+    "continue"   shift, and go to state 15
+    "!"          shift, and go to state 16
+    "{"          shift, and go to state 17
+    "("          shift, and go to state 18
+    ";"          shift, and go to state 19
 
-    FuncDef       go to state 69
-    FuncDeclare   go to state 70
-    Block         go to state 20
-    Statement     go to state 71
-    IfStmt        go to state 22
-    WhileStmt     go to state 23
-    DowhileStmt   go to state 24
-    Condition     go to state 25
-    OrCond        go to state 26
-    AndCond       go to state 27
-    NotCond       go to state 28
-    EquCondTerm   go to state 29
-    LessCondTerm  go to state 30
-    Declare       go to state 31
-    Array         go to state 32
-    Expr          go to state 33
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 38
+    FuncDef      go to state 71
+    FuncDeclare  go to state 72
+    Block        go to state 23
+    Statement    go to state 73
+    AssignStmt   go to state 25
+    DeclStmt     go to state 26
+    VarlDecl     go to state 27
+    ConstDecl    go to state 28
+    IfStmt       go to state 29
+    WhileStmt    go to state 30
+    DowhileStmt  go to state 31
+    Expr         go to state 32
+    AddExpr      go to state 33
+    MulExpr      go to state 34
+    UnaryExpr    go to state 35
+    PrimaryExp   go to state 36
+    Lval         go to state 37
 
 
-State 18
+State 21
 
     1 CompileUnit: FuncDef •
 
     $default  reduce using rule 1 (CompileUnit)
 
 
-State 19
+State 22
 
     5 CompileUnit: FuncDeclare •
 
     $default  reduce using rule 5 (CompileUnit)
 
 
-State 20
+State 23
 
-   31 Statement: Block •
+   32 Statement: Block •
 
-    $default  reduce using rule 31 (Statement)
+    $default  reduce using rule 32 (Statement)
 
 
-State 21
+State 24
 
     3 CompileUnit: Statement •
 
     $default  reduce using rule 3 (CompileUnit)
 
 
-State 22
-
-   32 Statement: IfStmt •
-
-    $default  reduce using rule 32 (Statement)
-
-
-State 23
-
-   33 Statement: WhileStmt •
-
-    $default  reduce using rule 33 (Statement)
-
-
-State 24
-
-   34 Statement: DowhileStmt •
-
-    $default  reduce using rule 34 (Statement)
-
-
 State 25
 
-   36 Statement: Condition • ";"
+   38 Statement: AssignStmt •
 
-    ";"  shift, and go to state 72
+    $default  reduce using rule 38 (Statement)
 
 
 State 26
 
-   45 Condition: OrCond •
-   47 OrCond: OrCond • "||" AndCond
+   39 Statement: DeclStmt •
 
-    "||"  shift, and go to state 73
-
-    $default  reduce using rule 45 (Condition)
+    $default  reduce using rule 39 (Statement)
 
 
 State 27
 
-   46 OrCond: AndCond •
-   49 AndCond: AndCond • "&&" NotCond
+   44 DeclStmt: VarlDecl •
 
-    "&&"  shift, and go to state 74
-
-    $default  reduce using rule 46 (OrCond)
+    $default  reduce using rule 44 (DeclStmt)
 
 
 State 28
 
-   48 AndCond: NotCond •
+   43 DeclStmt: ConstDecl •
 
-    $default  reduce using rule 48 (AndCond)
+    $default  reduce using rule 43 (DeclStmt)
 
 
 State 29
 
-   51 NotCond: EquCondTerm •
-   53 EquCondTerm: EquCondTerm • "==" LessCondTerm
-   54            | EquCondTerm • "!=" LessCondTerm
+   33 Statement: IfStmt •
 
-    "=="  shift, and go to state 75
-    "!="  shift, and go to state 76
-
-    $default  reduce using rule 51 (NotCond)
+    $default  reduce using rule 33 (Statement)
 
 
 State 30
 
-   52 EquCondTerm: LessCondTerm •
-   56 LessCondTerm: LessCondTerm • "<" Expr
-   57             | LessCondTerm • "<=" Expr
-   58             | LessCondTerm • ">" Expr
-   59             | LessCondTerm • ">=" Expr
+   34 Statement: WhileStmt •
 
-    "<"   shift, and go to state 77
-    ">"   shift, and go to state 78
-    "<="  shift, and go to state 79
-    ">="  shift, and go to state 80
-
-    $default  reduce using rule 52 (EquCondTerm)
+    $default  reduce using rule 34 (Statement)
 
 
 State 31
 
-   35 Statement: Declare •
+   35 Statement: DowhileStmt •
 
     $default  reduce using rule 35 (Statement)
 
 
 State 32
 
-   40 Statement: Array • "=" Condition ";"
-   70 Array: Array • "[" Expr "]"
-   85 Term: Array •
+   40 Statement: Expr • ";"
 
-    "="  shift, and go to state 81
-    "["  shift, and go to state 82
-
-    $default  reduce using rule 85 (Term)
+    ";"  shift, and go to state 74
 
 
 State 33
 
-   55 LessCondTerm: Expr •
+   75 Expr: AddExpr •
+   78 AddExpr: AddExpr • "+" MulExpr
+   79        | AddExpr • "-" MulExpr
 
-    $default  reduce using rule 55 (LessCondTerm)
+    "+"  shift, and go to state 75
+    "-"  shift, and go to state 76
+
+    $default  reduce using rule 75 (Expr)
 
 
 State 34
 
-   71 Expr: AddExpr •
-   73 AddExpr: AddExpr • "+" MulExpr
-   74        | AddExpr • "-" MulExpr
+   77 AddExpr: MulExpr •
+   81 MulExpr: MulExpr • "*" UnaryExpr
+   82        | MulExpr • "/" UnaryExpr
+   83        | MulExpr • "%" UnaryExpr
 
-    "+"  shift, and go to state 83
-    "-"  shift, and go to state 84
+    "/"  shift, and go to state 77
+    "*"  shift, and go to state 78
+    "%"  shift, and go to state 79
 
-    $default  reduce using rule 71 (Expr)
+    $default  reduce using rule 77 (AddExpr)
 
 
 State 35
 
-   72 AddExpr: MulExpr •
-   76 MulExpr: MulExpr • "*" UnaryExpr
-   77        | MulExpr • "/" UnaryExpr
-   78        | MulExpr • "%" UnaryExpr
+   80 MulExpr: UnaryExpr •
 
-    "/"  shift, and go to state 85
-    "*"  shift, and go to state 86
-    "%"  shift, and go to state 87
-
-    $default  reduce using rule 72 (AddExpr)
+    $default  reduce using rule 80 (MulExpr)
 
 
 State 36
 
-   75 MulExpr: UnaryExpr •
+   97 UnaryExpr: PrimaryExp •
 
-    $default  reduce using rule 75 (MulExpr)
+    $default  reduce using rule 97 (UnaryExpr)
 
 
 State 37
 
-   79 UnaryExpr: Term •
+   42 AssignStmt: Lval • "=" Expr ";"
+  101 PrimaryExp: Lval •
 
-    $default  reduce using rule 79 (UnaryExpr)
+    "="  shift, and go to state 80
+
+    $default  reduce using rule 101 (PrimaryExp)
 
 
 State 38
 
-   37 Statement: var • "=" Condition ";"
-   83 Term: var •
+  105 PrimaryExp: DIGIT_ID "(" • FuncRealParams ")"
+  106           | DIGIT_ID "(" • ")"
 
-    "="  shift, and go to state 88
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
+    ")"          shift, and go to state 81
 
-    $default  reduce using rule 83 (Term)
+    Expr            go to state 82
+    AddExpr         go to state 33
+    MulExpr         go to state 34
+    UnaryExpr       go to state 35
+    PrimaryExp      go to state 36
+    Lval            go to state 42
+    FuncRealParams  go to state 83
 
 
 State 39
 
-   86 Term: DIGIT_ID "(" • FuncRealParams ")"
-   87     | DIGIT_ID "(" • ")"
+   73 ArrayIndexs: "[" • Expr "]"
 
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 41
-    ")"          shift, and go to state 89
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
 
-    Array           go to state 42
-    Expr            go to state 90
-    AddExpr         go to state 34
-    MulExpr         go to state 35
-    UnaryExpr       go to state 36
-    Term            go to state 37
-    var             go to state 44
-    FuncRealParams  go to state 91
+    Expr        go to state 84
+    AddExpr     go to state 33
+    MulExpr     go to state 34
+    UnaryExpr   go to state 35
+    PrimaryExp  go to state 36
+    Lval        go to state 42
 
 
 State 40
 
-   68 Array: DIGIT_ID "[" • Expr "]"
-   69      | DIGIT_ID "[" • "]"
+   74 ArrayIndexs: ArrayIndexs • "[" Expr "]"
+  108 Lval: DIGIT_ID ArrayIndexs •
 
-    DIGIT_INT    shift, and go to state 1
-    DIGIT_ID     shift, and go to state 2
-    DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 41
-    "]"          shift, and go to state 92
+    "["  shift, and go to state 85
 
-    Array      go to state 42
-    Expr       go to state 93
-    AddExpr    go to state 34
-    MulExpr    go to state 35
-    UnaryExpr  go to state 36
-    Term       go to state 37
-    var        go to state 44
+    $default  reduce using rule 108 (Lval)
 
 
 State 41
 
-   84 Term: "(" • Expr ")"
+   98 UnaryExpr: "+" UnaryExpr •
 
-    DIGIT_INT    shift, and go to state 1
-    DIGIT_ID     shift, and go to state 2
-    DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 41
-
-    Array      go to state 42
-    Expr       go to state 94
-    AddExpr    go to state 34
-    MulExpr    go to state 35
-    UnaryExpr  go to state 36
-    Term       go to state 37
-    var        go to state 44
+    $default  reduce using rule 98 (UnaryExpr)
 
 
 State 42
 
-   70 Array: Array • "[" Expr "]"
-   85 Term: Array •
+  101 PrimaryExp: Lval •
 
-    "["  shift, and go to state 82
-
-    $default  reduce using rule 85 (Term)
+    $default  reduce using rule 101 (PrimaryExp)
 
 
 State 43
 
-   80 UnaryExpr: "-" Term •
+   99 UnaryExpr: "-" UnaryExpr •
 
-    $default  reduce using rule 80 (UnaryExpr)
+    $default  reduce using rule 99 (UnaryExpr)
 
 
 State 44
-
-   83 Term: var •
-
-    $default  reduce using rule 83 (Term)
-
-
-State 45
 
     7 FuncDef: "int" DIGIT_ID • "(" ")" Block
     8        | "int" DIGIT_ID • "(" FuncFormalParams ")" Block
    13 FuncDeclare: "int" DIGIT_ID • "(" ")" ";"
    14            | "int" DIGIT_ID • "(" FuncFormalParams ")" ";"
-   68 Array: DIGIT_ID • "[" Expr "]"
-   69      | DIGIT_ID • "[" "]"
-   88 var: DIGIT_ID •
+   49 VarDef: DIGIT_ID •
+   50       | DIGIT_ID • "=" VarInitVal
+   51       | DIGIT_ID • ArrayIndexs
+   52       | DIGIT_ID • ArrayIndexs "=" VarInitVal
 
-    "("  shift, and go to state 95
-    "["  shift, and go to state 40
+    "="  shift, and go to state 86
+    "("  shift, and go to state 87
+    "["  shift, and go to state 39
 
-    $default  reduce using rule 88 (var)
+    $default  reduce using rule 49 (VarDef)
+
+    ArrayIndexs  go to state 88
+
+
+State 45
+
+   45 VarlDecl: "int" VarDefList • ";"
+   48 VarDefList: VarDefList • "," VarDef
+
+    ","  shift, and go to state 89
+    ";"  shift, and go to state 90
 
 
 State 46
 
-   61 Declare: "int" DeclareItems • ";"
-   64 DeclareItems: DeclareItems • "," DeclareItem
+   47 VarDefList: VarDef •
 
-    ","  shift, and go to state 96
-    ";"  shift, and go to state 97
+    $default  reduce using rule 47 (VarDefList)
 
 
 State 47
-
-   63 DeclareItems: DeclareItem •
-
-    $default  reduce using rule 63 (DeclareItems)
-
-
-State 48
-
-   67 DeclareItem: Array •
-   70 Array: Array • "[" Expr "]"
-
-    "["  shift, and go to state 82
-
-    $default  reduce using rule 67 (DeclareItem)
-
-
-State 49
-
-   65 DeclareItem: var •
-   66            | var • "=" Expr
-
-    "="  shift, and go to state 98
-
-    $default  reduce using rule 65 (DeclareItem)
-
-
-State 50
 
    11 FuncDef: "float" DIGIT_ID • "(" ")" Block
    12        | "float" DIGIT_ID • "(" FuncFormalParams ")" Block
    17 FuncDeclare: "float" DIGIT_ID • "(" ")" ";"
    18            | "float" DIGIT_ID • "(" FuncFormalParams ")" ";"
-   68 Array: DIGIT_ID • "[" Expr "]"
-   69      | DIGIT_ID • "[" "]"
-   88 var: DIGIT_ID •
+   49 VarDef: DIGIT_ID •
+   50       | DIGIT_ID • "=" VarInitVal
+   51       | DIGIT_ID • ArrayIndexs
+   52       | DIGIT_ID • ArrayIndexs "=" VarInitVal
 
-    "("  shift, and go to state 99
-    "["  shift, and go to state 40
+    "="  shift, and go to state 86
+    "("  shift, and go to state 91
+    "["  shift, and go to state 39
 
-    $default  reduce using rule 88 (var)
+    $default  reduce using rule 49 (VarDef)
 
-
-State 51
-
-   62 Declare: "float" DeclareItems • ";"
-   64 DeclareItems: DeclareItems • "," DeclareItem
-
-    ","  shift, and go to state 96
-    ";"  shift, and go to state 100
+    ArrayIndexs  go to state 88
 
 
-State 52
+State 48
+
+   46 VarlDecl: "float" VarDefList • ";"
+   48 VarDefList: VarDefList • "," VarDef
+
+    ","  shift, and go to state 89
+    ";"  shift, and go to state 92
+
+
+State 49
 
     9 FuncDef: "void" DIGIT_ID • "(" ")" Block
    10        | "void" DIGIT_ID • "(" FuncFormalParams ")" Block
    15 FuncDeclare: "void" DIGIT_ID • "(" ")" ";"
    16            | "void" DIGIT_ID • "(" FuncFormalParams ")" ";"
 
-    "("  shift, and go to state 101
+    "("  shift, and go to state 93
+
+
+State 50
+
+   69 IfStmt: "if" "(" • Condition ")" Statement
+   70       | "if" "(" • Condition ")" Statement "else" Statement
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
+
+    Expr          go to state 65
+    AddExpr       go to state 33
+    MulExpr       go to state 34
+    Condition     go to state 94
+    OrCond        go to state 95
+    AndCond       go to state 67
+    EquCondTerm   go to state 68
+    LessCondTerm  go to state 69
+    UnaryExpr     go to state 35
+    PrimaryExp    go to state 36
+    Lval          go to state 42
+
+
+State 51
+
+   31 Statement: "return" ";" •
+
+    $default  reduce using rule 31 (Statement)
+
+
+State 52
+
+   30 Statement: "return" Expr • ";"
+
+    ";"  shift, and go to state 96
 
 
 State 53
 
-   41 IfStmt: "if" "(" • Condition ")" Statement
-   42       | "if" "(" • Condition ")" Statement "else" Statement
+   71 WhileStmt: "while" "(" • Condition ")" Statement
 
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "!"          shift, and go to state 14
-    "("          shift, and go to state 16
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
 
-    Condition     go to state 102
-    OrCond        go to state 26
-    AndCond       go to state 27
-    NotCond       go to state 28
-    EquCondTerm   go to state 29
-    LessCondTerm  go to state 30
-    Array         go to state 42
-    Expr          go to state 33
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 44
+    Expr          go to state 65
+    AddExpr       go to state 33
+    MulExpr       go to state 34
+    Condition     go to state 97
+    OrCond        go to state 95
+    AndCond       go to state 67
+    EquCondTerm   go to state 68
+    LessCondTerm  go to state 69
+    UnaryExpr     go to state 35
+    PrimaryExp    go to state 36
+    Lval          go to state 42
 
 
 State 54
 
-   30 Statement: "return" ";" •
+   45 VarlDecl: "int" • VarDefList ";"
 
-    $default  reduce using rule 30 (Statement)
+    DIGIT_ID  shift, and go to state 98
+
+    VarDefList  go to state 45
+    VarDef      go to state 46
 
 
 State 55
 
-   29 Statement: "return" Expr • ";"
+   46 VarlDecl: "float" • VarDefList ";"
 
-    ";"  shift, and go to state 103
+    DIGIT_ID  shift, and go to state 98
+
+    VarDefList  go to state 48
+    VarDef      go to state 46
 
 
 State 56
 
-   43 WhileStmt: "while" "(" • Condition ")" Statement
+   72 DowhileStmt: "do" Statement • "while" "(" Condition ")" ";"
 
-    DIGIT_INT    shift, and go to state 1
-    DIGIT_ID     shift, and go to state 2
-    DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "!"          shift, and go to state 14
-    "("          shift, and go to state 16
-
-    Condition     go to state 104
-    OrCond        go to state 26
-    AndCond       go to state 27
-    NotCond       go to state 28
-    EquCondTerm   go to state 29
-    LessCondTerm  go to state 30
-    Array         go to state 42
-    Expr          go to state 33
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 44
+    "while"  shift, and go to state 99
 
 
 State 57
 
-   61 Declare: "int" • DeclareItems ";"
+   58 ConstDecl: "const" "int" • ConstDefList ";"
 
-    DIGIT_ID  shift, and go to state 105
+    DIGIT_ID  shift, and go to state 100
 
-    DeclareItems  go to state 46
-    DeclareItem   go to state 47
-    Array         go to state 48
-    var           go to state 49
+    ConstDefList  go to state 101
+    ConstDef      go to state 102
 
 
 State 58
 
-   62 Declare: "float" • DeclareItems ";"
+   59 ConstDecl: "const" "float" • ConstDefList ";"
 
-    DIGIT_ID  shift, and go to state 105
+    DIGIT_ID  shift, and go to state 100
 
-    DeclareItems  go to state 51
-    DeclareItem   go to state 47
-    Array         go to state 48
-    var           go to state 49
+    ConstDefList  go to state 103
+    ConstDef      go to state 102
 
 
 State 59
 
-   44 DowhileStmt: "do" Statement • "while" "(" Condition ")" ";"
+   36 Statement: "break" ";" •
 
-    "while"  shift, and go to state 106
+    $default  reduce using rule 36 (Statement)
 
 
 State 60
 
-   38 Statement: "break" ";" •
+   37 Statement: "continue" ";" •
 
-    $default  reduce using rule 38 (Statement)
+    $default  reduce using rule 37 (Statement)
 
 
 State 61
 
-   39 Statement: "continue" ";" •
+  100 UnaryExpr: "!" UnaryExpr •
 
-    $default  reduce using rule 39 (Statement)
+    $default  reduce using rule 100 (UnaryExpr)
 
 
 State 62
 
-   50 NotCond: "!" EquCondTerm •
-   53 EquCondTerm: EquCondTerm • "==" LessCondTerm
-   54            | EquCondTerm • "!=" LessCondTerm
+   26 Block: "{" "}" •
 
-    "=="  shift, and go to state 75
-    "!="  shift, and go to state 76
-
-    $default  reduce using rule 50 (NotCond)
+    $default  reduce using rule 26 (Block)
 
 
 State 63
 
-   25 Block: "{" "}" •
-
-    $default  reduce using rule 25 (Block)
-
-
-State 64
-
-   26 Block: "{" BlockItemList • "}"
-   28 BlockItemList: BlockItemList • Statement
+   27 Block: "{" BlockItemList • "}"
+   29 BlockItemList: BlockItemList • Statement
 
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "int"        shift, and go to state 57
-    "float"      shift, and go to state 58
-    "if"         shift, and go to state 8
-    "return"     shift, and go to state 9
-    "while"      shift, and go to state 10
-    "do"         shift, and go to state 11
-    "break"      shift, and go to state 12
-    "continue"   shift, and go to state 13
-    "!"          shift, and go to state 14
-    "{"          shift, and go to state 15
-    "}"          shift, and go to state 107
-    "("          shift, and go to state 16
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "int"        shift, and go to state 54
+    "float"      shift, and go to state 55
+    "if"         shift, and go to state 9
+    "return"     shift, and go to state 10
+    "while"      shift, and go to state 11
+    "do"         shift, and go to state 12
+    "const"      shift, and go to state 13
+    "break"      shift, and go to state 14
+    "continue"   shift, and go to state 15
+    "!"          shift, and go to state 16
+    "{"          shift, and go to state 17
+    "}"          shift, and go to state 104
+    "("          shift, and go to state 18
+    ";"          shift, and go to state 19
 
-    Block         go to state 20
-    Statement     go to state 108
-    IfStmt        go to state 22
-    WhileStmt     go to state 23
-    DowhileStmt   go to state 24
-    Condition     go to state 25
-    OrCond        go to state 26
-    AndCond       go to state 27
-    NotCond       go to state 28
-    EquCondTerm   go to state 29
-    LessCondTerm  go to state 30
-    Declare       go to state 31
-    Array         go to state 32
-    Expr          go to state 33
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 38
+    Block        go to state 23
+    Statement    go to state 105
+    AssignStmt   go to state 25
+    DeclStmt     go to state 26
+    VarlDecl     go to state 27
+    ConstDecl    go to state 28
+    IfStmt       go to state 29
+    WhileStmt    go to state 30
+    DowhileStmt  go to state 31
+    Expr         go to state 32
+    AddExpr      go to state 33
+    MulExpr      go to state 34
+    UnaryExpr    go to state 35
+    PrimaryExp   go to state 36
+    Lval         go to state 37
+
+
+State 64
+
+   28 BlockItemList: Statement •
+
+    $default  reduce using rule 28 (BlockItemList)
 
 
 State 65
 
-   27 BlockItemList: Statement •
+   92 LessCondTerm: Expr •
 
-    $default  reduce using rule 27 (BlockItemList)
+    $default  reduce using rule 92 (LessCondTerm)
 
 
 State 66
 
-   60 LessCondTerm: "(" Condition • ")"
+   86 OrCond: OrCond • "||" AndCond
+  102 PrimaryExp: "(" OrCond • ")"
 
-    ")"  shift, and go to state 109
+    "||"  shift, and go to state 106
+    ")"   shift, and go to state 107
 
 
 State 67
 
-   55 LessCondTerm: Expr •
-   84 Term: "(" Expr • ")"
+   85 OrCond: AndCond •
+   88 AndCond: AndCond • "&&" EquCondTerm
 
-    ")"  shift, and go to state 110
+    "&&"  shift, and go to state 108
 
-    ")"       [reduce using rule 55 (LessCondTerm)]
-    $default  reduce using rule 55 (LessCondTerm)
-
-    shift/reduce conflict on token ")":
-       55 LessCondTerm: Expr •
-       84 Term: "(" Expr • ")"
-      Example: "(" Expr • ")"
-      Shift derivation
-        LessCondTerm
-        ↳ 55: Expr
-              ↳ 71: AddExpr
-                    ↳ 72: MulExpr
-                          ↳ 75: UnaryExpr
-                                ↳ 79: Term
-                                      ↳ 84: "(" Expr • ")"
-      Reduce derivation
-        LessCondTerm
-        ↳ 60: "(" Condition                                  ")"
-                  ↳ 45: OrCond
-                        ↳ 46: AndCond
-                              ↳ 48: NotCond
-                                    ↳ 51: EquCondTerm
-                                          ↳ 52: LessCondTerm
-                                                ↳ 55: Expr •
-
+    $default  reduce using rule 85 (OrCond)
 
 
 State 68
+
+   87 AndCond: EquCondTerm •
+   90 EquCondTerm: EquCondTerm • "==" LessCondTerm
+   91            | EquCondTerm • "!=" LessCondTerm
+
+    "=="  shift, and go to state 109
+    "!="  shift, and go to state 110
+
+    $default  reduce using rule 87 (AndCond)
+
+
+State 69
+
+   89 EquCondTerm: LessCondTerm •
+   93 LessCondTerm: LessCondTerm • "<" Expr
+   94             | LessCondTerm • "<=" Expr
+   95             | LessCondTerm • ">" Expr
+   96             | LessCondTerm • ">=" Expr
+
+    "<"   shift, and go to state 111
+    ">"   shift, and go to state 112
+    "<="  shift, and go to state 113
+    ">="  shift, and go to state 114
+
+    $default  reduce using rule 89 (EquCondTerm)
+
+
+State 70
 
     0 $accept: CompileUnit $end •
 
     $default  accept
 
 
-State 69
+State 71
 
     2 CompileUnit: CompileUnit FuncDef •
 
     $default  reduce using rule 2 (CompileUnit)
 
 
-State 70
+State 72
 
     6 CompileUnit: CompileUnit FuncDeclare •
 
     $default  reduce using rule 6 (CompileUnit)
 
 
-State 71
+State 73
 
     4 CompileUnit: CompileUnit Statement •
 
     $default  reduce using rule 4 (CompileUnit)
 
 
-State 72
-
-   36 Statement: Condition ";" •
-
-    $default  reduce using rule 36 (Statement)
-
-
-State 73
-
-   47 OrCond: OrCond "||" • AndCond
-
-    DIGIT_INT    shift, and go to state 1
-    DIGIT_ID     shift, and go to state 2
-    DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "!"          shift, and go to state 14
-    "("          shift, and go to state 16
-
-    AndCond       go to state 111
-    NotCond       go to state 28
-    EquCondTerm   go to state 29
-    LessCondTerm  go to state 30
-    Array         go to state 42
-    Expr          go to state 33
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 44
-
-
 State 74
 
-   49 AndCond: AndCond "&&" • NotCond
+   40 Statement: Expr ";" •
 
-    DIGIT_INT    shift, and go to state 1
-    DIGIT_ID     shift, and go to state 2
-    DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "!"          shift, and go to state 14
-    "("          shift, and go to state 16
-
-    NotCond       go to state 112
-    EquCondTerm   go to state 29
-    LessCondTerm  go to state 30
-    Array         go to state 42
-    Expr          go to state 33
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 44
+    $default  reduce using rule 40 (Statement)
 
 
 State 75
 
-   53 EquCondTerm: EquCondTerm "==" • LessCondTerm
+   78 AddExpr: AddExpr "+" • MulExpr
 
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 16
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
 
-    LessCondTerm  go to state 113
-    Array         go to state 42
-    Expr          go to state 33
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 44
+    MulExpr     go to state 115
+    UnaryExpr   go to state 35
+    PrimaryExp  go to state 36
+    Lval        go to state 42
 
 
 State 76
 
-   54 EquCondTerm: EquCondTerm "!=" • LessCondTerm
+   79 AddExpr: AddExpr "-" • MulExpr
 
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 16
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
 
-    LessCondTerm  go to state 114
-    Array         go to state 42
-    Expr          go to state 33
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 44
+    MulExpr     go to state 116
+    UnaryExpr   go to state 35
+    PrimaryExp  go to state 36
+    Lval        go to state 42
 
 
 State 77
 
-   56 LessCondTerm: LessCondTerm "<" • Expr
+   82 MulExpr: MulExpr "/" • UnaryExpr
 
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 41
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
 
-    Array      go to state 42
-    Expr       go to state 115
-    AddExpr    go to state 34
-    MulExpr    go to state 35
-    UnaryExpr  go to state 36
-    Term       go to state 37
-    var        go to state 44
+    UnaryExpr   go to state 117
+    PrimaryExp  go to state 36
+    Lval        go to state 42
 
 
 State 78
 
-   58 LessCondTerm: LessCondTerm ">" • Expr
+   81 MulExpr: MulExpr "*" • UnaryExpr
 
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 41
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
 
-    Array      go to state 42
-    Expr       go to state 116
-    AddExpr    go to state 34
-    MulExpr    go to state 35
-    UnaryExpr  go to state 36
-    Term       go to state 37
-    var        go to state 44
+    UnaryExpr   go to state 118
+    PrimaryExp  go to state 36
+    Lval        go to state 42
 
 
 State 79
 
-   57 LessCondTerm: LessCondTerm "<=" • Expr
+   83 MulExpr: MulExpr "%" • UnaryExpr
 
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 41
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
 
-    Array      go to state 42
-    Expr       go to state 117
-    AddExpr    go to state 34
-    MulExpr    go to state 35
-    UnaryExpr  go to state 36
-    Term       go to state 37
-    var        go to state 44
+    UnaryExpr   go to state 119
+    PrimaryExp  go to state 36
+    Lval        go to state 42
 
 
 State 80
 
-   59 LessCondTerm: LessCondTerm ">=" • Expr
+   42 AssignStmt: Lval "=" • Expr ";"
 
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 41
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
 
-    Array      go to state 42
-    Expr       go to state 118
-    AddExpr    go to state 34
-    MulExpr    go to state 35
-    UnaryExpr  go to state 36
-    Term       go to state 37
-    var        go to state 44
+    Expr        go to state 120
+    AddExpr     go to state 33
+    MulExpr     go to state 34
+    UnaryExpr   go to state 35
+    PrimaryExp  go to state 36
+    Lval        go to state 42
 
 
 State 81
 
-   40 Statement: Array "=" • Condition ";"
+  106 PrimaryExp: DIGIT_ID "(" ")" •
 
-    DIGIT_INT    shift, and go to state 1
-    DIGIT_ID     shift, and go to state 2
-    DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "!"          shift, and go to state 14
-    "("          shift, and go to state 16
-
-    Condition     go to state 119
-    OrCond        go to state 26
-    AndCond       go to state 27
-    NotCond       go to state 28
-    EquCondTerm   go to state 29
-    LessCondTerm  go to state 30
-    Array         go to state 42
-    Expr          go to state 33
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 44
+    $default  reduce using rule 106 (PrimaryExp)
 
 
 State 82
 
-   70 Array: Array "[" • Expr "]"
+  109 FuncRealParams: Expr •
 
-    DIGIT_INT    shift, and go to state 1
-    DIGIT_ID     shift, and go to state 2
-    DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 41
-
-    Array      go to state 42
-    Expr       go to state 120
-    AddExpr    go to state 34
-    MulExpr    go to state 35
-    UnaryExpr  go to state 36
-    Term       go to state 37
-    var        go to state 44
+    $default  reduce using rule 109 (FuncRealParams)
 
 
 State 83
 
-   73 AddExpr: AddExpr "+" • MulExpr
+  105 PrimaryExp: DIGIT_ID "(" FuncRealParams • ")"
+  110 FuncRealParams: FuncRealParams • "," Expr
 
-    DIGIT_INT    shift, and go to state 1
-    DIGIT_ID     shift, and go to state 2
-    DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 41
-
-    Array      go to state 42
-    MulExpr    go to state 121
-    UnaryExpr  go to state 36
-    Term       go to state 37
-    var        go to state 44
+    ")"  shift, and go to state 121
+    ","  shift, and go to state 122
 
 
 State 84
 
-   74 AddExpr: AddExpr "-" • MulExpr
+   73 ArrayIndexs: "[" Expr • "]"
 
-    DIGIT_INT    shift, and go to state 1
-    DIGIT_ID     shift, and go to state 2
-    DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 41
-
-    Array      go to state 42
-    MulExpr    go to state 122
-    UnaryExpr  go to state 36
-    Term       go to state 37
-    var        go to state 44
+    "]"  shift, and go to state 123
 
 
 State 85
 
-   77 MulExpr: MulExpr "/" • UnaryExpr
+   74 ArrayIndexs: ArrayIndexs "[" • Expr "]"
 
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 41
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
 
-    Array      go to state 42
-    UnaryExpr  go to state 123
-    Term       go to state 37
-    var        go to state 44
+    Expr        go to state 124
+    AddExpr     go to state 33
+    MulExpr     go to state 34
+    UnaryExpr   go to state 35
+    PrimaryExp  go to state 36
+    Lval        go to state 42
 
 
 State 86
 
-   76 MulExpr: MulExpr "*" • UnaryExpr
+   50 VarDef: DIGIT_ID "=" • VarInitVal
 
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 41
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "{"          shift, and go to state 125
+    "("          shift, and go to state 18
 
-    Array      go to state 42
-    UnaryExpr  go to state 124
-    Term       go to state 37
-    var        go to state 44
+    VarInitVal  go to state 126
+    Expr        go to state 127
+    AddExpr     go to state 33
+    MulExpr     go to state 34
+    UnaryExpr   go to state 35
+    PrimaryExp  go to state 36
+    Lval        go to state 42
 
 
 State 87
-
-   78 MulExpr: MulExpr "%" • UnaryExpr
-
-    DIGIT_INT    shift, and go to state 1
-    DIGIT_ID     shift, and go to state 2
-    DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 41
-
-    Array      go to state 42
-    UnaryExpr  go to state 125
-    Term       go to state 37
-    var        go to state 44
-
-
-State 88
-
-   37 Statement: var "=" • Condition ";"
-
-    DIGIT_INT    shift, and go to state 1
-    DIGIT_ID     shift, and go to state 2
-    DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "!"          shift, and go to state 14
-    "("          shift, and go to state 16
-
-    Condition     go to state 126
-    OrCond        go to state 26
-    AndCond       go to state 27
-    NotCond       go to state 28
-    EquCondTerm   go to state 29
-    LessCondTerm  go to state 30
-    Array         go to state 42
-    Expr          go to state 33
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 44
-
-
-State 89
-
-   87 Term: DIGIT_ID "(" ")" •
-
-    $default  reduce using rule 87 (Term)
-
-
-State 90
-
-   89 FuncRealParams: Expr •
-
-    $default  reduce using rule 89 (FuncRealParams)
-
-
-State 91
-
-   86 Term: DIGIT_ID "(" FuncRealParams • ")"
-   90 FuncRealParams: FuncRealParams • "," Expr
-
-    ")"  shift, and go to state 127
-    ","  shift, and go to state 128
-
-
-State 92
-
-   69 Array: DIGIT_ID "[" "]" •
-
-    $default  reduce using rule 69 (Array)
-
-
-State 93
-
-   68 Array: DIGIT_ID "[" Expr • "]"
-
-    "]"  shift, and go to state 129
-
-
-State 94
-
-   84 Term: "(" Expr • ")"
-
-    ")"  shift, and go to state 110
-
-
-State 95
 
     7 FuncDef: "int" DIGIT_ID "(" • ")" Block
     8        | "int" DIGIT_ID "(" • FuncFormalParams ")" Block
    13 FuncDeclare: "int" DIGIT_ID "(" • ")" ";"
    14            | "int" DIGIT_ID "(" • FuncFormalParams ")" ";"
 
-    "int"    shift, and go to state 130
-    "float"  shift, and go to state 131
-    ")"      shift, and go to state 132
+    "int"    shift, and go to state 128
+    "float"  shift, and go to state 129
+    ")"      shift, and go to state 130
 
-    FuncFormalParams  go to state 133
-    FuncFormalParam   go to state 134
-
-
-State 96
-
-   64 DeclareItems: DeclareItems "," • DeclareItem
-
-    DIGIT_ID  shift, and go to state 105
-
-    DeclareItem  go to state 135
-    Array        go to state 48
-    var          go to state 49
+    FuncFormalParams  go to state 131
+    FuncFormalParam   go to state 132
 
 
-State 97
+State 88
 
-   61 Declare: "int" DeclareItems ";" •
+   51 VarDef: DIGIT_ID ArrayIndexs •
+   52       | DIGIT_ID ArrayIndexs • "=" VarInitVal
+   74 ArrayIndexs: ArrayIndexs • "[" Expr "]"
 
-    $default  reduce using rule 61 (Declare)
+    "="  shift, and go to state 133
+    "["  shift, and go to state 85
 
-
-State 98
-
-   66 DeclareItem: var "=" • Expr
-
-    DIGIT_INT    shift, and go to state 1
-    DIGIT_ID     shift, and go to state 2
-    DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 41
-
-    Array      go to state 42
-    Expr       go to state 136
-    AddExpr    go to state 34
-    MulExpr    go to state 35
-    UnaryExpr  go to state 36
-    Term       go to state 37
-    var        go to state 44
+    $default  reduce using rule 51 (VarDef)
 
 
-State 99
+State 89
+
+   48 VarDefList: VarDefList "," • VarDef
+
+    DIGIT_ID  shift, and go to state 98
+
+    VarDef  go to state 134
+
+
+State 90
+
+   45 VarlDecl: "int" VarDefList ";" •
+
+    $default  reduce using rule 45 (VarlDecl)
+
+
+State 91
 
    11 FuncDef: "float" DIGIT_ID "(" • ")" Block
    12        | "float" DIGIT_ID "(" • FuncFormalParams ")" Block
    17 FuncDeclare: "float" DIGIT_ID "(" • ")" ";"
    18            | "float" DIGIT_ID "(" • FuncFormalParams ")" ";"
 
-    "int"    shift, and go to state 130
-    "float"  shift, and go to state 131
-    ")"      shift, and go to state 137
+    "int"    shift, and go to state 128
+    "float"  shift, and go to state 129
+    ")"      shift, and go to state 135
 
-    FuncFormalParams  go to state 138
-    FuncFormalParam   go to state 134
-
-
-State 100
-
-   62 Declare: "float" DeclareItems ";" •
-
-    $default  reduce using rule 62 (Declare)
+    FuncFormalParams  go to state 136
+    FuncFormalParam   go to state 132
 
 
-State 101
+State 92
+
+   46 VarlDecl: "float" VarDefList ";" •
+
+    $default  reduce using rule 46 (VarlDecl)
+
+
+State 93
 
     9 FuncDef: "void" DIGIT_ID "(" • ")" Block
    10        | "void" DIGIT_ID "(" • FuncFormalParams ")" Block
    15 FuncDeclare: "void" DIGIT_ID "(" • ")" ";"
    16            | "void" DIGIT_ID "(" • FuncFormalParams ")" ";"
 
-    "int"    shift, and go to state 130
-    "float"  shift, and go to state 131
-    ")"      shift, and go to state 139
+    "int"    shift, and go to state 128
+    "float"  shift, and go to state 129
+    ")"      shift, and go to state 137
 
-    FuncFormalParams  go to state 140
-    FuncFormalParam   go to state 134
+    FuncFormalParams  go to state 138
+    FuncFormalParam   go to state 132
+
+
+State 94
+
+   69 IfStmt: "if" "(" Condition • ")" Statement
+   70       | "if" "(" Condition • ")" Statement "else" Statement
+
+    ")"  shift, and go to state 139
+
+
+State 95
+
+   84 Condition: OrCond •
+   86 OrCond: OrCond • "||" AndCond
+
+    "||"  shift, and go to state 106
+
+    $default  reduce using rule 84 (Condition)
+
+
+State 96
+
+   30 Statement: "return" Expr ";" •
+
+    $default  reduce using rule 30 (Statement)
+
+
+State 97
+
+   71 WhileStmt: "while" "(" Condition • ")" Statement
+
+    ")"  shift, and go to state 140
+
+
+State 98
+
+   49 VarDef: DIGIT_ID •
+   50       | DIGIT_ID • "=" VarInitVal
+   51       | DIGIT_ID • ArrayIndexs
+   52       | DIGIT_ID • ArrayIndexs "=" VarInitVal
+
+    "="  shift, and go to state 86
+    "["  shift, and go to state 39
+
+    $default  reduce using rule 49 (VarDef)
+
+    ArrayIndexs  go to state 88
+
+
+State 99
+
+   72 DowhileStmt: "do" Statement "while" • "(" Condition ")" ";"
+
+    "("  shift, and go to state 141
+
+
+State 100
+
+   62 ConstDef: DIGIT_ID • "=" ConstInitVal
+   63         | DIGIT_ID • ArrayIndexs "=" ConstInitVal
+
+    "="  shift, and go to state 142
+    "["  shift, and go to state 39
+
+    ArrayIndexs  go to state 143
+
+
+State 101
+
+   58 ConstDecl: "const" "int" ConstDefList • ";"
+   61 ConstDefList: ConstDefList • "," ConstDef
+
+    ","  shift, and go to state 144
+    ";"  shift, and go to state 145
 
 
 State 102
 
-   41 IfStmt: "if" "(" Condition • ")" Statement
-   42       | "if" "(" Condition • ")" Statement "else" Statement
+   60 ConstDefList: ConstDef •
 
-    ")"  shift, and go to state 141
+    $default  reduce using rule 60 (ConstDefList)
 
 
 State 103
 
-   29 Statement: "return" Expr ";" •
+   59 ConstDecl: "const" "float" ConstDefList • ";"
+   61 ConstDefList: ConstDefList • "," ConstDef
 
-    $default  reduce using rule 29 (Statement)
+    ","  shift, and go to state 144
+    ";"  shift, and go to state 146
 
 
 State 104
 
-   43 WhileStmt: "while" "(" Condition • ")" Statement
+   27 Block: "{" BlockItemList "}" •
 
-    ")"  shift, and go to state 142
+    $default  reduce using rule 27 (Block)
 
 
 State 105
 
-   68 Array: DIGIT_ID • "[" Expr "]"
-   69      | DIGIT_ID • "[" "]"
-   88 var: DIGIT_ID •
+   29 BlockItemList: BlockItemList Statement •
 
-    "["  shift, and go to state 40
-
-    $default  reduce using rule 88 (var)
+    $default  reduce using rule 29 (BlockItemList)
 
 
 State 106
 
-   44 DowhileStmt: "do" Statement "while" • "(" Condition ")" ";"
-
-    "("  shift, and go to state 143
-
-
-State 107
-
-   26 Block: "{" BlockItemList "}" •
-
-    $default  reduce using rule 26 (Block)
-
-
-State 108
-
-   28 BlockItemList: BlockItemList Statement •
-
-    $default  reduce using rule 28 (BlockItemList)
-
-
-State 109
-
-   60 LessCondTerm: "(" Condition ")" •
-
-    $default  reduce using rule 60 (LessCondTerm)
-
-
-State 110
-
-   84 Term: "(" Expr ")" •
-
-    $default  reduce using rule 84 (Term)
-
-
-State 111
-
-   47 OrCond: OrCond "||" AndCond •
-   49 AndCond: AndCond • "&&" NotCond
-
-    "&&"  shift, and go to state 74
-
-    $default  reduce using rule 47 (OrCond)
-
-
-State 112
-
-   49 AndCond: AndCond "&&" NotCond •
-
-    $default  reduce using rule 49 (AndCond)
-
-
-State 113
-
-   53 EquCondTerm: EquCondTerm "==" LessCondTerm •
-   56 LessCondTerm: LessCondTerm • "<" Expr
-   57             | LessCondTerm • "<=" Expr
-   58             | LessCondTerm • ">" Expr
-   59             | LessCondTerm • ">=" Expr
-
-    "<"   shift, and go to state 77
-    ">"   shift, and go to state 78
-    "<="  shift, and go to state 79
-    ">="  shift, and go to state 80
-
-    $default  reduce using rule 53 (EquCondTerm)
-
-
-State 114
-
-   54 EquCondTerm: EquCondTerm "!=" LessCondTerm •
-   56 LessCondTerm: LessCondTerm • "<" Expr
-   57             | LessCondTerm • "<=" Expr
-   58             | LessCondTerm • ">" Expr
-   59             | LessCondTerm • ">=" Expr
-
-    "<"   shift, and go to state 77
-    ">"   shift, and go to state 78
-    "<="  shift, and go to state 79
-    ">="  shift, and go to state 80
-
-    $default  reduce using rule 54 (EquCondTerm)
-
-
-State 115
-
-   56 LessCondTerm: LessCondTerm "<" Expr •
-
-    $default  reduce using rule 56 (LessCondTerm)
-
-
-State 116
-
-   58 LessCondTerm: LessCondTerm ">" Expr •
-
-    $default  reduce using rule 58 (LessCondTerm)
-
-
-State 117
-
-   57 LessCondTerm: LessCondTerm "<=" Expr •
-
-    $default  reduce using rule 57 (LessCondTerm)
-
-
-State 118
-
-   59 LessCondTerm: LessCondTerm ">=" Expr •
-
-    $default  reduce using rule 59 (LessCondTerm)
-
-
-State 119
-
-   40 Statement: Array "=" Condition • ";"
-
-    ";"  shift, and go to state 144
-
-
-State 120
-
-   70 Array: Array "[" Expr • "]"
-
-    "]"  shift, and go to state 145
-
-
-State 121
-
-   73 AddExpr: AddExpr "+" MulExpr •
-   76 MulExpr: MulExpr • "*" UnaryExpr
-   77        | MulExpr • "/" UnaryExpr
-   78        | MulExpr • "%" UnaryExpr
-
-    "/"  shift, and go to state 85
-    "*"  shift, and go to state 86
-    "%"  shift, and go to state 87
-
-    $default  reduce using rule 73 (AddExpr)
-
-
-State 122
-
-   74 AddExpr: AddExpr "-" MulExpr •
-   76 MulExpr: MulExpr • "*" UnaryExpr
-   77        | MulExpr • "/" UnaryExpr
-   78        | MulExpr • "%" UnaryExpr
-
-    "/"  shift, and go to state 85
-    "*"  shift, and go to state 86
-    "%"  shift, and go to state 87
-
-    $default  reduce using rule 74 (AddExpr)
-
-
-State 123
-
-   77 MulExpr: MulExpr "/" UnaryExpr •
-
-    $default  reduce using rule 77 (MulExpr)
-
-
-State 124
-
-   76 MulExpr: MulExpr "*" UnaryExpr •
-
-    $default  reduce using rule 76 (MulExpr)
-
-
-State 125
-
-   78 MulExpr: MulExpr "%" UnaryExpr •
-
-    $default  reduce using rule 78 (MulExpr)
-
-
-State 126
-
-   37 Statement: var "=" Condition • ";"
-
-    ";"  shift, and go to state 146
-
-
-State 127
-
-   86 Term: DIGIT_ID "(" FuncRealParams ")" •
-
-    $default  reduce using rule 86 (Term)
-
-
-State 128
-
-   90 FuncRealParams: FuncRealParams "," • Expr
+   86 OrCond: OrCond "||" • AndCond
 
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "("          shift, and go to state 41
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
 
-    Array      go to state 42
-    Expr       go to state 147
-    AddExpr    go to state 34
-    MulExpr    go to state 35
-    UnaryExpr  go to state 36
-    Term       go to state 37
-    var        go to state 44
+    Expr          go to state 65
+    AddExpr       go to state 33
+    MulExpr       go to state 34
+    AndCond       go to state 147
+    EquCondTerm   go to state 68
+    LessCondTerm  go to state 69
+    UnaryExpr     go to state 35
+    PrimaryExp    go to state 36
+    Lval          go to state 42
+
+
+State 107
+
+  102 PrimaryExp: "(" OrCond ")" •
+
+    $default  reduce using rule 102 (PrimaryExp)
+
+
+State 108
+
+   88 AndCond: AndCond "&&" • EquCondTerm
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
+
+    Expr          go to state 65
+    AddExpr       go to state 33
+    MulExpr       go to state 34
+    EquCondTerm   go to state 148
+    LessCondTerm  go to state 69
+    UnaryExpr     go to state 35
+    PrimaryExp    go to state 36
+    Lval          go to state 42
+
+
+State 109
+
+   90 EquCondTerm: EquCondTerm "==" • LessCondTerm
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
+
+    Expr          go to state 65
+    AddExpr       go to state 33
+    MulExpr       go to state 34
+    LessCondTerm  go to state 149
+    UnaryExpr     go to state 35
+    PrimaryExp    go to state 36
+    Lval          go to state 42
+
+
+State 110
+
+   91 EquCondTerm: EquCondTerm "!=" • LessCondTerm
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
+
+    Expr          go to state 65
+    AddExpr       go to state 33
+    MulExpr       go to state 34
+    LessCondTerm  go to state 150
+    UnaryExpr     go to state 35
+    PrimaryExp    go to state 36
+    Lval          go to state 42
+
+
+State 111
+
+   93 LessCondTerm: LessCondTerm "<" • Expr
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
+
+    Expr        go to state 151
+    AddExpr     go to state 33
+    MulExpr     go to state 34
+    UnaryExpr   go to state 35
+    PrimaryExp  go to state 36
+    Lval        go to state 42
+
+
+State 112
+
+   95 LessCondTerm: LessCondTerm ">" • Expr
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
+
+    Expr        go to state 152
+    AddExpr     go to state 33
+    MulExpr     go to state 34
+    UnaryExpr   go to state 35
+    PrimaryExp  go to state 36
+    Lval        go to state 42
+
+
+State 113
+
+   94 LessCondTerm: LessCondTerm "<=" • Expr
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
+
+    Expr        go to state 153
+    AddExpr     go to state 33
+    MulExpr     go to state 34
+    UnaryExpr   go to state 35
+    PrimaryExp  go to state 36
+    Lval        go to state 42
+
+
+State 114
+
+   96 LessCondTerm: LessCondTerm ">=" • Expr
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
+
+    Expr        go to state 154
+    AddExpr     go to state 33
+    MulExpr     go to state 34
+    UnaryExpr   go to state 35
+    PrimaryExp  go to state 36
+    Lval        go to state 42
+
+
+State 115
+
+   78 AddExpr: AddExpr "+" MulExpr •
+   81 MulExpr: MulExpr • "*" UnaryExpr
+   82        | MulExpr • "/" UnaryExpr
+   83        | MulExpr • "%" UnaryExpr
+
+    "/"  shift, and go to state 77
+    "*"  shift, and go to state 78
+    "%"  shift, and go to state 79
+
+    $default  reduce using rule 78 (AddExpr)
+
+
+State 116
+
+   79 AddExpr: AddExpr "-" MulExpr •
+   81 MulExpr: MulExpr • "*" UnaryExpr
+   82        | MulExpr • "/" UnaryExpr
+   83        | MulExpr • "%" UnaryExpr
+
+    "/"  shift, and go to state 77
+    "*"  shift, and go to state 78
+    "%"  shift, and go to state 79
+
+    $default  reduce using rule 79 (AddExpr)
+
+
+State 117
+
+   82 MulExpr: MulExpr "/" UnaryExpr •
+
+    $default  reduce using rule 82 (MulExpr)
+
+
+State 118
+
+   81 MulExpr: MulExpr "*" UnaryExpr •
+
+    $default  reduce using rule 81 (MulExpr)
+
+
+State 119
+
+   83 MulExpr: MulExpr "%" UnaryExpr •
+
+    $default  reduce using rule 83 (MulExpr)
+
+
+State 120
+
+   42 AssignStmt: Lval "=" Expr • ";"
+
+    ";"  shift, and go to state 155
+
+
+State 121
+
+  105 PrimaryExp: DIGIT_ID "(" FuncRealParams ")" •
+
+    $default  reduce using rule 105 (PrimaryExp)
+
+
+State 122
+
+  110 FuncRealParams: FuncRealParams "," • Expr
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
+
+    Expr        go to state 156
+    AddExpr     go to state 33
+    MulExpr     go to state 34
+    UnaryExpr   go to state 35
+    PrimaryExp  go to state 36
+    Lval        go to state 42
+
+
+State 123
+
+   73 ArrayIndexs: "[" Expr "]" •
+
+    $default  reduce using rule 73 (ArrayIndexs)
+
+
+State 124
+
+   74 ArrayIndexs: ArrayIndexs "[" Expr • "]"
+
+    "]"  shift, and go to state 157
+
+
+State 125
+
+   54 VarInitVal: "{" • "}"
+   55           | "{" • VarInitValList "}"
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "{"          shift, and go to state 125
+    "}"          shift, and go to state 158
+    "("          shift, and go to state 18
+
+    VarInitVal      go to state 159
+    VarInitValList  go to state 160
+    Expr            go to state 127
+    AddExpr         go to state 33
+    MulExpr         go to state 34
+    UnaryExpr       go to state 35
+    PrimaryExp      go to state 36
+    Lval            go to state 42
+
+
+State 126
+
+   50 VarDef: DIGIT_ID "=" VarInitVal •
+
+    $default  reduce using rule 50 (VarDef)
+
+
+State 127
+
+   53 VarInitVal: Expr •
+
+    $default  reduce using rule 53 (VarInitVal)
+
+
+State 128
+
+   21 FuncFormalParam: "int" • DIGIT_ID
+   23                | "int" • DIGIT_ID "[" "]"
+   24                | "int" • DIGIT_ID ArrayIndexs
+   25                | "int" • DIGIT_ID "[" "]" ArrayIndexs
+
+    DIGIT_ID  shift, and go to state 161
 
 
 State 129
 
-   68 Array: DIGIT_ID "[" Expr "]" •
+   22 FuncFormalParam: "float" • DIGIT_ID
 
-    $default  reduce using rule 68 (Array)
+    DIGIT_ID  shift, and go to state 162
 
 
 State 130
 
-   21 FuncFormalParam: "int" • DIGIT_ID
-   23                | "int" • Array
-
-    DIGIT_ID  shift, and go to state 148
-
-    Array  go to state 149
-
-
-State 131
-
-   22 FuncFormalParam: "float" • DIGIT_ID
-   24                | "float" • Array
-
-    DIGIT_ID  shift, and go to state 150
-
-    Array  go to state 151
-
-
-State 132
-
     7 FuncDef: "int" DIGIT_ID "(" ")" • Block
    13 FuncDeclare: "int" DIGIT_ID "(" ")" • ";"
 
-    "{"  shift, and go to state 15
-    ";"  shift, and go to state 152
+    "{"  shift, and go to state 17
+    ";"  shift, and go to state 163
 
-    Block  go to state 153
+    Block  go to state 164
 
 
-State 133
+State 131
 
     8 FuncDef: "int" DIGIT_ID "(" FuncFormalParams • ")" Block
    14 FuncDeclare: "int" DIGIT_ID "(" FuncFormalParams • ")" ";"
    20 FuncFormalParams: FuncFormalParams • "," FuncFormalParam
 
-    ")"  shift, and go to state 154
-    ","  shift, and go to state 155
+    ")"  shift, and go to state 165
+    ","  shift, and go to state 166
 
 
-State 134
+State 132
 
    19 FuncFormalParams: FuncFormalParam •
 
     $default  reduce using rule 19 (FuncFormalParams)
 
 
+State 133
+
+   52 VarDef: DIGIT_ID ArrayIndexs "=" • VarInitVal
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "{"          shift, and go to state 125
+    "("          shift, and go to state 18
+
+    VarInitVal  go to state 167
+    Expr        go to state 127
+    AddExpr     go to state 33
+    MulExpr     go to state 34
+    UnaryExpr   go to state 35
+    PrimaryExp  go to state 36
+    Lval        go to state 42
+
+
+State 134
+
+   48 VarDefList: VarDefList "," VarDef •
+
+    $default  reduce using rule 48 (VarDefList)
+
+
 State 135
-
-   64 DeclareItems: DeclareItems "," DeclareItem •
-
-    $default  reduce using rule 64 (DeclareItems)
-
-
-State 136
-
-   66 DeclareItem: var "=" Expr •
-
-    $default  reduce using rule 66 (DeclareItem)
-
-
-State 137
 
    11 FuncDef: "float" DIGIT_ID "(" ")" • Block
    17 FuncDeclare: "float" DIGIT_ID "(" ")" • ";"
 
-    "{"  shift, and go to state 15
-    ";"  shift, and go to state 156
+    "{"  shift, and go to state 17
+    ";"  shift, and go to state 168
 
-    Block  go to state 157
+    Block  go to state 169
 
 
-State 138
+State 136
 
    12 FuncDef: "float" DIGIT_ID "(" FuncFormalParams • ")" Block
    18 FuncDeclare: "float" DIGIT_ID "(" FuncFormalParams • ")" ";"
    20 FuncFormalParams: FuncFormalParams • "," FuncFormalParam
 
-    ")"  shift, and go to state 158
-    ","  shift, and go to state 155
+    ")"  shift, and go to state 170
+    ","  shift, and go to state 166
 
 
-State 139
+State 137
 
     9 FuncDef: "void" DIGIT_ID "(" ")" • Block
    15 FuncDeclare: "void" DIGIT_ID "(" ")" • ";"
 
-    "{"  shift, and go to state 15
-    ";"  shift, and go to state 159
+    "{"  shift, and go to state 17
+    ";"  shift, and go to state 171
 
-    Block  go to state 160
+    Block  go to state 172
 
 
-State 140
+State 138
 
    10 FuncDef: "void" DIGIT_ID "(" FuncFormalParams • ")" Block
    16 FuncDeclare: "void" DIGIT_ID "(" FuncFormalParams • ")" ";"
    20 FuncFormalParams: FuncFormalParams • "," FuncFormalParam
 
-    ")"  shift, and go to state 161
-    ","  shift, and go to state 155
+    ")"  shift, and go to state 173
+    ","  shift, and go to state 166
+
+
+State 139
+
+   69 IfStmt: "if" "(" Condition ")" • Statement
+   70       | "if" "(" Condition ")" • Statement "else" Statement
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "int"        shift, and go to state 54
+    "float"      shift, and go to state 55
+    "if"         shift, and go to state 9
+    "return"     shift, and go to state 10
+    "while"      shift, and go to state 11
+    "do"         shift, and go to state 12
+    "const"      shift, and go to state 13
+    "break"      shift, and go to state 14
+    "continue"   shift, and go to state 15
+    "!"          shift, and go to state 16
+    "{"          shift, and go to state 17
+    "("          shift, and go to state 18
+    ";"          shift, and go to state 19
+
+    Block        go to state 23
+    Statement    go to state 174
+    AssignStmt   go to state 25
+    DeclStmt     go to state 26
+    VarlDecl     go to state 27
+    ConstDecl    go to state 28
+    IfStmt       go to state 29
+    WhileStmt    go to state 30
+    DowhileStmt  go to state 31
+    Expr         go to state 32
+    AddExpr      go to state 33
+    MulExpr      go to state 34
+    UnaryExpr    go to state 35
+    PrimaryExp   go to state 36
+    Lval         go to state 37
+
+
+State 140
+
+   71 WhileStmt: "while" "(" Condition ")" • Statement
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "int"        shift, and go to state 54
+    "float"      shift, and go to state 55
+    "if"         shift, and go to state 9
+    "return"     shift, and go to state 10
+    "while"      shift, and go to state 11
+    "do"         shift, and go to state 12
+    "const"      shift, and go to state 13
+    "break"      shift, and go to state 14
+    "continue"   shift, and go to state 15
+    "!"          shift, and go to state 16
+    "{"          shift, and go to state 17
+    "("          shift, and go to state 18
+    ";"          shift, and go to state 19
+
+    Block        go to state 23
+    Statement    go to state 175
+    AssignStmt   go to state 25
+    DeclStmt     go to state 26
+    VarlDecl     go to state 27
+    ConstDecl    go to state 28
+    IfStmt       go to state 29
+    WhileStmt    go to state 30
+    DowhileStmt  go to state 31
+    Expr         go to state 32
+    AddExpr      go to state 33
+    MulExpr      go to state 34
+    UnaryExpr    go to state 35
+    PrimaryExp   go to state 36
+    Lval         go to state 37
 
 
 State 141
 
-   41 IfStmt: "if" "(" Condition ")" • Statement
-   42       | "if" "(" Condition ")" • Statement "else" Statement
+   72 DowhileStmt: "do" Statement "while" "(" • Condition ")" ";"
 
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "int"        shift, and go to state 57
-    "float"      shift, and go to state 58
-    "if"         shift, and go to state 8
-    "return"     shift, and go to state 9
-    "while"      shift, and go to state 10
-    "do"         shift, and go to state 11
-    "break"      shift, and go to state 12
-    "continue"   shift, and go to state 13
-    "!"          shift, and go to state 14
-    "{"          shift, and go to state 15
-    "("          shift, and go to state 16
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
 
-    Block         go to state 20
-    Statement     go to state 162
-    IfStmt        go to state 22
-    WhileStmt     go to state 23
-    DowhileStmt   go to state 24
-    Condition     go to state 25
-    OrCond        go to state 26
-    AndCond       go to state 27
-    NotCond       go to state 28
-    EquCondTerm   go to state 29
-    LessCondTerm  go to state 30
-    Declare       go to state 31
-    Array         go to state 32
-    Expr          go to state 33
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 38
+    Expr          go to state 65
+    AddExpr       go to state 33
+    MulExpr       go to state 34
+    Condition     go to state 176
+    OrCond        go to state 95
+    AndCond       go to state 67
+    EquCondTerm   go to state 68
+    LessCondTerm  go to state 69
+    UnaryExpr     go to state 35
+    PrimaryExp    go to state 36
+    Lval          go to state 42
 
 
 State 142
 
-   43 WhileStmt: "while" "(" Condition ")" • Statement
+   62 ConstDef: DIGIT_ID "=" • ConstInitVal
 
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "int"        shift, and go to state 57
-    "float"      shift, and go to state 58
-    "if"         shift, and go to state 8
-    "return"     shift, and go to state 9
-    "while"      shift, and go to state 10
-    "do"         shift, and go to state 11
-    "break"      shift, and go to state 12
-    "continue"   shift, and go to state 13
-    "!"          shift, and go to state 14
-    "{"          shift, and go to state 15
-    "("          shift, and go to state 16
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "{"          shift, and go to state 177
+    "("          shift, and go to state 18
 
-    Block         go to state 20
-    Statement     go to state 163
-    IfStmt        go to state 22
-    WhileStmt     go to state 23
-    DowhileStmt   go to state 24
-    Condition     go to state 25
-    OrCond        go to state 26
-    AndCond       go to state 27
-    NotCond       go to state 28
-    EquCondTerm   go to state 29
-    LessCondTerm  go to state 30
-    Declare       go to state 31
-    Array         go to state 32
-    Expr          go to state 33
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 38
+    ConstInitVal  go to state 178
+    ConstExp      go to state 179
+    AddExpr       go to state 180
+    MulExpr       go to state 34
+    UnaryExpr     go to state 35
+    PrimaryExp    go to state 36
+    Lval          go to state 42
 
 
 State 143
 
-   44 DowhileStmt: "do" Statement "while" "(" • Condition ")" ";"
+   63 ConstDef: DIGIT_ID ArrayIndexs • "=" ConstInitVal
+   74 ArrayIndexs: ArrayIndexs • "[" Expr "]"
 
-    DIGIT_INT    shift, and go to state 1
-    DIGIT_ID     shift, and go to state 2
-    DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "!"          shift, and go to state 14
-    "("          shift, and go to state 16
-
-    Condition     go to state 164
-    OrCond        go to state 26
-    AndCond       go to state 27
-    NotCond       go to state 28
-    EquCondTerm   go to state 29
-    LessCondTerm  go to state 30
-    Array         go to state 42
-    Expr          go to state 33
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 44
+    "="  shift, and go to state 181
+    "["  shift, and go to state 85
 
 
 State 144
 
-   40 Statement: Array "=" Condition ";" •
+   61 ConstDefList: ConstDefList "," • ConstDef
 
-    $default  reduce using rule 40 (Statement)
+    DIGIT_ID  shift, and go to state 100
+
+    ConstDef  go to state 182
 
 
 State 145
 
-   70 Array: Array "[" Expr "]" •
+   58 ConstDecl: "const" "int" ConstDefList ";" •
 
-    $default  reduce using rule 70 (Array)
+    $default  reduce using rule 58 (ConstDecl)
 
 
 State 146
 
-   37 Statement: var "=" Condition ";" •
+   59 ConstDecl: "const" "float" ConstDefList ";" •
 
-    $default  reduce using rule 37 (Statement)
+    $default  reduce using rule 59 (ConstDecl)
 
 
 State 147
 
-   90 FuncRealParams: FuncRealParams "," Expr •
+   86 OrCond: OrCond "||" AndCond •
+   88 AndCond: AndCond • "&&" EquCondTerm
 
-    $default  reduce using rule 90 (FuncRealParams)
+    "&&"  shift, and go to state 108
+
+    $default  reduce using rule 86 (OrCond)
 
 
 State 148
 
-   21 FuncFormalParam: "int" DIGIT_ID •
-   68 Array: DIGIT_ID • "[" Expr "]"
-   69      | DIGIT_ID • "[" "]"
+   88 AndCond: AndCond "&&" EquCondTerm •
+   90 EquCondTerm: EquCondTerm • "==" LessCondTerm
+   91            | EquCondTerm • "!=" LessCondTerm
 
-    "["  shift, and go to state 40
+    "=="  shift, and go to state 109
+    "!="  shift, and go to state 110
 
-    $default  reduce using rule 21 (FuncFormalParam)
+    $default  reduce using rule 88 (AndCond)
 
 
 State 149
 
-   23 FuncFormalParam: "int" Array •
-   70 Array: Array • "[" Expr "]"
+   90 EquCondTerm: EquCondTerm "==" LessCondTerm •
+   93 LessCondTerm: LessCondTerm • "<" Expr
+   94             | LessCondTerm • "<=" Expr
+   95             | LessCondTerm • ">" Expr
+   96             | LessCondTerm • ">=" Expr
 
-    "["  shift, and go to state 82
+    "<"   shift, and go to state 111
+    ">"   shift, and go to state 112
+    "<="  shift, and go to state 113
+    ">="  shift, and go to state 114
 
-    $default  reduce using rule 23 (FuncFormalParam)
+    $default  reduce using rule 90 (EquCondTerm)
 
 
 State 150
 
-   22 FuncFormalParam: "float" DIGIT_ID •
-   68 Array: DIGIT_ID • "[" Expr "]"
-   69      | DIGIT_ID • "[" "]"
+   91 EquCondTerm: EquCondTerm "!=" LessCondTerm •
+   93 LessCondTerm: LessCondTerm • "<" Expr
+   94             | LessCondTerm • "<=" Expr
+   95             | LessCondTerm • ">" Expr
+   96             | LessCondTerm • ">=" Expr
 
-    "["  shift, and go to state 40
+    "<"   shift, and go to state 111
+    ">"   shift, and go to state 112
+    "<="  shift, and go to state 113
+    ">="  shift, and go to state 114
 
-    $default  reduce using rule 22 (FuncFormalParam)
+    $default  reduce using rule 91 (EquCondTerm)
 
 
 State 151
 
-   24 FuncFormalParam: "float" Array •
-   70 Array: Array • "[" Expr "]"
+   93 LessCondTerm: LessCondTerm "<" Expr •
 
-    "["  shift, and go to state 82
-
-    $default  reduce using rule 24 (FuncFormalParam)
+    $default  reduce using rule 93 (LessCondTerm)
 
 
 State 152
+
+   95 LessCondTerm: LessCondTerm ">" Expr •
+
+    $default  reduce using rule 95 (LessCondTerm)
+
+
+State 153
+
+   94 LessCondTerm: LessCondTerm "<=" Expr •
+
+    $default  reduce using rule 94 (LessCondTerm)
+
+
+State 154
+
+   96 LessCondTerm: LessCondTerm ">=" Expr •
+
+    $default  reduce using rule 96 (LessCondTerm)
+
+
+State 155
+
+   42 AssignStmt: Lval "=" Expr ";" •
+
+    $default  reduce using rule 42 (AssignStmt)
+
+
+State 156
+
+  110 FuncRealParams: FuncRealParams "," Expr •
+
+    $default  reduce using rule 110 (FuncRealParams)
+
+
+State 157
+
+   74 ArrayIndexs: ArrayIndexs "[" Expr "]" •
+
+    $default  reduce using rule 74 (ArrayIndexs)
+
+
+State 158
+
+   54 VarInitVal: "{" "}" •
+
+    $default  reduce using rule 54 (VarInitVal)
+
+
+State 159
+
+   56 VarInitValList: VarInitVal •
+
+    $default  reduce using rule 56 (VarInitValList)
+
+
+State 160
+
+   55 VarInitVal: "{" VarInitValList • "}"
+   57 VarInitValList: VarInitValList • "," VarInitVal
+
+    "}"  shift, and go to state 183
+    ","  shift, and go to state 184
+
+
+State 161
+
+   21 FuncFormalParam: "int" DIGIT_ID •
+   23                | "int" DIGIT_ID • "[" "]"
+   24                | "int" DIGIT_ID • ArrayIndexs
+   25                | "int" DIGIT_ID • "[" "]" ArrayIndexs
+
+    "["  shift, and go to state 185
+
+    $default  reduce using rule 21 (FuncFormalParam)
+
+    ArrayIndexs  go to state 186
+
+
+State 162
+
+   22 FuncFormalParam: "float" DIGIT_ID •
+
+    $default  reduce using rule 22 (FuncFormalParam)
+
+
+State 163
 
    13 FuncDeclare: "int" DIGIT_ID "(" ")" ";" •
 
     $default  reduce using rule 13 (FuncDeclare)
 
 
-State 153
+State 164
 
     7 FuncDef: "int" DIGIT_ID "(" ")" Block •
 
     $default  reduce using rule 7 (FuncDef)
 
 
-State 154
+State 165
 
     8 FuncDef: "int" DIGIT_ID "(" FuncFormalParams ")" • Block
    14 FuncDeclare: "int" DIGIT_ID "(" FuncFormalParams ")" • ";"
 
-    "{"  shift, and go to state 15
-    ";"  shift, and go to state 165
+    "{"  shift, and go to state 17
+    ";"  shift, and go to state 187
 
-    Block  go to state 166
+    Block  go to state 188
 
 
-State 155
+State 166
 
    20 FuncFormalParams: FuncFormalParams "," • FuncFormalParam
 
-    "int"    shift, and go to state 130
-    "float"  shift, and go to state 131
+    "int"    shift, and go to state 128
+    "float"  shift, and go to state 129
 
-    FuncFormalParam  go to state 167
+    FuncFormalParam  go to state 189
 
 
-State 156
+State 167
+
+   52 VarDef: DIGIT_ID ArrayIndexs "=" VarInitVal •
+
+    $default  reduce using rule 52 (VarDef)
+
+
+State 168
 
    17 FuncDeclare: "float" DIGIT_ID "(" ")" ";" •
 
     $default  reduce using rule 17 (FuncDeclare)
 
 
-State 157
+State 169
 
    11 FuncDef: "float" DIGIT_ID "(" ")" Block •
 
     $default  reduce using rule 11 (FuncDef)
 
 
-State 158
+State 170
 
    12 FuncDef: "float" DIGIT_ID "(" FuncFormalParams ")" • Block
    18 FuncDeclare: "float" DIGIT_ID "(" FuncFormalParams ")" • ";"
 
-    "{"  shift, and go to state 15
-    ";"  shift, and go to state 168
+    "{"  shift, and go to state 17
+    ";"  shift, and go to state 190
 
-    Block  go to state 169
+    Block  go to state 191
 
 
-State 159
+State 171
 
    15 FuncDeclare: "void" DIGIT_ID "(" ")" ";" •
 
     $default  reduce using rule 15 (FuncDeclare)
 
 
-State 160
+State 172
 
     9 FuncDef: "void" DIGIT_ID "(" ")" Block •
 
     $default  reduce using rule 9 (FuncDef)
 
 
-State 161
+State 173
 
    10 FuncDef: "void" DIGIT_ID "(" FuncFormalParams ")" • Block
    16 FuncDeclare: "void" DIGIT_ID "(" FuncFormalParams ")" • ";"
 
-    "{"  shift, and go to state 15
-    ";"  shift, and go to state 170
+    "{"  shift, and go to state 17
+    ";"  shift, and go to state 192
 
-    Block  go to state 171
-
-
-State 162
-
-   41 IfStmt: "if" "(" Condition ")" Statement •
-   42       | "if" "(" Condition ")" Statement • "else" Statement
-
-    "else"  shift, and go to state 172
-
-    "else"    [reduce using rule 41 (IfStmt)]
-    $default  reduce using rule 41 (IfStmt)
-
-    shift/reduce conflict on token "else":
-       41 IfStmt: "if" "(" Condition ")" Statement •
-       42 IfStmt: "if" "(" Condition ")" Statement • "else" Statement
-      Example: "if" "(" Condition ")" "if" "(" Condition ")" Statement • "else" Statement
-      Shift derivation
-        IfStmt
-        ↳ 41: "if" "(" Condition ")" Statement
-                                     ↳ 32: IfStmt
-                                           ↳ 42: "if" "(" Condition ")" Statement • "else" Statement
-      Reduce derivation
-        IfStmt
-        ↳ 42: "if" "(" Condition ")" Statement                                      "else" Statement
-                                     ↳ 32: IfStmt
-                                           ↳ 41: "if" "(" Condition ")" Statement •
+    Block  go to state 193
 
 
+State 174
 
-State 163
+   69 IfStmt: "if" "(" Condition ")" Statement •
+   70       | "if" "(" Condition ")" Statement • "else" Statement
 
-   43 WhileStmt: "while" "(" Condition ")" Statement •
+    "else"  shift, and go to state 194
 
-    $default  reduce using rule 43 (WhileStmt)
-
-
-State 164
-
-   44 DowhileStmt: "do" Statement "while" "(" Condition • ")" ";"
-
-    ")"  shift, and go to state 173
+    $default  reduce using rule 69 (IfStmt)
 
 
-State 165
+State 175
+
+   71 WhileStmt: "while" "(" Condition ")" Statement •
+
+    $default  reduce using rule 71 (WhileStmt)
+
+
+State 176
+
+   72 DowhileStmt: "do" Statement "while" "(" Condition • ")" ";"
+
+    ")"  shift, and go to state 195
+
+
+State 177
+
+   65 ConstInitVal: "{" • "}"
+   66             | "{" • ConstInitvalList "}"
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "{"          shift, and go to state 177
+    "}"          shift, and go to state 196
+    "("          shift, and go to state 18
+
+    ConstInitVal      go to state 197
+    ConstInitvalList  go to state 198
+    ConstExp          go to state 179
+    AddExpr           go to state 180
+    MulExpr           go to state 34
+    UnaryExpr         go to state 35
+    PrimaryExp        go to state 36
+    Lval              go to state 42
+
+
+State 178
+
+   62 ConstDef: DIGIT_ID "=" ConstInitVal •
+
+    $default  reduce using rule 62 (ConstDef)
+
+
+State 179
+
+   64 ConstInitVal: ConstExp •
+
+    $default  reduce using rule 64 (ConstInitVal)
+
+
+State 180
+
+   76 ConstExp: AddExpr •
+   78 AddExpr: AddExpr • "+" MulExpr
+   79        | AddExpr • "-" MulExpr
+
+    "+"  shift, and go to state 75
+    "-"  shift, and go to state 76
+
+    $default  reduce using rule 76 (ConstExp)
+
+
+State 181
+
+   63 ConstDef: DIGIT_ID ArrayIndexs "=" • ConstInitVal
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "{"          shift, and go to state 177
+    "("          shift, and go to state 18
+
+    ConstInitVal  go to state 199
+    ConstExp      go to state 179
+    AddExpr       go to state 180
+    MulExpr       go to state 34
+    UnaryExpr     go to state 35
+    PrimaryExp    go to state 36
+    Lval          go to state 42
+
+
+State 182
+
+   61 ConstDefList: ConstDefList "," ConstDef •
+
+    $default  reduce using rule 61 (ConstDefList)
+
+
+State 183
+
+   55 VarInitVal: "{" VarInitValList "}" •
+
+    $default  reduce using rule 55 (VarInitVal)
+
+
+State 184
+
+   57 VarInitValList: VarInitValList "," • VarInitVal
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "{"          shift, and go to state 125
+    "("          shift, and go to state 18
+
+    VarInitVal  go to state 200
+    Expr        go to state 127
+    AddExpr     go to state 33
+    MulExpr     go to state 34
+    UnaryExpr   go to state 35
+    PrimaryExp  go to state 36
+    Lval        go to state 42
+
+
+State 185
+
+   23 FuncFormalParam: "int" DIGIT_ID "[" • "]"
+   25                | "int" DIGIT_ID "[" • "]" ArrayIndexs
+   73 ArrayIndexs: "[" • Expr "]"
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "("          shift, and go to state 18
+    "]"          shift, and go to state 201
+
+    Expr        go to state 84
+    AddExpr     go to state 33
+    MulExpr     go to state 34
+    UnaryExpr   go to state 35
+    PrimaryExp  go to state 36
+    Lval        go to state 42
+
+
+State 186
+
+   24 FuncFormalParam: "int" DIGIT_ID ArrayIndexs •
+   74 ArrayIndexs: ArrayIndexs • "[" Expr "]"
+
+    "["  shift, and go to state 85
+
+    $default  reduce using rule 24 (FuncFormalParam)
+
+
+State 187
 
    14 FuncDeclare: "int" DIGIT_ID "(" FuncFormalParams ")" ";" •
 
     $default  reduce using rule 14 (FuncDeclare)
 
 
-State 166
+State 188
 
     8 FuncDef: "int" DIGIT_ID "(" FuncFormalParams ")" Block •
 
     $default  reduce using rule 8 (FuncDef)
 
 
-State 167
+State 189
 
    20 FuncFormalParams: FuncFormalParams "," FuncFormalParam •
 
     $default  reduce using rule 20 (FuncFormalParams)
 
 
-State 168
+State 190
 
    18 FuncDeclare: "float" DIGIT_ID "(" FuncFormalParams ")" ";" •
 
     $default  reduce using rule 18 (FuncDeclare)
 
 
-State 169
+State 191
 
    12 FuncDef: "float" DIGIT_ID "(" FuncFormalParams ")" Block •
 
     $default  reduce using rule 12 (FuncDef)
 
 
-State 170
+State 192
 
    16 FuncDeclare: "void" DIGIT_ID "(" FuncFormalParams ")" ";" •
 
     $default  reduce using rule 16 (FuncDeclare)
 
 
-State 171
+State 193
 
    10 FuncDef: "void" DIGIT_ID "(" FuncFormalParams ")" Block •
 
     $default  reduce using rule 10 (FuncDef)
 
 
-State 172
+State 194
 
-   42 IfStmt: "if" "(" Condition ")" Statement "else" • Statement
+   70 IfStmt: "if" "(" Condition ")" Statement "else" • Statement
 
     DIGIT_INT    shift, and go to state 1
     DIGIT_ID     shift, and go to state 2
     DIGIT_FLOAT  shift, and go to state 3
-    "-"          shift, and go to state 4
-    "int"        shift, and go to state 57
-    "float"      shift, and go to state 58
-    "if"         shift, and go to state 8
-    "return"     shift, and go to state 9
-    "while"      shift, and go to state 10
-    "do"         shift, and go to state 11
-    "break"      shift, and go to state 12
-    "continue"   shift, and go to state 13
-    "!"          shift, and go to state 14
-    "{"          shift, and go to state 15
-    "("          shift, and go to state 16
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "int"        shift, and go to state 54
+    "float"      shift, and go to state 55
+    "if"         shift, and go to state 9
+    "return"     shift, and go to state 10
+    "while"      shift, and go to state 11
+    "do"         shift, and go to state 12
+    "const"      shift, and go to state 13
+    "break"      shift, and go to state 14
+    "continue"   shift, and go to state 15
+    "!"          shift, and go to state 16
+    "{"          shift, and go to state 17
+    "("          shift, and go to state 18
+    ";"          shift, and go to state 19
 
-    Block         go to state 20
-    Statement     go to state 174
-    IfStmt        go to state 22
-    WhileStmt     go to state 23
-    DowhileStmt   go to state 24
-    Condition     go to state 25
-    OrCond        go to state 26
-    AndCond       go to state 27
-    NotCond       go to state 28
-    EquCondTerm   go to state 29
-    LessCondTerm  go to state 30
-    Declare       go to state 31
-    Array         go to state 32
-    Expr          go to state 33
-    AddExpr       go to state 34
-    MulExpr       go to state 35
-    UnaryExpr     go to state 36
-    Term          go to state 37
-    var           go to state 38
-
-
-State 173
-
-   44 DowhileStmt: "do" Statement "while" "(" Condition ")" • ";"
-
-    ";"  shift, and go to state 175
+    Block        go to state 23
+    Statement    go to state 202
+    AssignStmt   go to state 25
+    DeclStmt     go to state 26
+    VarlDecl     go to state 27
+    ConstDecl    go to state 28
+    IfStmt       go to state 29
+    WhileStmt    go to state 30
+    DowhileStmt  go to state 31
+    Expr         go to state 32
+    AddExpr      go to state 33
+    MulExpr      go to state 34
+    UnaryExpr    go to state 35
+    PrimaryExp   go to state 36
+    Lval         go to state 37
 
 
-State 174
+State 195
 
-   42 IfStmt: "if" "(" Condition ")" Statement "else" Statement •
+   72 DowhileStmt: "do" Statement "while" "(" Condition ")" • ";"
 
-    $default  reduce using rule 42 (IfStmt)
+    ";"  shift, and go to state 203
 
 
-State 175
+State 196
 
-   44 DowhileStmt: "do" Statement "while" "(" Condition ")" ";" •
+   65 ConstInitVal: "{" "}" •
 
-    $default  reduce using rule 44 (DowhileStmt)
+    $default  reduce using rule 65 (ConstInitVal)
+
+
+State 197
+
+   67 ConstInitvalList: ConstInitVal •
+
+    $default  reduce using rule 67 (ConstInitvalList)
+
+
+State 198
+
+   66 ConstInitVal: "{" ConstInitvalList • "}"
+   68 ConstInitvalList: ConstInitvalList • "," ConstInitVal
+
+    "}"  shift, and go to state 204
+    ","  shift, and go to state 205
+
+
+State 199
+
+   63 ConstDef: DIGIT_ID ArrayIndexs "=" ConstInitVal •
+
+    $default  reduce using rule 63 (ConstDef)
+
+
+State 200
+
+   57 VarInitValList: VarInitValList "," VarInitVal •
+
+    $default  reduce using rule 57 (VarInitValList)
+
+
+State 201
+
+   23 FuncFormalParam: "int" DIGIT_ID "[" "]" •
+   25                | "int" DIGIT_ID "[" "]" • ArrayIndexs
+
+    "["  shift, and go to state 39
+
+    $default  reduce using rule 23 (FuncFormalParam)
+
+    ArrayIndexs  go to state 206
+
+
+State 202
+
+   70 IfStmt: "if" "(" Condition ")" Statement "else" Statement •
+
+    $default  reduce using rule 70 (IfStmt)
+
+
+State 203
+
+   72 DowhileStmt: "do" Statement "while" "(" Condition ")" ";" •
+
+    $default  reduce using rule 72 (DowhileStmt)
+
+
+State 204
+
+   66 ConstInitVal: "{" ConstInitvalList "}" •
+
+    $default  reduce using rule 66 (ConstInitVal)
+
+
+State 205
+
+   68 ConstInitvalList: ConstInitvalList "," • ConstInitVal
+
+    DIGIT_INT    shift, and go to state 1
+    DIGIT_ID     shift, and go to state 2
+    DIGIT_FLOAT  shift, and go to state 3
+    "+"          shift, and go to state 4
+    "-"          shift, and go to state 5
+    "!"          shift, and go to state 16
+    "{"          shift, and go to state 177
+    "("          shift, and go to state 18
+
+    ConstInitVal  go to state 207
+    ConstExp      go to state 179
+    AddExpr       go to state 180
+    MulExpr       go to state 34
+    UnaryExpr     go to state 35
+    PrimaryExp    go to state 36
+    Lval          go to state 42
+
+
+State 206
+
+   25 FuncFormalParam: "int" DIGIT_ID "[" "]" ArrayIndexs •
+   74 ArrayIndexs: ArrayIndexs • "[" Expr "]"
+
+    "["  shift, and go to state 85
+
+    $default  reduce using rule 25 (FuncFormalParam)
+
+
+State 207
+
+   68 ConstInitvalList: ConstInitvalList "," ConstInitVal •
+
+    $default  reduce using rule 68 (ConstInitvalList)

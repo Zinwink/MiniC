@@ -12,6 +12,7 @@
 #pragma once
 
 #include <vector>
+#include <deque>
 #include <string>
 #include <cstdint>
 #include "Literal_Val.h"
@@ -35,8 +36,26 @@ enum class ast_node_type : int
     ///@brief 标识符变量叶子节点
     AST_LEAF_VAR_ID,
 
+    /// @brief 常量节点 const 修饰的
+    AST_LEAF_CONST_VAR_ID,
+
+    /// @brief 变量声明时定义的定义 如 int a=100
+    AST_OP_VAR_DEF,
+
+    /// @brief const 修饰的常量初始定义
+    AST_OP_CONST_VAR_DEF,
+
     /// @brief 数组节点,可能是声明处，也可能是取址处，也可能是函数形参
     AST_OP_ARRAY,
+
+    /// @brief const 修饰的数组
+    AST_OP_CONST_ARRAY,
+
+    /// @brief 数组初赋值 定义节点
+    AST_ARRAY_DEF,
+
+    /// @brief const修饰的数组初赋值节点
+    AST_CONST_ARRAY_DEF,
 
     /// @brief 单个函数形参运算符节点 属性包含名字与类型
     AST_LEAF_FUNC_FORMAL_PARAM,
@@ -138,6 +157,9 @@ enum class ast_node_type : int
     /// @brief 多个声明
     AST_OP_DECL_ITEMS,
 
+    /// @brief 多个 const 声明
+    AST_OP_CONST_DECL_ITEMS,
+
     /// @brief 单项声明节点
     AST_OP_DECL_ITEM,
 
@@ -155,6 +177,9 @@ enum class ast_node_type : int
 
     /// @brief continue
     AST_OP_CONTINUE,
+
+    /// @brief 数组索引
+    AST_OP_ARRAY_INDEX,
 
     /// @brief 非法运算符
     AST_ILLEGAL,
@@ -175,7 +200,7 @@ public: // 属性
     ast_node *parent = nullptr;
 
     /// @brief 孩子节点
-    std::vector<ast_node *> sons;
+    std::deque<ast_node *> sons;
 
     /// @brief 节点类型
     ast_node_type node_type;
@@ -261,10 +286,10 @@ ast_node *new_ast_leaf_node(Literal_Val &literal, ast_node_type _node_type = ast
 ast_node *create_fun_def(Literal_Val &literal, Type *ret_type, ast_node *params = nullptr, ast_node *block = nullptr);
 
 /// @brief 创建函数声明
-/// @param literal 
-/// @param ret_type 
-/// @param params 
-/// @return 
+/// @param literal
+/// @param ret_type
+/// @param params
+/// @return
 ast_node *create_fun_declare(Literal_Val &literal, Type *ret_type, ast_node *params = nullptr);
 
 /// @brief 创建函数形参节点
@@ -283,12 +308,22 @@ ast_node *create_fun_call(Literal_Val &literal, ast_node *params);
 /// @param parent
 void updateDeclTypes(ast_node *parent);
 
-/// @brief 获取数组名
-/// @param arr
-/// @return
-std::string getNameofArray(ast_node *arr);
+// /// @brief 获取数组名
+// /// @param arr
+// /// @return
+// std::string getNameofArray(ast_node *arr);
 
-/// @brief 获取数组的维度数据(如果该维度为空节点，则赋值为-1， 一般这种情况出现在函数形参中)
-/// @param arr
+// /// @brief 获取数组的维度数据(如果该维度为空节点，则赋值为-1， 一般这种情况出现在函数形参中)
+// /// @param arr
+// /// @return
+// std::vector<int> getArrayDimOrd(ast_node *arr);
+
+/// @brief 获取数组声明时的维度
+/// @param node
 /// @return
-std::vector<int> getArrayDimOrd(ast_node *arr);
+std::vector<int> getArrayDeclDims(ast_node *node);
+
+/// @brief 获取ConstExpr节点的值(int类型)
+/// @param node
+/// @return
+int getValueofOpNode(ast_node *node);

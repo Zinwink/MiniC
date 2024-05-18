@@ -93,6 +93,12 @@ public:
         return ContainedTys[ord + 1];
     };
 
+    void addParamType(Type *argTy)
+    {
+        ContainedTys.push_back(argTy);
+        NumContainedTys += 1;
+    }
+
     /// @brief  返回参数数目
     /// @return
     unsigned getNumParams() const

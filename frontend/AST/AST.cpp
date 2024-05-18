@@ -65,6 +65,7 @@ bool isLeafNodeType(ast_node_type _node_type)
     case ast_node_type::AST_LEAF_LITERAL_FLOAT:
     case ast_node_type::AST_LEAF_LITERAL_UINT:
     case ast_node_type::AST_LEAF_VAR_ID:
+    case ast_node_type::AST_LEAF_CONST_VAR_ID:
     // case ast_node_type::AST_LEAF_FUNC_FORMAL_PARAM:
     case ast_node_type::AST_LEAF_TYPE:
     case ast_node_type::AST_OP_BREAK:
@@ -133,7 +134,6 @@ ast_node *insert_ast_node(ast_node *parent, ast_node *node)
 ast_node *new_ast_leaf_node(Literal_Val &literal, ast_node_type _node_type)
 {
     // 断言确保输入节点类型_node_type为叶子类型
-    assert(isLeafNodeType(_node_type) && "Error:the _node_type input is not leaf type!");
     ast_node *node = new ast_node(literal, _node_type);
     return node;
 }
@@ -219,76 +219,93 @@ ast_node *create_fun_call(Literal_Val &literal, ast_node *params)
 void updateDeclTypes(ast_node *parent)
 {
     // 这里主要针对  int declareItems使用 对于数组类型特殊处理，其余在MiniC.y顺带处理
-    assert(parent->node_type == ast_node_type::AST_OP_DECL_ITEMS && "Error! file:AST.cpp");
+    ast_node_type paretTy = parent->node_type;
+    assert((paretTy == ast_node_type::AST_OP_DECL_ITEMS || paretTy == ast_node_type::AST_OP_CONST_DECL_ITEMS) && "Error! file:AST.cpp");
     for (auto &son : parent->sons)
     {
-
-        if (son->node_type == ast_node_type::AST_OP_ARRAY) // 子节点为数组类型较为特殊
+        //  DECL_ITEMS CONST_DECL_IEMS 的子节点有 DEF节点(有初赋值)，有val 节点(没有初赋值)
+        ast_node_type sonTy = son->node_type;
+        if (sonTy == ast_node_type::AST_OP_ARRAY) // 子节点为数组类型较为特殊
         {
-            // 先获取 数组节点声明的各个维度数值
-            std::vector<int> dims;
-            dims = getArrayDimOrd(son);
-
             Type *ty = Type::copy(parent->attr);
-            son->attr = ArrayType::get(dims, ty);
+            son->attr = ty;
         }
-        else if (son->node_type == ast_node_type::AST_LEAF_VAR_ID)
+        else if (sonTy == ast_node_type::AST_LEAF_VAR_ID)
         {
+            Type *ty = Type::copy(parent->attr);
+            son->attr = ty;
+        }
+        else if (sonTy == ast_node_type::AST_LEAF_CONST_VAR_ID)
+        {
+            Type *ty = Type::copy(parent->attr);
+            son->attr = ty;
+        }
+        else if (sonTy == ast_node_type::AST_OP_VAR_DEF)
+        {
+            Type *ty = Type::copy(parent->attr);
+            son->sons[0]->attr = ty;
+        }
+        else if (sonTy == ast_node_type::AST_OP_CONST_VAR_DEF)
+        {
+            Type *ty = Type::copy(parent->attr);
+            son->sons[0]->attr = ty;
+        }
+        else {
             Type *ty = Type::copy(parent->attr);
             son->attr = ty;
         }
     }
 }
 
-/// @brief 获取数组名
-/// @param arr
-/// @return
-std::string getNameofArray(ast_node *arr)
-{
-    assert(arr->node_type == ast_node_type::AST_OP_ARRAY && "Error, not array type");
-    string name = arr->literal_val.digit.id;
-    if (arr->parent->node_type == ast_node_type::AST_OP_DECL_ITEMS)
-    {
-        name += ": " + arr->attr->TypeStr();
-    }
-    else
-    {
-        name += ": Array";
-    }
-    return name;
-}
+// /// @brief 获取数组名
+// /// @param arr
+// /// @return
+// std::string getNameofArray(ast_node *arr)
+// {
+//     assert(arr->node_type == ast_node_type::AST_OP_ARRAY && "Error, not array type");
+//     string name = arr->literal_val.digit.id;
+//     if (arr->parent->node_type == ast_node_type::AST_OP_DECL_ITEMS)
+//     {
+//         name += ": " + arr->attr->TypeStr();
+//     }
+//     else
+//     {
+//         name += ": Array";
+//     }
+//     return name;
+// }
 
 /// @brief 获取数组的维度数据(如果该维度为空节点，则赋值为-1， 一般这种情况出现在函数形参中)
 /// @param arr 数组类型AST节点
 /// @return
-std::vector<int> getArrayDimOrd(ast_node *arr)
-{
-    // 先获取 数组节点声明的各个维度数值
-    std::vector<int> dims;
-    for (auto &son : arr->sons)
-    {
-        int num;
-        if (son->node_type == ast_node_type::AST_NULL)
-        {
-            num = -1;
-        }
-        else if (son->node_type == ast_node_type::AST_LEAF_LITERAL_INT)
-        {
-            num = son->literal_val.digit.int32_digit;
-        }
-        else if (son->node_type == ast_node_type::AST_LEAF_LITERAL_UINT)
-        {
-            num = son->literal_val.digit.int32_digit;
-        }
-        else
-        {
-            // 声明时数组的各维度一定要为整数 有符号 或无符号
-            int lino = arr->literal_val.line_no;
-            std::string errormsg = ">>>Error!: the array declare size must be const int! line: " + std::to_string(lino);
-            throw std::invalid_argument(errormsg);
-        }
+// std::vector<int> getArrayDimOrd(ast_node *arr)
+// {
+//     // 先获取 数组节点声明的各个维度数值
+//     std::vector<int> dims;
+//     for (auto &son : arr->sons)
+//     {
+//         int num;
+//         if (son->node_type == ast_node_type::AST_NULL)
+//         {
+//             num = -1;
+//         }
+//         else if (son->node_type == ast_node_type::AST_LEAF_LITERAL_INT)
+//         {
+//             num = son->literal_val.digit.int32_digit;
+//         }
+//         else if (son->node_type == ast_node_type::AST_LEAF_LITERAL_UINT)
+//         {
+//             num = son->literal_val.digit.int32_digit;
+//         }
+//         else
+//         {
+//             // 声明时数组的各维度一定要为整数 有符号 或无符号
+//             int lino = arr->literal_val.line_no;
+//             std::string errormsg = ">>>Error!: the array declare size must be const int! line: " + std::to_string(lino);
+//             throw std::invalid_argument(errormsg);
+//         }
 
-        dims.push_back(num);
-    }
-    return dims;
-}
+//         dims.push_back(num);
+//     }
+//     return dims;
+// }

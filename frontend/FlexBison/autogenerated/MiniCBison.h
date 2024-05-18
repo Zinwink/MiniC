@@ -71,25 +71,27 @@ extern int yydebug;
     T_RETURN = 272,                /* "return"  */
     T_WHILE = 273,                 /* "while"  */
     T_DO = 274,                    /* "do"  */
-    T_BREAK = 275,                 /* "break"  */
-    T_CONTINUE = 276,              /* "continue"  */
-    T_EQUAL = 277,                 /* "=="  */
-    T_NOT_EQU = 278,               /* "!="  */
-    T_LESS = 279,                  /* "<"  */
-    T_GREATER = 280,               /* ">"  */
-    T_LESS_EQU = 281,              /* "<="  */
-    T_GREATER_EQU = 282,           /* ">="  */
-    T_NOT = 283,                   /* "!"  */
-    T_AND = 284,                   /* "&&"  */
-    T_OR = 285,                    /* "||"  */
-    T_LBRACE = 286,                /* "{"  */
-    T_RBRACE = 287,                /* "}"  */
-    T_LPAREN = 288,                /* "("  */
-    T_RPAREN = 289,                /* ")"  */
-    T_LSQU = 290,                  /* "["  */
-    T_RSQU = 291,                  /* "]"  */
-    T_COMMA = 292,                 /* ","  */
-    T_SEMICOLON = 293              /* ";"  */
+    T_CONST = 275,                 /* "const"  */
+    T_BREAK = 276,                 /* "break"  */
+    T_CONTINUE = 277,              /* "continue"  */
+    T_EQUAL = 278,                 /* "=="  */
+    T_NOT_EQU = 279,               /* "!="  */
+    T_LESS = 280,                  /* "<"  */
+    T_GREATER = 281,               /* ">"  */
+    T_LESS_EQU = 282,              /* "<="  */
+    T_GREATER_EQU = 283,           /* ">="  */
+    T_NOT = 284,                   /* "!"  */
+    T_AND = 285,                   /* "&&"  */
+    T_OR = 286,                    /* "||"  */
+    T_LBRACE = 287,                /* "{"  */
+    T_RBRACE = 288,                /* "}"  */
+    T_LPAREN = 289,                /* "("  */
+    T_RPAREN = 290,                /* ")"  */
+    T_LSQU = 291,                  /* "["  */
+    T_RSQU = 292,                  /* "]"  */
+    T_COMMA = 293,                 /* ","  */
+    T_SEMICOLON = 294,             /* ";"  */
+    THEN = 295                     /* THEN  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -98,12 +100,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 16 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
+#line 18 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.y"
 
     class ast_node * node;
     class Literal_Val* literal;
 
-#line 107 "MiniCBison.h"
+#line 109 "MiniCBison.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

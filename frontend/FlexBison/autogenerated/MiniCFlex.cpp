@@ -374,8 +374,8 @@ static void yynoreturn yy_fatal_error ( const char* msg  );
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
-#define YY_NUM_RULES 46
-#define YY_END_OF_BUFFER 47
+#define YY_NUM_RULES 47
+#define YY_END_OF_BUFFER 48
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -383,20 +383,20 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static const flex_int16_t yy_accept[105] =
+static const flex_int16_t yy_accept[107] =
     {   0,
-       42,   42,    0,    0,   47,   45,   43,   44,   44,   27,
-       20,   45,   32,   33,   17,   15,   36,   18,   45,   16,
-       38,   38,   37,   23,   19,   24,   41,   34,   35,   41,
-       41,   41,   41,   41,   41,   41,   41,   41,   30,   45,
-       31,    3,    3,    3,   43,   44,   22,   28,    0,   42,
-        1,    4,    0,   39,    0,    0,   38,   25,   21,   26,
-       41,   41,   41,   12,   41,   41,    8,   41,   41,   41,
-       41,   29,    3,    3,    2,    4,    4,   42,   40,   41,
-       41,   41,   41,    5,   41,   41,   41,   41,   41,    9,
-       41,   41,    7,   41,   13,   41,    6,   41,   11,   41,
+       43,   43,    0,    0,   48,   46,   44,   45,   45,   28,
+       21,   46,   33,   34,   18,   16,   37,   19,   46,   17,
+       39,   39,   38,   24,   20,   25,   42,   35,   36,   42,
+       42,   42,   42,   42,   42,   42,   42,   42,   31,   46,
+       32,    3,    3,    3,   44,   45,   23,   29,    0,   43,
+        1,    4,    0,   40,    0,    0,   39,   26,   22,   27,
+       42,   42,   42,   13,   42,   42,    8,   42,   42,   42,
+       42,   30,    3,    3,    2,    4,    4,   43,   41,   42,
+       42,   42,   42,    5,   42,   42,   42,   42,   42,   42,
+        9,   42,   42,    7,   42,   14,   11,   42,    6,   42,
 
-       10,   41,   14,    0
+       12,   42,   10,   42,   15,    0
     } ;
 
 static const YY_CHAR yy_ec[256] =
@@ -440,39 +440,41 @@ static const YY_CHAR yy_meta[49] =
         4,    4,    4,    4,    4,    1,    1,    1
     } ;
 
-static const flex_int16_t yy_base[110] =
+static const flex_int16_t yy_base[112] =
     {   0,
-        0,    0,   46,   47,  161,  162,  158,   48,   50,  138,
-      162,  151,  162,  162,  162,  162,  162,  143,   42,   51,
-       51,   56,  162,  135,  134,  133,    0,  162,  162,  113,
-      113,  112,  113,  112,   42,  116,  108,  112,  162,   98,
-      162,  141,  140,  127,  139,   59,  162,  162,   61,   65,
-      162,  137,   68,   73,   78,    0,   83,  162,  162,  162,
-        0,  107,  100,    0,   96,   97,    0,   93,   92,   98,
-       97,  162,  128,  127,  162,  126,  162,   86,    0,  100,
-       85,   94,   97,    0,   81,   92,   85,   85,   85,    0,
-       77,   72,    0,   66,    0,   55,    0,   50,    0,   28,
+        0,    0,   46,   47,  163,  164,  160,   48,   50,  140,
+      164,  153,  164,  164,  164,  164,  164,  145,   42,   51,
+       51,   56,  164,  137,  136,  135,    0,  164,  164,  115,
+      115,  114,  115,  114,   42,  118,  110,  114,  164,  100,
+      164,  143,  142,  129,  141,   59,  164,  164,   61,   65,
+      164,  139,   68,   73,   78,    0,   83,  164,  164,  164,
+        0,  109,  102,    0,   98,   99,    0,   95,   94,  100,
+       99,  164,  130,  129,  164,  128,  164,   86,    0,  102,
+       64,   97,  100,    0,   84,   95,   88,   88,   81,   87,
+        0,   79,   74,    0,   66,    0,    0,   55,    0,   50,
 
-        0,   32,    0,  162,  104,  106,  110,  114,   52
+        0,   28,    0,   32,    0,  164,  106,  108,  112,  116,
+       52
     } ;
 
-static const flex_int16_t yy_def[110] =
+static const flex_int16_t yy_def[112] =
     {   0,
-      104,    1,  105,  105,  104,  104,  104,  104,  104,  104,
-      104,  104,  104,  104,  104,  104,  104,  104,  104,  104,
-      104,  104,  104,  104,  104,  104,  106,  104,  104,  106,
-      106,  106,  106,  106,  106,  106,  106,  106,  104,  104,
-      104,  107,  107,  104,  104,  104,  104,  104,  104,  104,
-      104,  108,  104,  104,  104,  109,  104,  104,  104,  104,
+      106,    1,  107,  107,  106,  106,  106,  106,  106,  106,
       106,  106,  106,  106,  106,  106,  106,  106,  106,  106,
-      106,  104,  107,  107,  104,  108,  104,  104,  109,  106,
-      106,  106,  106,  106,  106,  106,  106,  106,  106,  106,
-      106,  106,  106,  106,  106,  106,  106,  106,  106,  106,
+      106,  106,  106,  106,  106,  106,  108,  106,  106,  108,
+      108,  108,  108,  108,  108,  108,  108,  108,  106,  106,
+      106,  109,  109,  106,  106,  106,  106,  106,  106,  106,
+      106,  110,  106,  106,  106,  111,  106,  106,  106,  106,
+      108,  108,  108,  108,  108,  108,  108,  108,  108,  108,
+      108,  106,  109,  109,  106,  110,  106,  106,  111,  108,
+      108,  108,  108,  108,  108,  108,  108,  108,  108,  108,
+      108,  108,  108,  108,  108,  108,  108,  108,  108,  108,
 
-      106,  106,  106,    0,  104,  104,  104,  104,  104
+      108,  108,  108,  108,  108,    0,  106,  106,  106,  106,
+      106
     } ;
 
-static const flex_int16_t yy_nxt[211] =
+static const flex_int16_t yy_nxt[213] =
     {   0,
         6,    7,    8,    9,   10,   11,   12,   13,   14,   15,
        16,   17,   18,   19,   20,   21,   22,   22,   23,   24,
@@ -480,58 +482,60 @@ static const flex_int16_t yy_nxt[211] =
        32,   33,   34,   27,   35,   27,   27,   27,   27,   36,
        27,   27,   27,   37,   38,   39,   40,   41,   43,   43,
        46,   46,   46,   46,   79,   44,   44,   50,   50,   50,
-       51,   46,   46,  103,   53,   52,   54,   54,   55,   53,
-      102,   57,   57,   57,   67,   56,   50,   50,   50,   68,
-       50,   50,   50,   78,   78,   78,   53,  101,   54,   54,
-       55,   53,  100,   55,   55,   55,   53,   99,   57,   57,
+       51,   46,   46,  105,   53,   52,   54,   54,   55,   53,
+      104,   57,   57,   57,   67,   56,   50,   50,   50,   68,
+       50,   50,   50,   78,   78,   78,   53,  103,   54,   54,
+       55,   53,  102,   55,   55,   55,   53,  101,   57,   57,
 
-       57,   55,   55,   55,   42,   42,   42,   42,   61,   61,
-       73,   98,   73,   73,   76,   76,   76,   76,   97,   96,
-       95,   94,   93,   92,   91,   90,   89,   88,   77,   74,
-       74,   87,   86,   85,   84,   83,   82,   81,   80,   77,
-       45,   75,   74,   74,   72,   71,   70,   69,   66,   65,
-       64,   63,   62,   60,   59,   58,   49,   48,   47,   45,
-      104,    5,  104,  104,  104,  104,  104,  104,  104,  104,
-      104,  104,  104,  104,  104,  104,  104,  104,  104,  104,
-      104,  104,  104,  104,  104,  104,  104,  104,  104,  104,
-      104,  104,  104,  104,  104,  104,  104,  104,  104,  104,
+       57,   55,   55,   55,   89,   90,   42,   42,   42,   42,
+       61,   61,   73,  100,   73,   73,   76,   76,   76,   76,
+       99,   98,   97,   96,   95,   94,   93,   92,   91,   88,
+       77,   74,   74,   87,   86,   85,   84,   83,   82,   81,
+       80,   77,   45,   75,   74,   74,   72,   71,   70,   69,
+       66,   65,   64,   63,   62,   60,   59,   58,   49,   48,
+       47,   45,  106,    5,  106,  106,  106,  106,  106,  106,
+      106,  106,  106,  106,  106,  106,  106,  106,  106,  106,
+      106,  106,  106,  106,  106,  106,  106,  106,  106,  106,
+      106,  106,  106,  106,  106,  106,  106,  106,  106,  106,
 
-      104,  104,  104,  104,  104,  104,  104,  104,  104,  104
+      106,  106,  106,  106,  106,  106,  106,  106,  106,  106,
+      106,  106
     } ;
 
-static const flex_int16_t yy_chk[211] =
+static const flex_int16_t yy_chk[213] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    3,    4,
-        8,    8,    9,    9,  109,    3,    4,   19,   19,   19,
-       20,   46,   46,  102,   21,   20,   21,   21,   21,   22,
-      100,   22,   22,   22,   35,   21,   49,   49,   49,   35,
-       50,   50,   50,   53,   53,   53,   54,   98,   54,   54,
-       54,   55,   96,   55,   55,   55,   57,   94,   57,   57,
+        8,    8,    9,    9,  111,    3,    4,   19,   19,   19,
+       20,   46,   46,  104,   21,   20,   21,   21,   21,   22,
+      102,   22,   22,   22,   35,   21,   49,   49,   49,   35,
+       50,   50,   50,   53,   53,   53,   54,  100,   54,   54,
+       54,   55,   98,   55,   55,   55,   57,   95,   57,   57,
 
-       57,   78,   78,   78,  105,  105,  105,  105,  106,  106,
-      107,   92,  107,  107,  108,  108,  108,  108,   91,   89,
-       88,   87,   86,   85,   83,   82,   81,   80,   76,   74,
-       73,   71,   70,   69,   68,   66,   65,   63,   62,   52,
-       45,   44,   43,   42,   40,   38,   37,   36,   34,   33,
-       32,   31,   30,   26,   25,   24,   18,   12,   10,    7,
-        5,  104,  104,  104,  104,  104,  104,  104,  104,  104,
-      104,  104,  104,  104,  104,  104,  104,  104,  104,  104,
-      104,  104,  104,  104,  104,  104,  104,  104,  104,  104,
-      104,  104,  104,  104,  104,  104,  104,  104,  104,  104,
+       57,   78,   78,   78,   81,   81,  107,  107,  107,  107,
+      108,  108,  109,   93,  109,  109,  110,  110,  110,  110,
+       92,   90,   89,   88,   87,   86,   85,   83,   82,   80,
+       76,   74,   73,   71,   70,   69,   68,   66,   65,   63,
+       62,   52,   45,   44,   43,   42,   40,   38,   37,   36,
+       34,   33,   32,   31,   30,   26,   25,   24,   18,   12,
+       10,    7,    5,  106,  106,  106,  106,  106,  106,  106,
+      106,  106,  106,  106,  106,  106,  106,  106,  106,  106,
+      106,  106,  106,  106,  106,  106,  106,  106,  106,  106,
+      106,  106,  106,  106,  106,  106,  106,  106,  106,  106,
 
-      104,  104,  104,  104,  104,  104,  104,  104,  104,  104
+      106,  106,  106,  106,  106,  106,  106,  106,  106,  106,
+      106,  106
     } ;
 
 /* Table of booleans, true if rule could match eol. */
-static const flex_int32_t yy_rule_can_match_eol[47] =
+static const flex_int32_t yy_rule_can_match_eol[48] =
     {   0,
 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 1, 0, 0,     };
+    0, 0, 0, 0, 0, 1, 0, 0,     };
 
 static yy_state_type yy_last_accepting_state;
 static char *yy_last_accepting_cpos;
@@ -556,7 +560,7 @@ char *yytext;
 #include "BisonParser.h"
 #include "Literal_Val.h"
 #include <string>
-#line 560 "MiniCFlex.cpp"
+#line 564 "MiniCFlex.cpp"
 /* 不添加默认规则, 当给定规则无法匹配时，抛出错误 */
 /* 不使用yywrap */
 /* yylineno维护当前行编号 */
@@ -573,7 +577,7 @@ char *yytext;
 /* 小数 */
 /* 空白 */
 /* 空白行 */
-#line 577 "MiniCFlex.cpp"
+#line 581 "MiniCFlex.cpp"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -794,7 +798,7 @@ YY_DECL
 #line 42 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 
 
-#line 798 "MiniCFlex.cpp"
+#line 802 "MiniCFlex.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -821,13 +825,13 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 105 )
+				if ( yy_current_state >= 107 )
 					yy_c = yy_meta[yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 			++yy_cp;
 			}
-		while ( yy_current_state != 104 );
+		while ( yy_current_state != 106 );
 		yy_cp = (yy_last_accepting_cpos);
 		yy_current_state = (yy_last_accepting_state);
 
@@ -928,213 +932,218 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 72 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_WHILE;}
+#line 71 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+{return T_CONST;}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
 #line 73 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_DO;}
+{return T_WHILE;}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
 #line 74 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+{return T_DO;}
+	YY_BREAK
+case 14:
+YY_RULE_SETUP
+#line 75 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 { 
     yylval.literal=new Literal_Val(strdup(yytext),yylineno);
     return T_BREAK;
 }
 	YY_BREAK
-case 14:
+case 15:
 YY_RULE_SETUP
-#line 78 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 79 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {
     yylval.literal=new Literal_Val(strdup(yytext),yylineno);
     return T_CONTINUE;
 }
 	YY_BREAK
-case 15:
-YY_RULE_SETUP
-#line 83 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_ADD;}
-	YY_BREAK
 case 16:
 YY_RULE_SETUP
 #line 84 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_DIV;}
+{return T_ADD;}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
 #line 85 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_MUL;}
+{return T_DIV;}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
 #line 86 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_SUB;}
+{return T_MUL;}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
 #line 87 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_ASSIGN;}
+{return T_SUB;}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
 #line 88 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_MOD;}
+{return T_ASSIGN;}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 90 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_EQUAL;}
+#line 89 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+{return T_MOD;}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
 #line 91 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_NOT_EQU;}
+{return T_EQUAL;}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
 #line 92 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_LESS;}
+{return T_NOT_EQU;}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
 #line 93 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_GREATER;}
+{return T_LESS;}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
 #line 94 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_LESS_EQU;}
+{return T_GREATER;}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
 #line 95 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_GREATER_EQU;}
+{return T_LESS_EQU;}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
 #line 96 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_NOT;}
+{return T_GREATER_EQU;}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
 #line 97 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_AND;}
+{return T_NOT;}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
 #line 98 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_OR;}
+{return T_AND;}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 100 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_LBRACE;}
+#line 99 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+{return T_OR;}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
 #line 101 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_RBRACE;}
+{return T_LBRACE;}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
 #line 102 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_LPAREN;}
+{return T_RBRACE;}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
 #line 103 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_RPAREN;}
+{return T_LPAREN;}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
 #line 104 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_LSQU;}
+{return T_RPAREN;}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
 #line 105 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_RSQU;}
+{return T_LSQU;}
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 107 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_COMMA;}
+#line 106 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+{return T_RSQU;}
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
 #line 108 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-{return T_SEMICOLON;}
+{return T_COMMA;}
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 110 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 109 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+{return T_SEMICOLON;}
+	YY_BREAK
+case 39:
+YY_RULE_SETUP
+#line 111 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {
     //识别整数
     yylval.literal=new Literal_Val(std::stoi(yytext),yylineno);
     return DIGIT_INT;
 }
 	YY_BREAK
-case 39:
+case 40:
 YY_RULE_SETUP
-#line 116 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 117 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {
     yylval.literal=new Literal_Val(std::stoi(yytext,nullptr,8),yylineno);
     return DIGIT_INT;
 }
 	YY_BREAK
-case 40:
+case 41:
 YY_RULE_SETUP
-#line 121 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 122 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {
     yylval.literal=new Literal_Val(std::stoi(yytext,nullptr,16),yylineno);
     return DIGIT_INT;
 }
 	YY_BREAK
-case 41:
+case 42:
 YY_RULE_SETUP
-#line 126 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 127 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {
     // 识别标识符
     yylval.literal=new Literal_Val(strdup(yytext),yylineno);
     return DIGIT_ID;
 }
 	YY_BREAK
-case 42:
+case 43:
 YY_RULE_SETUP
-#line 132 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 133 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {
     //识别小数
     yylval.literal=new Literal_Val(std::stof(yytext),yylineno);
     return DIGIT_FLOAT;
 }
 	YY_BREAK
-case 43:
-YY_RULE_SETUP
-#line 138 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
-;
-	YY_BREAK
 case 44:
-/* rule 44 can match eol */
 YY_RULE_SETUP
 #line 139 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 ;
 	YY_BREAK
 case 45:
+/* rule 45 can match eol */
 YY_RULE_SETUP
-#line 141 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 140 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+;
+	YY_BREAK
+case 46:
+YY_RULE_SETUP
+#line 142 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 {  //其余未识别的符号 错误
         printf("Line %d:unknown token %s\n",yylineno,yytext);
         return 8909;
 }
 	YY_BREAK
-case 46:
+case 47:
 YY_RULE_SETUP
-#line 147 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 148 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1138 "MiniCFlex.cpp"
+#line 1147 "MiniCFlex.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1432,7 +1441,7 @@ static int yy_get_next_buffer (void)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 105 )
+			if ( yy_current_state >= 107 )
 				yy_c = yy_meta[yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
@@ -1460,11 +1469,11 @@ static int yy_get_next_buffer (void)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 105 )
+		if ( yy_current_state >= 107 )
 			yy_c = yy_meta[yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
-	yy_is_jam = (yy_current_state == 104);
+	yy_is_jam = (yy_current_state == 106);
 
 		return yy_is_jam ? 0 : yy_current_state;
 }
@@ -2152,7 +2161,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 147 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
+#line 148 "/home/mole/Program/compile_principle/MiniC/frontend/FlexBison/MiniC.l"
 
 
 

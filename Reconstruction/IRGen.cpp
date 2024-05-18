@@ -15,6 +15,7 @@
 #include "FuncTab.h"
 #include "Function.h"
 #include <iostream>
+#include "DerivedTypes.h"
 
 /// @brief 析构函数
 IRGen::~IRGen()
@@ -49,12 +50,14 @@ IRGen::IRGen(ast_node *root, ModulePtr _module)
     ast2ir_handers[ast_node_type::AST_LEAF_LITERAL_FLOAT] = &IRGen::ir_leafNode_float;
     ast2ir_handers[ast_node_type::AST_LEAF_VAR_ID] = &IRGen::ir_leafNode_var;
     ast2ir_handers[ast_node_type::AST_OP_ARRAY] = &IRGen::ir_leafNode_array;
+    ast2ir_handers[ast_node_type::AST_NULL] = &IRGen::ir_leafNode_NULL;
 
     // AST中的block节点
     ast2ir_handers[ast_node_type::AST_OP_BLOCK] = &IRGen::IRGen::ir_block;
 
     // AST中的变量声明  declarationItems
     ast2ir_handers[ast_node_type::AST_OP_DECL_ITEMS] = &IRGen::ir_declItems;
+    ast2ir_handers[ast_node_type::AST_OP_VAR_DEF] = &IRGen::ir_declVarDef;
 
     // AST中的赋值Assign节点
     ast2ir_handers[ast_node_type::AST_OP_ASSIGN] = &IRGen::ir_assign;
@@ -252,9 +255,14 @@ bool IRGen::ir_func_declare(ast_node *node, LabelParams blocks)
         // 未查找到 则创建
         FuncPtr funp = Function::get(node->attr, funcname);
         node->attr = nullptr;
+        scoper->globalTab()->newDeclVar(funp); // 加入到表中
+        // 遍历形参列表
+        ast_node *res = ir_visit_astnode(node->sons[0], {});
+        if (res == nullptr)
+            return false;
+
         // 添加到 Extern表中 默认是外部
         module->addExternFunction(funp);
-        scoper->globalTab()->newDeclVar(funp); // 加入到表中
     }
     else
     {
@@ -277,10 +285,41 @@ bool IRGen::ir_func_formal_params(ast_node *node, LabelParams blocks)
     FuncPtr fun_f = std::static_pointer_cast<Function>(fun);
     for (auto &son : node->sons)
     {
-        string argName = son->literal_val.digit.id;     // 形参名
-        ArgPtr arg = Argument::get(son->attr, argName); // 形参对象
-        son->attr = nullptr;
+        string argName = son->literal_val.digit.id; // 形参名
+
+        // 先获取形参类型
+        ArgPtr arg;
+        if (son->sons.size() == 0)
+        {
+            // 非数组
+            arg = Argument::get(son->attr, argName); // 形参对象
+            son->attr = nullptr;
+        }
+        else
+        {
+            // 是数组
+            ast_node *arrIndex = son->sons[0];
+            std::vector<int> arrDims;
+            for (auto &index : arrIndex->sons)
+            {
+                ast_node *res = ir_visit_astnode(index, {});
+                if (res == nullptr)
+                {
+                    return false;
+                }
+                // 函数形参数组维度一定是常量
+                ConstantIntPtr c = std::static_pointer_cast<ConstantInt>(res->value);
+                arrDims.push_back(c->getValue());
+            }
+            ArrayType *arrFUll = ArrayType::get(arrDims, son->attr);
+            son->attr = nullptr;
+            Type *arrL = PointerType::get(arrFUll->getContainedTy());
+            arrFUll = nullptr;
+            arg = Argument::get(arrL, argName); // 形参对象
+        }
+
         fun_f->addArg(arg);
+
         // 如果父节点是define类型的，则将形参变量加入到函数符号表中   对于形参列表节点 其父节点有可能是decalre function(只声明无定义)
         if (parent->node_type == ast_node_type::AST_OP_FUNC_DEF)
         {
@@ -641,31 +680,139 @@ bool IRGen::ir_declItems(ast_node *node, LabelParams blocks)
     return true;
 }
 
+/// @brief declitems 下的 def定义节点
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_declVarDef(ast_node *node, LabelParams blocks)
+{
+    // 定义的变量名
+    ast_node *left = node->sons[0];
+    ast_node *right = node->sons[1];
+    string name = left->literal_val.digit.id;
+    ValPtr val = scoper->curTab()->findDeclVarOfCurTab(name);
+    if (val != nullptr)
+    {
+        // 找到该value 重复声明！
+        std::cout << ">>>Error:the variable " << name << " is redifined! line:" << left->literal_val.line_no << std::endl;
+        return false;
+    }
+    if (scoper->curTab()->isGlobalTab())
+    {
+        // 全局变量 声明+ 定义
+        if (left->sons.size() == 0)
+        { // 说明是变量的声明定义
+            GlobalVariPtr g = GlobalVariable::get(left->attr, name);
+            left->attr = nullptr;
+            module->addGlobalVar(g);
+            scoper->curTab()->newDeclVar(g);
+            // 进行初始化
+            ast_node *res = ir_visit_astnode(right, {});
+            if (res == nullptr)
+            {
+                return false;
+            }
+            if (!res->value->isConstant())
+            {
+                std::cout << "globalvariable " << name << " must use constant to define! line: " << left->literal_val.line_no << std::endl;
+                return false;
+            }
+            ConstantPtr initer = std::static_pointer_cast<Constant>(right->value);
+            g->setInitilizer(std::move(initer));
+        }
+        else
+        {
+            // 说明是数组的声明+定义
+            // 数组的初始化暂未实现
+        }
+    }
+    else
+    {
+        // 非全局变量的声明+ 定义
+        if (left->sons.size() == 0)
+        {
+            // 变量 非数组
+            AllocaInstPtr alloca = AllocaInst::get(name, left->attr);
+            left->attr = nullptr;
+            scoper->curTab()->newDeclVar(alloca);
+            scoper->curFun()->insertAllocaInst(alloca);
+            // 访问右边
+            ast_node *res = ir_visit_astnode(right, {});
+            if (res == nullptr)
+                return false;
+            StoreInst::create(right->value, alloca, getCurBlock());
+        }
+        else
+        {
+            // 数组的初始化
+            // 暂未实现
+        }
+    }
+
+    return true;
+}
+
 /// @brief 取负号
 /// @param node
 /// @param blocks
 /// @return
 bool IRGen::ir_Negative(ast_node *node, LabelParams blocks)
 {
-    ast_node *res = ir_visit_astnode(node->sons[0], blocks);
+    // 翻译时对 neg进行初步优化 如 - - - - a  变为 a
+    ast_node *son = node->sons[0];
+    bool isneg = true;
+    while (son->node_type == ast_node_type::AST_OP_NEG)
+    {
+        son = son->sons[0];
+        isneg = !isneg;
+    }
+    ast_node *res = ir_visit_astnode(son, {});
     if (res == nullptr)
         return false;
+
     if (res->value->isConstant())
     {
         // 目前只有 int 故直接转int
         ConstantIntPtr intCOnst = std::static_pointer_cast<ConstantInt>(res->value);
         int num = intCOnst->getValue();
         ConstantIntPtr resConst = ConstantInt::get(32);
-        resConst->setValue(-num);
+        if (isneg)
+        {
+            resConst->setValue(-num);
+        }
+        else
+        {
+            resConst->setValue(num);
+        }
         node->value = std::move(resConst);
     }
     else
     {
         // 不是常数  则使用 sub 二元操作  左操作数为0
-        ConstantIntPtr leftConst = ConstantInt::get(32);
-        leftConst->setValue(0);
-        BinaryOperatorPtr negValue = BinaryOperator::create(Opcode::SubInteger, leftConst, res->value, getCurBlock());
-        node->value = negValue;
+        if (isneg)
+        {
+            ConstantIntPtr leftConst = ConstantInt::get(32);
+            leftConst->setValue(0);
+            BinaryOperatorPtr negValue = BinaryOperator::create(Opcode::SubInteger, leftConst, res->value, getCurBlock());
+            node->value = negValue;
+        }
+        else
+        {
+            node->value = son->value;
+        }
+    }
+    if (blocks.size() == 2)
+    {
+        // if while do-while 条件下
+        ConstantIntPtr zero = ConstantInt::get(32);
+        zero->setValue(0);
+        ICmpInstPtr icmp = ICmpInst::create(Opcode::NotEqInteger, node->value, zero, getCurBlock());
+        BranchInstPtr br = BranchInst::get(icmp, blocks[0], blocks[1]);
+        getCurBlock()->AddInstBack(br);
+
+        // 当前基本块结束
+        transmitBlocks.pop_front();
+        curUsedBlockIter = std::next(curUsedBlockIter);
     }
     return true;
 }
@@ -1261,6 +1408,18 @@ bool IRGen::ir_leafNode_float(ast_node *node, LabelParams blocks)
     return true;
 }
 
+/// @brief NULL空节点
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_leafNode_NULL(ast_node *node, LabelParams blocks)
+{
+    ConstantIntPtr c = ConstantInt::get(32);
+    c->setValue(-1);
+    node->value = c;
+    return true;
+}
+
 /// @brief 数组节点
 /// @param node
 /// @param blocks
@@ -1279,16 +1438,45 @@ bool IRGen::ir_leafNode_array(ast_node *node, LabelParams blocks)
         }
         if (scoper->curTab()->isGlobalTab())
         { // 全局变量声明
-            GlobalVariPtr g = GlobalVariable::get(node->attr, name);
-            node->attr = nullptr;            // 防止反复释放
+
+            ast_node *arrIndex = node->sons[0]; // 数组维度列表
+            std::vector<int> dims;
+            for (auto &id : arrIndex->sons)
+            {
+                ast_node *res = ir_visit_astnode(id, {});
+                if (res == nullptr)
+                {
+                    return false;
+                }
+                // 声明时维度一定是常量 可能是  常量表达式
+                ConstantIntPtr c = std::static_pointer_cast<ConstantInt>(res->value);
+                dims.push_back(c->getValue());
+            }
+            ArrayType *arrty = ArrayType::get(dims, node->attr);
+            node->attr = nullptr;
+            GlobalVariPtr g = GlobalVariable::get(arrty, name);
             module->addGlobalVar(g);         // 加入全局变量列表
             scoper->curTab()->newDeclVar(g); // 符号表中加入相应的声明
         }
         else
         {
             // 非全局变量声明
-            AllocaInstPtr alloca = AllocaInst::get(name, node->attr);
+            ast_node *arrIndex = node->sons[0]; // 数组维度列表
+            std::vector<int> dims;
+            for (auto &id : arrIndex->sons)
+            {
+                ast_node *res = ir_visit_astnode(id, {});
+                if (res == nullptr)
+                {
+                    return false;
+                }
+                // 声明时维度一定是常量 可能是  常量表达式
+                ConstantIntPtr c = std::static_pointer_cast<ConstantInt>(res->value);
+                dims.push_back(c->getValue());
+            }
+            ArrayType *arrty = ArrayType::get(dims, node->attr);
             node->attr = nullptr;
+            AllocaInstPtr alloca = AllocaInst::get(name, arrty);
             scoper->curTab()->newDeclVar(alloca);       //  将声明变量加入当前符号表中
             scoper->curFun()->insertAllocaInst(alloca); // 将allocaInst加入到指令基本块中
         }
@@ -1302,18 +1490,19 @@ bool IRGen::ir_leafNode_array(ast_node *node, LabelParams blocks)
             std::cout << ">>>Error:the array variable " << name << " is not declared! line:" << node->literal_val.line_no << std::endl;
             return false;
         }
-        std::vector<ValPtr> indexs;
-        for (auto &son : node->sons)
+        ast_node *arrIndex = node->sons[0]; // 数组维度列表
+        std::vector<ValPtr> dims;
+        for (auto &id : arrIndex->sons)
         {
-            ast_node *dim = ir_visit_astnode(son, {});
-            if (dim == nullptr)
+            ast_node *res = ir_visit_astnode(id, {});
+            if (res == nullptr)
             {
                 return false;
             }
-            indexs.push_back(dim->value);
+            dims.push_back(res->value);
         }
         // 创建 getelementptr指令
-        getelemInstPtr getelem = getelementptrInst::create(val, indexs, getCurBlock());
+        getelemInstPtr getelem = getelementptrInst::create(val, dims, getCurBlock());
         // node->value = getelem;
         if (blocks.size() == 0)
         {

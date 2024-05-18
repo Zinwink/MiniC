@@ -13,6 +13,7 @@
 #include "BasicBlock.h"
 #include "Argument.h"
 #include <unordered_map>
+#include "DerivedTypes.h"
 
 class Counter;
 class BasicBlock;
@@ -78,7 +79,12 @@ public:
 
     /// @brief 加入形参
     /// @param arg
-    void addArg(ArgPtr arg) { args.push_back(arg); }
+    void addArg(ArgPtr arg)
+    {
+        args.push_back(arg);
+        FunctionType *functy = static_cast<FunctionType *>(getType());
+        functy->addParamType(Type::copy(arg->getType()));
+    }
 
     /// @brief BasicBlock列表
     /// @return

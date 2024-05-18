@@ -41,7 +41,7 @@ private:
     Type *ty = nullptr;          // 类型
     std::list<UserPtr> UserList; // 该Value被其他Value使用的记录列表
     SubClassID ValID;            // 标识
-
+    
 protected:
     unsigned HasName = 0;
 

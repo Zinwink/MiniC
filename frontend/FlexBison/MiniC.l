@@ -68,6 +68,7 @@ white_line  [\r\n]
 "if"        {return T_IF;}
 "else"      {return T_ELSE;}
 "return"    {return T_RETURN;}
+"const"      {return T_CONST;}
 
 "while"     {return T_WHILE;}
 "do"        {return T_DO;}

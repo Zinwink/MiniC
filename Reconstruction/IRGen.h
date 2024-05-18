@@ -143,6 +143,12 @@ private:
     /// @return
     bool ir_declItems(ast_node *node, LabelParams blocks);
 
+    /// @brief declitems 下的 def定义节点
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_declVarDef(ast_node *node, LabelParams blocks);
+
     /// @brief AST  ASSIGN赋值节点对应的函数操作
     /// @param node
     /// @return
@@ -250,4 +256,10 @@ private:
     /// @param blocks
     /// @return
     bool ir_leafNode_array(ast_node *node, LabelParams blocks);
+
+    /// @brief NULL空节点
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_leafNode_NULL(ast_node *node, LabelParams blocks);
 };

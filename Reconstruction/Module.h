@@ -100,3 +100,24 @@ public:
         countMap.clear();
     }
 };
+
+// std.c 标准库内置函数池
+// std::vector<FuncPtr> getStdFuncList()
+// {
+//     // int getint()
+//     FunctionType *getintTy = FunctionType::get(Type::getIntNType(32));
+//     FuncPtr getint = Function::get(getintTy, "getint");
+
+//     // int getch()
+//     FunctionType *getchTy = FunctionType::get(Type::getIntNType(32));
+//     FuncPtr getch = Function::get(getchTy, "getch");
+
+//     // int getarray(int a[])
+//     std::vector<Type *> argTys;
+//     argTys.push_back(PointerType::get(Type::getIntNType(32)));
+//     FunctionType *getarrayTy = FunctionType::get(Type::getIntNType(32), argTys);
+//     FuncPtr getarray = Function::get(getarrayTy, "getarray");
+
+//     // void putint(int k)
+//     // std::vector
+// }
