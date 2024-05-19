@@ -23,13 +23,15 @@ class BasicBlock : public Value
 {
 private:
     std::list<InstPtr> InstLists; // 指令列表
-    FuncPtr parent;               // 基本块所属的函数
+    FuncPtr parent = nullptr;     // 基本块所属的函数
     string Labelname;             // 基本块名字，可以没有
+    bool _hasSign = false;        // 是否有外部标记
 
 public:
     using InstIterator = std::list<InstPtr>::iterator; // 指令迭代器
     InstIterator begin() { return InstLists.begin(); }
     InstIterator end() { return InstLists.end(); }
+    InstPtr &back() { return InstLists.back(); };
 
 public:
     /// @brief 析构函数
@@ -38,6 +40,13 @@ public:
         parent.reset();
         InstLists.clear();
     }
+
+    /// @brief 是否有标记
+    /// @return
+    bool hasSign() { return _hasSign; }
+
+    /// @brief 设置标记
+    void setSign() { _hasSign = true; }
 
     /// @brief 引用存在环，需要打破
     void clear() override
@@ -113,6 +122,18 @@ public:
     /// @brief 判断基本块是否完整
     /// @return
     bool isCompleted();
+
+    /// @brief 判断基本块是否有直接前驱
+    /// @return
+    bool hasImmmedPred();
+
+    /// @brief 获取基本块出口列表
+    /// @return
+    std::vector<BasicBlockPtr> getJumpList();
+
+    /// @brief 获取当前块的直接前驱列表
+    /// @return
+    std::vector<BasicBlockPtr> getImmedPreds();
 
     /// @brief 得到基本块指针
     /// @param _parent

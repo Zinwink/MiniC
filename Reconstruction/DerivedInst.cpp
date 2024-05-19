@@ -54,6 +54,7 @@ StoreInstPtr StoreInst::create(ValPtr val, ValPtr Ptr, BasicBlockPtr atBack)
     {
         LoadInstPtr load = LoadInst::get(val);
         atBack->AddInstBack(load);
+        load->setBBlockParent(atBack);
         src = load;
     }
     StoreInstPtr store = StoreInst::get(src, Ptr);
@@ -205,7 +206,8 @@ CallInstPtr CallInst::create(ValPtr fun, std::vector<ValPtr> &relArgs, BasicBloc
             {
                 LoadInstPtr load = LoadInst::get(relArgs[i]);
                 atBack->AddInstBack(load); // 加入loadInst
-                relArgs[i] = load;         // 替换修正为LoadInst
+                load->setBBlockParent(atBack);
+                relArgs[i] = load; // 替换修正为LoadInst
             }
             else
             {
@@ -217,11 +219,13 @@ CallInstPtr CallInst::create(ValPtr fun, std::vector<ValPtr> &relArgs, BasicBloc
                 getelemInstPtr getele = getelementptrInst::get(relArgs[i], 1, offset);
                 relArgs[i] = getele;
                 atBack->AddInstBack(getele);
+                getele->setBBlockParent(atBack);
             }
         }
     }
     CallInstPtr call = CallInst::get(fun, relArgs); // relArgs修正完毕
     atBack->AddInstBack(call);                      // 加入call指令
+    call->setBBlockParent(atBack);
     return call;
 }
 
@@ -364,6 +368,7 @@ getelemInstPtr getelementptrInst::create(ValPtr arrayBaseAdress, std::vector<Val
         // 目前的情况看 说明这是对形参的 Alloca  因此是指针的指针
         LoadInstPtr load = LoadInst::get(arrayBaseAdress);
         atBack->AddInstBack(load); // 加入load指令
+        load->setBBlockParent(atBack);
         if (elemTy->getElemntTy()->isArrayType())
         {
             ArrayType *arrty = static_cast<ArrayType *>(elemTy->getElemntTy());
@@ -377,6 +382,7 @@ getelemInstPtr getelementptrInst::create(ValPtr arrayBaseAdress, std::vector<Val
                 //  在单维数组中可能出现的情况 单位数组的索引可能使用一个 allocaInst 变量 那是i32*
                 LoadInstPtr mulAddLoad = LoadInst::get(mulAdd);
                 atBack->AddInstBack(mulAddLoad);
+                mulAddLoad->setBBlockParent(atBack);
                 mulAdd = mulAddLoad;
             }
             for (size_t i = 0; i < dimsOrd.size(); i++)
@@ -390,6 +396,7 @@ getelemInstPtr getelementptrInst::create(ValPtr arrayBaseAdress, std::vector<Val
             }
             getelemInstPtr getelem = getelementptrInst::get(load, dims.size() - 1, mulAdd);
             atBack->AddInstBack(getelem);
+            getelem->setBBlockParent(atBack);
             return getelem;
         }
         else
@@ -400,10 +407,12 @@ getelemInstPtr getelementptrInst::create(ValPtr arrayBaseAdress, std::vector<Val
             {
                 LoadInstPtr loadoff = LoadInst::get(offset);
                 atBack->AddInstBack(loadoff);
+                loadoff->setBBlockParent(atBack);
                 offset = loadoff;
             }
             getelemInstPtr getelem = getelementptrInst::get(load, 0, offset);
             atBack->AddInstBack(getelem);
+            getelem->setBBlockParent(atBack);
             return getelem;
         }
     }
@@ -418,6 +427,7 @@ getelemInstPtr getelementptrInst::create(ValPtr arrayBaseAdress, std::vector<Val
             // 索引不是 i32 而是指针  这种情况出现在  索引是变量(AllocaInst)地址  如 A   A代表地址
             LoadInstPtr load = LoadInst::get(mulAdd);
             atBack->AddInstBack(load);
+            load->setBBlockParent(atBack);
             mulAdd = load;
         }
         std::vector<int> dimsOrd = arrty->getDimValues(); // 获取维度数据
@@ -431,6 +441,7 @@ getelemInstPtr getelementptrInst::create(ValPtr arrayBaseAdress, std::vector<Val
         }
         getelemInstPtr getelem = getelementptrInst::get(arrayBaseAdress, dims.size(), mulAdd);
         atBack->AddInstBack(getelem);
+        getelem->setBBlockParent(atBack);
         return getelem;
     }
 }

@@ -12,6 +12,7 @@
 
 #include "Type.h"
 #include <list>
+#include <algorithm>
 // #include <iostream>
 
 class User;
@@ -41,7 +42,7 @@ private:
     Type *ty = nullptr;          // 类型
     std::list<UserPtr> UserList; // 该Value被其他Value使用的记录列表
     SubClassID ValID;            // 标识
-    
+
 protected:
     unsigned HasName = 0;
 
@@ -56,10 +57,7 @@ public:
     }
 
     /// @brief User,Value中的属性形成了环，释放时需要先调用释放内部引用计数
-    virtual void clear()
-    {
-        UserList.clear();
-    }
+    virtual void clear();
 
     /// @brief 默认无参构造
     Value() : ValID(Value::Unknown){};
@@ -115,7 +113,11 @@ public:
     /// @param user
     void insertUser(UserPtr user)
     {
-        UserList.push_back(user);
+        auto iter = std::find(UserList.begin(), UserList.end(), user);
+        if (iter == UserList.end())
+        { // 未找到  防止插入重复对象
+            UserList.push_back(user);
+        }
     }
 
     /// @brief 判断是否是常数数值类型

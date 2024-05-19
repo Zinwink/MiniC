@@ -197,14 +197,18 @@ bool IRGen::ir_func_define(ast_node *node, LabelParams blocks)
     // 根据函数返回值类型创建 函数返回值临时变量
     if (fun->getReturnTy()->isVoidType())
     {
-        Exit->AddInstBack(RetInst::get()); // 出口处加入ret指令
+        RetInstPtr ret = RetInst::get();
+        Exit->AddInstBack(ret); // 出口处加入ret指令
+        ret->setBBlockParent(Exit);
     }
     else
     {
         InstPtr allocaRet = AllocaInst::get("", Type::copy(fun->getReturnTy())); // 非void
         fun->insertAllocaInst(allocaRet);                                        // 加入创建的返回值临时变量
+        allocaRet->setBBlockParent(fun->getEntryBlock());
         InstPtr load = LoadInst::get(allocaRet);
         Exit->AddInstBack(load);
+        load->setBBlockParent(Exit);
         RetInst::create(load, Exit); // 在Exit出口中加入ret 语句
     }
     transmitBlocks.push_back(Entry); // 加入基本块流 不加函数出口
@@ -230,6 +234,7 @@ bool IRGen::ir_func_define(ast_node *node, LabelParams blocks)
         // 函数无返回值  加入跳转至Exit指令
         BranchInstPtr br = BranchInst::get(Exit);
         getCurBlock()->AddInstBack(br);
+        br->setBBlockParent(getCurBlock());
     }
     // 结束翻译函数时curFun赋值为nullptr,函数符号表弹出栈
     scoper->curFun() = nullptr;
@@ -333,8 +338,10 @@ bool IRGen::ir_func_formal_params(ast_node *node, LabelParams blocks)
             }
             AllocaInstPtr alloca = AllocaInst::get(argName, Type::copy(arg->getType())); // 创建 Alloca
             StoreInstPtr store = StoreInst::get(arg, alloca);
-            fun_f->insertAllocaInst(alloca);            // 加入AllocaInst
+            fun_f->insertAllocaInst(alloca); // 加入AllocaInst
+            alloca->setBBlockParent(fun_f->getEntryBlock());
             fun_f->getEntryBlock()->AddInstBack(store); // 加入store指令
+            store->setBBlockParent(fun_f->getEntryBlock());
             scoper->curTab()->newDeclVar(alloca);
         }
     }
@@ -395,6 +402,7 @@ bool IRGen::ir_while_Stmt(ast_node *node, LabelParams blocks)
     // 进入翻译循环前需弹出前一个block, 因为循环在新的一个块开始
     BranchInstPtr br = BranchInst::get(whileEntry);
     getCurBlock()->AddInstBack(br);
+    br->setBBlockParent(getCurBlock());
     transmitBlocks.pop_front();
     curUsedBlockIter = std::next(curUsedBlockIter);
 
@@ -435,6 +443,7 @@ bool IRGen::ir_Dowhile_Stmt(ast_node *node, LabelParams blocks)
     // 进入翻译循环前需弹出前一个block, 因为循环在新的一个块开始
     BranchInstPtr br = BranchInst::get(whileEntry);
     getCurBlock()->AddInstBack(br);
+    br->setBBlockParent(getCurBlock());
     transmitBlocks.pop_front();
     curUsedBlockIter = std::next(curUsedBlockIter);
 
@@ -474,6 +483,7 @@ bool IRGen::ir_break(ast_node *node, LabelParams blocks)
         BasicBlockPtr jumpExit = loopExits.top();
         BranchInstPtr br = BranchInst::get(jumpExit);
         getCurBlock()->AddInstBack(br); // 加入跳转指令到基本快
+        br->setBBlockParent(getCurBlock());
         // 当前基本块已经完毕 （末尾为跳转语句）
         // 创建一个新的基本块(主要用于对齐transmitBlocks状态，虽然这样会将break后无用语句加入，但可后期删除无用基本快)
         BasicBlockPtr block = BasicBlock::get(scoper->curFun());
@@ -507,6 +517,7 @@ bool IRGen::ir_continue(ast_node *node, LabelParams blocks)
         BasicBlockPtr jumpEntry = loopEntrys.top();
         BranchInstPtr br = BranchInst::get(jumpEntry);
         getCurBlock()->AddInstBack(br); // 加入跳转指令到基本快
+        br->setBBlockParent(getCurBlock());
         // 当前基本块已经完毕 （末尾为跳转语句）
         // 创建一个新的基本块(主要用于对齐transmitBlocks状态，虽然这样会将continue后无用语句加入，但可后期删除无用基本快)
         BasicBlockPtr block = BasicBlock::get(scoper->curFun());
@@ -551,7 +562,9 @@ bool IRGen::ir_block(ast_node *node, LabelParams blocks)
     {
         // block ast节点一般只有一个跳转   条件语句通常两个跳转块
         // 有一个跳转块  goto无条件跳转
-        getCurBlock()->AddInstBack(BranchInst::get(blocks[0]));
+        BranchInstPtr br = BranchInst::get(blocks[0]);
+        getCurBlock()->AddInstBack(br);
+        br->setBBlockParent(getCurBlock());
         transmitBlocks.pop_front(); // 当前基本块已完成  弹出 (使用的跳转基本快创建时会加入transmitBlocks队列流中)
         curUsedBlockIter = std::next(curUsedBlockIter);
     }
@@ -593,6 +606,7 @@ bool IRGen::ir_return(ast_node *node, LabelParams blocks)
     }
     BranchInstPtr br = BranchInst::get(scoper->curFun()->getExitBlock());
     getCurBlock()->AddInstBack(br);
+    br->setBBlockParent(getCurBlock());
     // 创建一个基本块 防止后面还有代码，使transmitBlocks无法对齐情况
     BasicBlockPtr blcok = BasicBlock::get(scoper->curFun());
     insertAtCurBlockBack(scoper->curFun(), {blcok});
@@ -736,6 +750,7 @@ bool IRGen::ir_declVarDef(ast_node *node, LabelParams blocks)
             left->attr = nullptr;
             scoper->curTab()->newDeclVar(alloca);
             scoper->curFun()->insertAllocaInst(alloca);
+            alloca->setBBlockParent(scoper->curFun()->getEntryBlock());
             // 访问右边
             ast_node *res = ir_visit_astnode(right, {});
             if (res == nullptr)
@@ -809,7 +824,7 @@ bool IRGen::ir_Negative(ast_node *node, LabelParams blocks)
         ICmpInstPtr icmp = ICmpInst::create(Opcode::NotEqInteger, node->value, zero, getCurBlock());
         BranchInstPtr br = BranchInst::get(icmp, blocks[0], blocks[1]);
         getCurBlock()->AddInstBack(br);
-
+        br->setBBlockParent(getCurBlock());
         // 当前基本块结束
         transmitBlocks.pop_front();
         curUsedBlockIter = std::next(curUsedBlockIter);
@@ -1155,6 +1170,7 @@ bool IRGen::ir_cmp_less(ast_node *node, LabelParams blocks)
         node->value = icmp;
         BranchInstPtr br = BranchInst::get(icmp, blocks[0], blocks[1]);
         getCurBlock()->AddInstBack(br); // 跳转指令
+        br->setBBlockParent(getCurBlock());
         transmitBlocks.pop_front();
         curUsedBlockIter = std::next(curUsedBlockIter);
     }
@@ -1182,6 +1198,7 @@ bool IRGen::ir_cmp_greater(ast_node *node, LabelParams blocks)
         node->value = icmp;
         BranchInstPtr br = BranchInst::get(icmp, blocks[0], blocks[1]);
         getCurBlock()->AddInstBack(br); // 跳转指令
+        br->setBBlockParent(getCurBlock());
         transmitBlocks.pop_front();
         curUsedBlockIter = std::next(curUsedBlockIter);
     }
@@ -1209,6 +1226,7 @@ bool IRGen::ir_cmp_equal(ast_node *node, LabelParams blocks)
         node->value = icmp;
         BranchInstPtr br = BranchInst::get(icmp, blocks[0], blocks[1]);
         getCurBlock()->AddInstBack(br); // 跳转指令
+        br->setBBlockParent(getCurBlock());
         transmitBlocks.pop_front();
         curUsedBlockIter = std::next(curUsedBlockIter);
     }
@@ -1238,6 +1256,7 @@ bool IRGen::ir_cmp_notEqual(ast_node *node, LabelParams blocks)
         node->value = icmp;
         BranchInstPtr br = BranchInst::get(icmp, blocks[0], blocks[1]);
         getCurBlock()->AddInstBack(br); // 跳转指令
+        br->setBBlockParent(getCurBlock());
         transmitBlocks.pop_front();
         curUsedBlockIter = std::next(curUsedBlockIter);
     }
@@ -1267,6 +1286,7 @@ bool IRGen::ir_cmp_lessEqual(ast_node *node, LabelParams blocks)
         node->value = icmp;
         BranchInstPtr br = BranchInst::get(icmp, blocks[0], blocks[1]);
         getCurBlock()->AddInstBack(br); // 跳转指令
+        br->setBBlockParent(getCurBlock());
         transmitBlocks.pop_front();
         curUsedBlockIter = std::next(curUsedBlockIter);
     }
@@ -1296,6 +1316,7 @@ bool IRGen::ir_cmp_greaterEqual(ast_node *node, LabelParams blocks)
         node->value = icmp;
         BranchInstPtr br = BranchInst::get(icmp, blocks[0], blocks[1]);
         getCurBlock()->AddInstBack(br); // 跳转指令
+        br->setBBlockParent(getCurBlock());
         transmitBlocks.pop_front();
         curUsedBlockIter = std::next(curUsedBlockIter);
     }
@@ -1331,6 +1352,7 @@ bool IRGen::ir_leafNode_var(ast_node *node, LabelParams blocks)
             node->attr = nullptr;
             scoper->curTab()->newDeclVar(alloca);       //  将声明变量加入当前符号表中
             scoper->curFun()->insertAllocaInst(alloca); // 将allocaInst加入到指令基本块中
+            alloca->setBBlockParent(scoper->curFun()->getEntryBlock());
         }
     }
     else
@@ -1359,6 +1381,7 @@ bool IRGen::ir_leafNode_var(ast_node *node, LabelParams blocks)
             // 再创建条件跳转语句
             BranchInstPtr br = BranchInst::get(notZero, blocks[0], blocks[1]);
             getCurBlock()->AddInstBack(br);
+            br->setBBlockParent(getCurBlock());
             // 创建跳转语句后 当前块完毕  更新基本块队列以及当前块迭代器
             transmitBlocks.pop_front();
             curUsedBlockIter = std::next(curUsedBlockIter);
@@ -1392,6 +1415,7 @@ bool IRGen::ir_leafNode_int(ast_node *node, LabelParams blocks)
         // 再创建条件跳转语句
         BranchInstPtr br = BranchInst::get(notZero, blocks[0], blocks[1]);
         getCurBlock()->AddInstBack(br);
+        br->setBBlockParent(getCurBlock());
         // 创建跳转语句后 当前块完毕  更新基本块队列以及当前块迭代器
         transmitBlocks.pop_front();
         curUsedBlockIter = std::next(curUsedBlockIter);
@@ -1479,6 +1503,7 @@ bool IRGen::ir_leafNode_array(ast_node *node, LabelParams blocks)
             AllocaInstPtr alloca = AllocaInst::get(name, arrty);
             scoper->curTab()->newDeclVar(alloca);       //  将声明变量加入当前符号表中
             scoper->curFun()->insertAllocaInst(alloca); // 将allocaInst加入到指令基本块中
+            alloca->setBBlockParent(scoper->curFun()->getEntryBlock());
         }
     }
     else
@@ -1519,6 +1544,7 @@ bool IRGen::ir_leafNode_array(ast_node *node, LabelParams blocks)
             // 再创建条件跳转语句
             BranchInstPtr br = BranchInst::get(notZero, blocks[0], blocks[1]);
             getCurBlock()->AddInstBack(br);
+            br->setBBlockParent(getCurBlock());
             // 创建跳转语句后 当前块完毕  更新基本块队列以及当前块迭代器
             transmitBlocks.pop_front();
             curUsedBlockIter = std::next(curUsedBlockIter);

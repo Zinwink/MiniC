@@ -12,14 +12,22 @@
 #include "User.h"
 #include "Module.h"
 
+/// @brief User,Value中的属性形成了环，释放时需要先调用释放内部引用计数
+void Value::clear()
+{
+    UserList.clear();
+}
+
 /// @brief 将所有使用本对象的User的本对象指针替换(可能用于优化时)
 /// @param _self 本对象
 /// @param newVal
 void Value::replaceAllUsesWith(ValPtr _self, ValPtr newVal)
 {
-    for (auto &user : _self->UserList)
+    for (auto iter = _self->UserList.begin(); iter != _self->UserList.end();)
     {
-        user->replaceUseWith(_self, newVal);
+        (*iter)->replaceUseWith(_self, newVal);
+        // 替换User中操作数完成后 将User冲UserList中删除
+        iter = _self->UserList.erase(iter);
     }
 }
 

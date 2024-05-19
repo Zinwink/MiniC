@@ -13,9 +13,12 @@
 #include <algorithm>
 #include <stdexcept>
 #include "Instruction.h"
+#include "DerivedInst.h"
 #include "Module.h"
 #include "Value.h"
 #include <string>
+#include "User.h"
+#include <vector>
 
 /// @brief 得到基本块指针
 /// @param _parent
@@ -85,6 +88,65 @@ bool BasicBlock::isCompleted()
         }
     }
     return false;
+}
+
+/// @brief 判断基本块是否有直接前驱
+/// @return
+bool BasicBlock::hasImmmedPred()
+{
+    if (getName() == "entry")
+    {
+        return true; // 入口默认为真
+    }
+    return getUseList().size() != 0;
+}
+
+/// @brief 获取基本块出口列表
+/// @return
+std::vector<BasicBlockPtr> BasicBlock::getJumpList()
+{
+    std::vector<BasicBlockPtr> res;
+    InstPtr br = InstLists.back(); // 获取最后一个跳转指令
+    if (br->getOpcode() == Opcode::Goto)
+    {
+        // 无条件跳转  只有一个操作数
+        BasicBlockPtr ifTrue = std::static_pointer_cast<BasicBlock>(br->getOperand(0));
+        res.push_back(ifTrue);
+    }
+    else if (br->getOpcode() == Opcode::Ret)
+    {
+    }
+    else
+    {
+        // 有条件跳转  真假 为 1，2
+        BasicBlockPtr ifTrue = std::static_pointer_cast<BasicBlock>(br->getOperand(1));
+        BasicBlockPtr ifFalse = std::static_pointer_cast<BasicBlock>(br->getOperand(2));
+        if (ifTrue == ifFalse)
+        {
+            res.push_back(ifTrue);
+        }
+        else
+        {
+            res.push_back(ifTrue);
+            res.push_back(ifFalse);
+        }
+    }
+    return res;
+}
+
+/// @brief 获取当前块的直接前驱列表
+/// @return
+std::vector<BasicBlockPtr> BasicBlock::getImmedPreds()
+{
+    std::vector<BasicBlockPtr> res;
+    for (auto &user : getUseList())
+    {
+        // User一定是 BranchInst
+        BranchInstPtr br = std::static_pointer_cast<BranchInst>(user);
+        assert(br->getBBlockParent() != nullptr && ">>>Error! BasicBlock.cpp");
+        res.push_back(br->getBBlockParent());
+    }
+    return res;
 }
 
 /// @brief 获取一个Block的文本表示
