@@ -30,3 +30,8 @@ void ElimUseLessBBlock(FuncPtr fun);
 /// @brief 处理Module
 /// @param _modul Module 包含 functionList
 void ElimUseLessBBlock(ModulePtr _modul);
+
+/// @brief 删除一个基本块
+/// @param block
+/// @param it
+void eraseBasicBlock(BasicBlockPtr block, bblockIter &it);

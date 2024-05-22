@@ -10,6 +10,7 @@
  */
 
 #include "ElimBasicBlock.h"
+#include "DeadInstElim.h"
 #include <algorithm>
 #include <iostream>
 
@@ -115,4 +116,12 @@ bblockIter &mergeBasicBlocks(BasicBlockPtr block, bblockIter &it)
     }
     ++it;
     return it;
+}
+
+/// @brief 删除一个基本块
+/// @param block
+/// @param it
+void eraseBasicBlock(BasicBlockPtr block, bblockIter &it)
+{
+    
 }

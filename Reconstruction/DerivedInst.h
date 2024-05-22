@@ -69,6 +69,20 @@ public:
         setOpcode(Opcode::Alloca);
     }
 
+    /// @brief 判断AllocaInst是否是死指令
+    /// @return
+    bool isDeadInst() override
+    {
+        if (getUseList().size() == 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     /// @brief 获取Value名
     /// @return
     string getName() override { return AllocaName; }
@@ -98,6 +112,9 @@ class StoreInst : public Instruction
 {
     friend class Instruction;
 
+private:
+    bool _isDead = false; // StoreInst 没有UserList需要结合数据流分析进行判断
+
 public:
     /// @brief 析构函数
     ~StoreInst() = default;
@@ -117,6 +134,16 @@ public:
         operands.push_back(val);
         operands.push_back(Ptr);
     }
+
+    /// @brief 根据数据流分析进行标记
+    void setDeadSign() override
+    {
+        _isDead = true;
+    }
+
+    /// @brief StoreInst 是否是不必要指令
+    /// @return
+    bool isDeadInst() override { return _isDead; }
 
     /// @brief 创建指令StoreInst
     /// @param val
@@ -154,6 +181,20 @@ public:
         setType(pointerTy->getElemntTy());
     }
 
+    /// @brief 判断LoadInst是否是死指令
+    /// @return
+    bool isDeadInst() override
+    {
+        if (getUseList().size() == 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     /// @brief 创建获取LoadInst
     /// @param Ptr
     /// @return
@@ -180,6 +221,20 @@ public:
 
         // 目前只设置为int结果类型 后面可以根据  val1,val2类型编写函数获取结果类型进行设置
         setType(Type::getIntNType(32));
+    }
+
+    /// @brief 判断BinaryInst是否是死指令
+    /// @return
+    bool isDeadInst() override
+    {
+        if (getUseList().size() == 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     /// @brief 创建BInaryOperator指令
@@ -221,6 +276,13 @@ public:
         setOpcode(Opcode::Ret);
     }
 
+    /// @brief 判断RetInst是否是死指令
+    /// @return
+    bool isDeadInst() override
+    {
+        return false; // retInst一定有用
+    }
+
     /// @brief 创建 ret void
     /// @return
     static RetInstPtr get();
@@ -253,6 +315,16 @@ public:
     /// @param relArgs
     CallInst(ValPtr fun, std::vector<ValPtr> &relArgs);
 
+    /// @brief 判断CallInst是否是死指令
+    /// @return
+    bool isDeadInst() override
+    {
+        // TODO 结合UserList 以及调用函数的副作用进行判断
+        // 特殊地 在main函数中和在其他函数中地规则不一样  如调用的函数会对全局变量影响 但在main函数中不使用全局变量
+
+        return false;
+    }
+
     /// @brief 创建CallInst
     /// @param fun
     /// @param relArgs
@@ -283,6 +355,20 @@ public:
         operands.push_back(val1);
         operands.push_back(val2);
         setType(Type::getIntNType(1));
+    }
+
+    /// @brief 判断IcmpInst是否是死指令
+    /// @return
+    bool isDeadInst() override
+    {
+        if (getUseList().size() == 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     /// @brief 创建ICmp
@@ -328,6 +414,14 @@ public:
         operands.push_back(ifFalse);
     }
 
+    /// @brief 判断BranchInst是否是死指令
+    /// @return
+    bool isDeadInst() override
+    {
+        // 分支指令没有 User
+        return false;
+    }
+
     /// @brief 获取BrachInst goto
     /// @param ifTrue
     /// @return
@@ -370,6 +464,20 @@ public:
     /// @param offset
     getelementptrInst(ValPtr arrayBaseAdress, int _gainDim, ValPtr offset);
 
+    /// @brief 判断getelementptrInst是否是死指令
+    /// @return
+    bool isDeadInst() override
+    {
+        if (getUseList().size() == 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     /// @brief 创建指令
     /// @param arrayBaseAdress
     /// @param offset
@@ -384,6 +492,7 @@ public:
     static getelemInstPtr create(ValPtr arrayBaseAdress, std::vector<ValPtr> dims, BasicBlockPtr atBack);
 };
 
+/// @brief 用于将 i1扩展为 i32指令
 class ZextInst : public Instruction
 {
 };

@@ -45,8 +45,8 @@ enum class Opcode
 class Instruction : public User
 {
 protected:
-    BasicBlockPtr parent; // 指令所属的基本块
-    Opcode op;            // 指令操作码
+    BasicBlockPtr parent = nullptr; // 指令所属的基本块
+    Opcode op;                      // 指令操作码
 
 public:
     /// @brief 析构函数
@@ -102,6 +102,25 @@ public:
     /// @brief 判断是否是分支指令
     /// @return
     bool isBranchInst();
+
+    /// @brief 是否是Alloca
+    /// @return
+    bool isAllocaInst();
+
+    /// @brief 是否是storeinst
+    /// @return
+    bool isStoreInst();
+
+    /// @brief 是否是LoadInst
+    /// @return
+    bool isLoadInst();
+
+    /// @brief 判断指令是否是死指令
+    /// @return
+    virtual bool isDeadInst() { return false; }
+
+    /// @brief 为指令设置 dead标记  对于 StoreInst 这类无直接User的指令具有作用
+    virtual void setDeadSign() {};
 
     /// @brief 获取指令的字符串翻译
     /// @param inst

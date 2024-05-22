@@ -120,6 +120,18 @@ public:
         }
     }
 
+    void deleteUser(UserPtr user)
+    {
+        // 删除USer  当User不在UserList中时不操作
+        auto iter = std::find(UserList.begin(), UserList.end(), user);
+        if (iter != UserList.end())
+        {
+            // 找到了
+            UserList.erase(iter);
+            // 删除该User
+        }
+    }
+
     /// @brief 判断是否是常数数值类型
     /// @return
     bool isConstant()
@@ -131,6 +143,23 @@ public:
     {
         return getSubclassID() == Value::GlobalVari;
     }
+
+    bool isInstruct()
+    {
+        return getSubclassID() == Value::InstructionVal;
+    }
+
+    /// @brief  判断valPtr是否是Alloca
+    /// @return
+    bool isAllocaInst();
+
+    /// @brief 判断ValPtr 是否是LoadInst
+    /// @return
+    bool isLoadInst();
+
+    /// @brief 判断ValPtr 是否是StoreInst
+    /// @return
+    bool isStoreInst();
 };
 
 /// @brief 获取 Val的 llvm 标识  可以是函数 全局变量 常量 %编号形式

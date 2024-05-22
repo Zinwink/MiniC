@@ -92,6 +92,27 @@ bool Instruction::isBranchInst()
     return op == Opcode::Goto || op == Opcode::ConditionBr;
 }
 
+/// @brief 是否是Alloca
+/// @return
+bool Instruction::isAllocaInst()
+{
+    return op == Opcode::Alloca;
+}
+
+/// @brief 是否是storeinst
+/// @return
+bool Instruction::isStoreInst()
+{
+    return op == Opcode::Store;
+}
+
+/// @brief 是否是LoadInst
+/// @return
+bool Instruction::isLoadInst()
+{
+    return op == Opcode::Load;
+}
+
 /// @brief 获取指令的字符串翻译
 /// @param inst
 /// @param cnt
