@@ -23,7 +23,7 @@ int main()
     IRGenPtr codeGen = IRGen::get(ast_root, module);
     codeGen->run();
     ElimUseLessBBlock(module);
-
+    ElimUseLessBBlock(module);
     eraseModuleDeadInst(module); // 删除死指令
 
     module->printIR("../tests/test1__13.ll");

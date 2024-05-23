@@ -25,19 +25,12 @@ void ElimUseLessBBlock(FuncPtr fun)
     {
         if (!(*it)->hasSign())
         {
-            // 该基本块跳转的块
-            std::vector<BasicBlockPtr> jumpB = (*it)->getJumpList();
-            for (auto &j : jumpB)
-            {
-                // 从 j的 的userList中删除 当前基本块
-                auto iterUser = std::find(j->getUseList().begin(), j->getUseList().end(), (*it)->getInstLists().back()); // 将该基本快的br语句从 j的UseList中删除
-                j->getUseList().erase(iterUser);
-            }
-            (*it)->getInstLists().clear();
-            it = blockList.erase(it); // 删除
+            // 没有标记 死基本块删除
+            eraseBasicBlock((*it), it);
         }
         else
         {
+            // 非死基本块 可用  尝试合并
             it = mergeBasicBlocks((*it), it);
         }
     }
@@ -92,7 +85,7 @@ bblockIter &mergeBasicBlocks(BasicBlockPtr block, bblockIter &it)
         // 若只有一条指令 则一定是无条件跳转指令
         Value::replaceAllUsesWith(block, next[0]); // 替换前驱节点的跳转为本基本块的跳转
         // 将本节点删除
-        it = fun->getBasicBlocks().erase(it);
+        eraseBasicBlock(block, it);
         return it;
     }
     else if (presList.size() == 1)
@@ -103,8 +96,16 @@ bblockIter &mergeBasicBlocks(BasicBlockPtr block, bblockIter &it)
         if (preJumps.size() == 1)
         {
             // 前驱只有一个后继
-            // 删除前驱的跳转指令 将本基本块合并到前驱中并删除
-            presList[0]->getInstLists().pop_back();
+            // 删除前驱的跳转指令 将本基本块合并到前驱中
+            std::list<InstPtr> &PreInsts = presList[0]->getInstLists();
+            InstPtr lastInst = PreInsts.back(); // 获取最后一条指令
+            // 删除该指令前 将其操作数的UserList进行更新
+            for (auto &op : lastInst->getOperandsList())
+            {
+                op->deleteUser(lastInst);
+            }
+            PreInsts.pop_back(); // 删除最后一条指令 br
+
             for (auto &inst : block->getInstLists())
             {
                 inst->setBBlockParent(presList[0]);
@@ -123,5 +124,15 @@ bblockIter &mergeBasicBlocks(BasicBlockPtr block, bblockIter &it)
 /// @param it
 void eraseBasicBlock(BasicBlockPtr block, bblockIter &it)
 {
-    
+    std::list<InstPtr> &instList = block->getInstLists();
+    for (auto iter = instList.begin(); iter != instList.end();)
+    {
+        // 删除指令  包括删除指令操作数的UserList中对应的User
+        iter = eraseInst(block, iter);
+    }
+    // 下一步删除基本块
+    FuncPtr fun = block->getParentFun();
+    assert(fun != nullptr && "error");
+    std::list<BasicBlockPtr> &bblockList = fun->getBasicBlocks();
+    it = bblockList.erase(it);
 }
