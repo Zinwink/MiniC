@@ -11,3 +11,11 @@
 
 #include "MachineCode.h"
 
+//********************** MachineOperand  **********************************
+
+/// @brief 操作数对应字符串
+/// @return
+std::string MachineOperand::toStr()
+{
+    
+}
