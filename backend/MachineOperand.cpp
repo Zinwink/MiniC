@@ -150,3 +150,29 @@ MOperaPtr MachineOperand::get(ValPtr val)
     // todo
     return nullptr;
 }
+
+/// @brief 拷贝生成相同的操作数
+/// @param op
+/// @return
+MOperaPtr MachineOperand::copy(MOperaPtr &op)
+{
+    // 不拷贝 parent 属性
+    MOperaPtr res = nullptr;
+    OprandType thisTy = op->type;
+    int val = op->val;
+    int regNo = op->reg_no;
+    std::string label = op->label;
+    if (thisTy == REG || thisTy == VREG)
+    {
+        res = get(thisTy, regNo);
+    }
+    else if (thisTy == IMM)
+    {
+        res = get(thisTy, val);
+    }
+    else
+    {
+        res = get(label);
+    }
+    return op;
+}

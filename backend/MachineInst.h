@@ -90,8 +90,14 @@ protected:
 
 public:
     virtual void clear(); // 手动清理 打破引用环 使智能指针自动释放
-    std::vector<MOperaPtr> &getDef() { return defs; }
-    std::vector<MOperaPtr> &getUse() { return uses; }
+    inline std::vector<MOperaPtr> &getDef() { return defs; }
+    inline std::vector<MOperaPtr> &getUse() { return uses; }
+
+    /// @brief 将旧的操作数替换为新的
+    /// @param srcOld
+    /// @param srcNew
+    void replaceUsesWith(MOperaPtr srcOld, MOperaPtr srcNew);
+
     MBlockPtr getParent();                                 // 返回MachineBlock
     void setParent(MBlockPtr _parent);                     // 设置parent
     void setCondSuffix(condSuffix _cond) { cond = _cond; } // 设置指令条件后缀
@@ -275,11 +281,11 @@ public:
     MBranchInst(MBlockPtr p, MinstTy instTy, MOperaPtr src, condSuffix _cond = condSuffix::NONE);
 
     /// @brief 创建智能指针对象 branch
-    /// @param p 
-    /// @param instTy 
-    /// @param src 
-    /// @param _cond 
-    /// @return 
+    /// @param p
+    /// @param instTy
+    /// @param src
+    /// @param _cond
+    /// @return
     static MBranchInstPtr get(MBlockPtr p, MinstTy instTy, MOperaPtr src, condSuffix _cond = condSuffix::NONE);
 
     /// @brief 输出字符串

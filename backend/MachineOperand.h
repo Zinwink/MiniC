@@ -128,4 +128,9 @@ public:
     /// @param val
     /// @return
     static MOperaPtr get(ValPtr val);
+
+    /// @brief 拷贝生成相同的操作数
+    /// @param op
+    /// @return
+    static MOperaPtr copy(MOperaPtr &op);
 };

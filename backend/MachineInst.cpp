@@ -13,6 +13,7 @@
 #include "MachineBlock.h"
 #include "MachineOperand.h"
 #include <cassert>
+#include <algorithm>
 
 //************************** MachineInst **************************************
 MBlockPtr MachineInst::getParent()
@@ -108,6 +109,19 @@ std::string MachineInst::MinstTyStr()
         break;
     }
     return str;
+}
+
+/// @brief 将旧的操作数替换为新的
+/// @param srcOld
+/// @param srcNew
+void MachineInst::replaceUsesWith(MOperaPtr srcOld, MOperaPtr srcNew)
+{
+    auto iter = std::find(uses.begin(), uses.end(), srcOld);
+    if (iter != uses.end())
+    {
+        srcNew->setParent(shared_from_this());
+        *iter = srcNew; // 替换
+    }
 }
 
 /// @brief 输出条件后缀字符串
