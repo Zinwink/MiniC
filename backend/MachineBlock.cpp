@@ -116,3 +116,13 @@ void MachineBlock::removeSucc(MBlockPtr block)
         succs.erase(iter);
     }
 }
+
+/// @brief 获取块的智能指针对象
+/// @param p
+/// @param n
+/// @return
+MBlockPtr MachineBlock::get(MFuncPtr p, uint64_t n)
+{
+    MBlockPtr block = std::make_shared<MachineBlock>(p, n);
+    return block;
+}

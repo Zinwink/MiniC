@@ -66,7 +66,7 @@ public:
 
     /// @brief 构造函数
     /// @param p
-    /// @param n
+    /// @param n n=0表示函数人口块
     MachineBlock(MFuncPtr p, uint64_t n);
 
     /// @brief 将汇编指令添加到末尾
@@ -93,4 +93,10 @@ public:
     /// @brief 删除后继
     /// @param block
     void removeSucc(MBlockPtr block);
+
+    /// @brief 获取块的智能指针对象
+    /// @param p 
+    /// @param n 
+    /// @return 
+    static MBlockPtr get(MFuncPtr p, uint64_t n);
 };

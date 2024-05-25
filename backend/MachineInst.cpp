@@ -31,11 +31,11 @@ void MachineInst::clear()
     parent.reset();
     for (auto &def : defs)
     {
-        def->setParent(nullptr);
+        def->clear();
     }
     for (auto &use : uses)
     {
-        use->setParent(nullptr);
+        use->clear();
     }
     defs.clear();
     uses.clear();

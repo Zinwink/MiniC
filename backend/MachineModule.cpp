@@ -10,3 +10,22 @@
  */
 
 #include "MachineModule.h"
+
+/// @brief 手动清理
+void MachineModule::clear()
+{
+    for (auto &Mfun : funcList)
+    {
+        Mfun->clear();
+    }
+    funcList.clear();
+    funcList.shrink_to_fit();
+    globalVaris.clear();
+    globalVaris.shrink_to_fit();
+}
+
+/// @brief  析构函数
+MachineModule::~MachineModule()
+{
+    clear();
+}
