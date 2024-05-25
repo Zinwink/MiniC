@@ -1,5 +1,5 @@
 /**
- * @file MachineModule.cpp
+ * @file MachineBlock.h
  * @author ZhengWenJie-mole (2732356616@qq.com)
  * @brief
  * @version 1.0
@@ -9,4 +9,8 @@
  *
  */
 
-#include "MachineModule.h"
+#pragma once
+
+#include <memory>
+class MachineBlock;
+using MBlockPtr = std::shared_ptr<MachineBlock>;

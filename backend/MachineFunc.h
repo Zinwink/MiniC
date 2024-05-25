@@ -1,5 +1,5 @@
 /**
- * @file MachineModule.cpp
+ * @file MachineFunc.h
  * @author ZhengWenJie-mole (2732356616@qq.com)
  * @brief
  * @version 1.0
@@ -9,4 +9,8 @@
  *
  */
 
-#include "MachineModule.h"
+#pragma once
+#include <memory>
+
+class MachineFunc;
+using MFuncPtr = std::shared_ptr<MachineFunc>;

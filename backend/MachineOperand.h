@@ -1,7 +1,7 @@
 /**
- * @file MachineCode.h
+ * @file MachineOperand.h
  * @author ZhengWenJie-mole (2732356616@qq.com)
- * @brief Arm32 机器指令表示
+ * @brief Arm32 机器指令操作数
  * @version 1.0
  * @date 2024-05-23
  *
@@ -12,19 +12,14 @@
 #pragma once
 #include <memory>
 #include <string>
+#include <vector>
+#include "Value.h"
 
-class MachineModule;
-class MachineFunction;
-class MachineBlock;
-class MachineInst;
 class MachineOperand;
-
+class MachineInst;
 /// @brief 智能指针
-using MModulePtr = std::shared_ptr<MachineModule>;
-using MFuncPtr = std::shared_ptr<MachineFunction>;
-using MBlockPtr = std::shared_ptr<MachineBlock>;
-using MInstPtr = std::shared_ptr<MachineInst>;
 using MOperaPtr = std::shared_ptr<MachineOperand>;
+using MInstPtr = std::shared_ptr<MachineInst>;
 
 /// @brief 机器指令操作数  可以是立即数 寄存器值 标签地址
 class MachineOperand
@@ -58,8 +53,8 @@ public:
     MachineOperand(OprandType ty, int _val);
 
     /// @brief 构造函数
-    /// @param label 地址标签
-    MachineOperand(std::string label);
+    /// @param label 地址标签,函数名，跳转基本块标签等
+    MachineOperand(std::string _label);
 
     /// @brief 是否是立即数类型
     /// @return
@@ -103,13 +98,34 @@ public:
 
     /// @brief 设置该操作数属于的指令
     /// @param minst
-    void setParent(MInstPtr minst) { parent = minst; }
+    void setParent(MInstPtr minst);
 
     /// @brief 获取父亲
     /// @return
-    MInstPtr &getParent() { return parent; }
+    MInstPtr &getParent();
 
     /// @brief 操作数对应字符串
     /// @return
     std::string toStr();
+
+    /// @brief 判断操作数上是否相等  集合set中有用
+    /// @param other
+    /// @return
+    bool operator==(MachineOperand &other);
+
+    /// @brief 创建操作数
+    /// @param ty 操作数类型
+    /// @param _val 数据 如果是 VREG,REG val表示寄存器编号 如果是IMM val表示数值
+    /// @return
+    static MOperaPtr get(OprandType ty, int _val);
+
+    /// @brief 创建Label操作数
+    /// @param _label
+    /// @return
+    static MOperaPtr get(std::string _label);
+
+    /// @brief 根据 IR指令操作数得到对应的汇编操作数
+    /// @param val
+    /// @return
+    static MOperaPtr get(ValPtr val);
 };

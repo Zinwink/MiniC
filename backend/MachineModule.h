@@ -8,3 +8,14 @@
  * @copyright Copyright (c) 2024
  * 
  */
+
+#pragma once
+
+class MachineModule
+{
+private:
+    /* data */
+public:
+    MachineModule(/* args */);
+    ~MachineModule();
+};
