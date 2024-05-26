@@ -1572,3 +1572,5 @@ bool IRGen::run()
     ast_node *node = ir_visit_astnode(ast_root, {});
     return node != nullptr;
 }
+
+

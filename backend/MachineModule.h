@@ -89,7 +89,7 @@ public:
     uint32_t getRegNo();
 
     /// @brief 构造函数
-    MachineModule() = default;
+    MachineModule();
 
     /// @brief  析构函数
     ~MachineModule();

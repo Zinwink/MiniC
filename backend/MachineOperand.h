@@ -135,7 +135,7 @@ public:
     /// @param imm
     /// @param Mmodule
     /// @return
-    static MOperaPtr imm2Reg(MOperaPtr imm, MModulePtr Mmodule);
+    static MOperaPtr imm2VReg(MOperaPtr imm, MModulePtr Mmodule);
 
     /// @brief 拷贝生成相同的操作数
     /// @param op

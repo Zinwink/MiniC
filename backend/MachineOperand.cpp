@@ -187,14 +187,39 @@ MOperaPtr MachineOperand::get(ValPtr val, MModulePtr Mmodule)
         {
             // >=4  大于等于4采用栈内存的形式
             MOperaPtr argVreg = get(VREG, Mmodule->getNo(val));
-            MOperaPtr ldrDst = copy(argVreg);
+            MOperaPtr ldrDst = argVreg;
             MOperaPtr ldrSrc1 = get(REG, 11);
-            MOperaPtr offset= get(IMM,(arg->getArgNo()-4));
-            // MLoadInstPtr ldr = MLoadInst::get(Mmodule->getCurBlock(), MachineInst::LDR, ldrDst, get(REG, 11), )
+            MOperaPtr offset = get(IMM, 4 * (arg->getArgNo() - 4) + 8); // 相对于fp
+            MLoadInstPtr ldr = MLoadInst::get(Mmodule->getCurBlock(), MachineInst::LDR, ldrDst, ldrSrc1, offset);
+            Mmodule->getCurBlock()->addInstBack(ldr); // 加入到当前块中
+            mop = argVreg;
         }
     }
 
     return mop;
+}
+
+/// @brief 将立即数加载到寄存器
+/// @param imm
+/// @param Mmodule
+/// @return
+MOperaPtr MachineOperand::imm2VReg(MOperaPtr imm, MModulePtr Mmodule)
+{
+    assert(imm->isImm() && "imm is not a imm type!");
+    int value = imm->getVal();
+    MOperaPtr vreg = get(VREG, Mmodule->getRegNo()); // 生成寄存器
+    if (Arm32::canBeImmOperand(value))
+    {
+        // 使用 MOV 指令
+        MMovInstPtr mov = MMovInst::get(Mmodule->getCurBlock(), MachineInst::MOV, vreg, imm);
+        Mmodule->getCurBlock()->addInstBack(mov);
+    }
+    else
+    {
+        MLoadInstPtr ldr = MLoadInst::get(Mmodule->getCurBlock(), MachineInst::LDR, vreg, imm);
+        Mmodule->getCurBlock()->addInstBack(ldr);
+    }
+    return vreg;
 }
 
 /// @brief 拷贝生成相同的操作数

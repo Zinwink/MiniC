@@ -11,6 +11,12 @@
 
 #include "MachineModule.h"
 
+/// @brief 构造函数
+MachineModule::MachineModule()
+{
+    counter = std::make_shared<MCount>();
+}
+
 /// @brief 手动清理
 void MachineModule::clear()
 {
@@ -77,6 +83,20 @@ uint32_t MCount::getNo(ValPtr val)
             // 需要寄存器编号 虚拟寄存器(物理寄存器已经确定)
             res = RegNo;
             record.emplace(val, RegNo);
+            RegNo++;
+        }
+        else if (val->isArgument())
+        {
+            // 函数形参  （传入的应该是 除了前4个的形参 需要从栈中加载到寄存器）
+            ArgPtr arg = std::static_pointer_cast<Argument>(val);
+            assert(arg->getArgNo() >= 4 && "not support this usage,the first four argument's reg is r0-r3");
+            res = RegNo;
+            record.emplace(val, RegNo);
+            RegNo++;
+        }
+        else if (val->isConstant())
+        {
+            res = RegNo;
             RegNo++;
         }
     }
