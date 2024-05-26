@@ -11,6 +11,10 @@
 
 #include "MachineOperand.h"
 #include "MachineInst.h"
+#include "PlatformArm32.h"
+#include "DerivedInst.h"
+#include "Constant.h"
+#include "MachineModule.h"
 
 //********************** MachineOperand  **********************************'
 
@@ -145,10 +149,52 @@ MOperaPtr MachineOperand::get(std::string _label)
 /// @brief 根据 IR指令操作数得到对应的汇编操作数
 /// @param val
 /// @return
-MOperaPtr MachineOperand::get(ValPtr val)
+MOperaPtr MachineOperand::get(ValPtr val, MModulePtr Mmodule)
 {
-    // todo
-    return nullptr;
+    MOperaPtr mop = nullptr;
+    // 是常数
+    if (val->isConstant())
+    {
+        // 整数类型
+        if (val->getType()->isIntegerType())
+        {
+            ConstantIntPtr intval = std::static_pointer_cast<ConstantInt>(val);
+            mop = get(IMM, intval->getValue());
+        }
+    }
+    else if (val->isGlobalVariable())
+    {
+        string Addrlabel = ".LCPI";
+        Addrlabel += std::to_string(Mmodule->getCurFuncNo());
+        Addrlabel += "_";
+        Addrlabel += std::to_string(Mmodule->getNo(val));
+        mop = get(Addrlabel);
+    }
+    else if (val->isTemporary())
+    {
+        // 临时变量将 使用虚拟寄存器
+        mop = get(VREG, Mmodule->getNo(val));
+    }
+    else if (val->isArgument())
+    {
+        ArgPtr arg = std::static_pointer_cast<Argument>(val);
+        if (arg->getArgNo() < 4)
+        {
+            // 0-3 号形参  采用r0-r3寄存器
+            mop = get(REG, arg->getArgNo());
+        }
+        else
+        {
+            // >=4  大于等于4采用栈内存的形式
+            MOperaPtr argVreg = get(VREG, Mmodule->getNo(val));
+            MOperaPtr ldrDst = copy(argVreg);
+            MOperaPtr ldrSrc1 = get(REG, 11);
+            MOperaPtr offset= get(IMM,(arg->getArgNo()-4));
+            // MLoadInstPtr ldr = MLoadInst::get(Mmodule->getCurBlock(), MachineInst::LDR, ldrDst, get(REG, 11), )
+        }
+    }
+
+    return mop;
 }
 
 /// @brief 拷贝生成相同的操作数

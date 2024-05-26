@@ -12,6 +12,7 @@
 #pragma once
 #include <memory>
 #include "MachineBlock.h"
+#include "Function.h"
 
 class MachineFunc;
 class MachineModule;
@@ -23,6 +24,9 @@ class MachineFunc
 private:
     /// @brief 所属于的Module
     MModulePtr parent = nullptr;
+
+    /// @brief 对应的IR函数
+    FuncPtr IRfun = nullptr;
 
     /// @brief 基本块列表
     std::list<MBlockPtr> blockList;

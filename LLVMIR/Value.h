@@ -134,32 +134,39 @@ public:
 
     /// @brief 判断是否是常数数值类型
     /// @return
-    bool isConstant()
+    inline bool isConstant()
     {
         return getSubclassID() == Value::Constant;
     }
 
-    bool isGlobalVariable()
+    /// @brief 是否是全局变量
+    /// @return
+    inline bool isGlobalVariable()
     {
         return getSubclassID() == Value::GlobalVari;
     }
 
-    bool isInstruct()
+    /// @brief 是否是指令类型
+    /// @return
+    inline bool isInstruct()
     {
         return getSubclassID() == Value::InstructionVal;
     }
 
-    /// @brief  判断valPtr是否是Alloca
+    /// @brief 是否是函数形参
     /// @return
-    bool isAllocaInst();
+    inline bool isArgument()
+    {
+        return getSubclassID() == Value::ArgumentVal;
+    }
 
-    /// @brief 判断ValPtr 是否是LoadInst
+    /// @brief 是否是基本块类型
     /// @return
-    bool isLoadInst();
+    inline bool isBasicBlockVal() { return getSubclassID() == Value::BasicBlockVal; }
 
-    /// @brief 判断ValPtr 是否是StoreInst
+    /// @brief 是否是指令产生的临时变量 如 call,BinaryInst,load,Icmp等指令产生的结果(为值类型 不包括getelementptr 产生的指针类型偏移地址)
     /// @return
-    bool isStoreInst();
+    bool isTemporary();
 };
 
 /// @brief 获取 Val的 llvm 标识  可以是函数 全局变量 常量 %编号形式

@@ -288,6 +288,7 @@ bool IRGen::ir_func_formal_params(ast_node *node, LabelParams blocks)
     string funname = parent->literal_val.digit.id;          // 形参对应的函数名
     ValPtr fun = scoper->globalTab()->findDeclVar(funname); // 查找对应的函数
     FuncPtr fun_f = std::static_pointer_cast<Function>(fun);
+    uint32_t argNo = 0;
     for (auto &son : node->sons)
     {
         string argName = son->literal_val.digit.id; // 形参名
@@ -323,6 +324,9 @@ bool IRGen::ir_func_formal_params(ast_node *node, LabelParams blocks)
             arg = Argument::get(arrL, argName); // 形参对象
         }
 
+        /// 设置形参编号
+        arg->setArgNo(argNo);
+        argNo++;
         fun_f->addArg(arg);
 
         // 如果父节点是define类型的，则将形参变量加入到函数符号表中   对于形参列表节点 其父节点有可能是decalre function(只声明无定义)
@@ -338,6 +342,7 @@ bool IRGen::ir_func_formal_params(ast_node *node, LabelParams blocks)
             }
             AllocaInstPtr alloca = AllocaInst::get(argName, Type::copy(arg->getType())); // 创建 Alloca
             StoreInstPtr store = StoreInst::get(arg, alloca);
+            alloca->setAllocaArg(arg);
             fun_f->insertAllocaInst(alloca); // 加入AllocaInst
             alloca->setBBlockParent(fun_f->getEntryBlock());
             fun_f->getEntryBlock()->AddInstBack(store); // 加入store指令
@@ -641,6 +646,10 @@ bool IRGen::ir_funcall(ast_node *node, LabelParams blocks)
     }
     CallInstPtr call = CallInst::create(fun, realArgs, getCurBlock());
     node->value = call; // 记录 value(对于有返回值的函数有作用)
+
+    // 更新当前函数调用函数的最大参数数目
+    scoper->curFun()->updateMaxCallFunArgsNum(realArgs.size());
+
     return true;
 }
 

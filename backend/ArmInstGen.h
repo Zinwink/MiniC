@@ -35,6 +35,9 @@ private:
     /// @brief 用于标记当前函数
     MFuncPtr curMFun = nullptr;
 
+    /// @brief 标记当前基本块
+    MBlockPtr curBlock = nullptr;
+
 public:
     /// @brief 构造函数
     /// @param _IRModule

@@ -19,25 +19,33 @@ using BasicBlockPtr = std::shared_ptr<BasicBlock>;
 /// @brief 指令操作码
 enum class Opcode
 {
-    Alloca,        // AllocaInst
-    Store,         // StoreInst
-    Ret,           // RetInst
-    Load,          // LoadInst
-    Call,          // CallInst 函数调用
-    Goto,          // 无条件跳转  BranchInst  br label ..
-    ConditionBr,   // 有条件跳转 br condition,label t, label f
+    Alloca, // AllocaInst
+    Store,  // StoreInst
+    Ret,    // RetInst
+    Load,   // LoadInst
+    Call,   // CallInst 函数调用
+
+    /// @brief branchInst
+    Goto,        // 无条件跳转  BranchInst  br label ..
+    ConditionBr, // 有条件跳转 br condition,label t, label f
+
+    /// @brief getelementptr
     GetelementPtr, // 获取数组偏移指针的指令
-    AddInteger,    // 整数加法
-    SubInteger,    // 整数减法
-    DivInteger,    // 整数除法
-    MulInteger,    // 整数乘法
-    ModInteger,    // 整数取余
-    GtInteger,     // 大于 icmp sgt/ugt
-    LtIntegr,      // 小于  icmp slt/ult
-    EqInTeger,     // ==  icmp eq
-    GeInTeger,     // >=
-    LeInteger,     // <=
-    NotEqInteger,  // !=
+
+    /// @brief BinaryInst 目前 8-12
+    AddInteger, // 整数加法
+    SubInteger, // 整数减法
+    DivInteger, // 整数除法
+    MulInteger, // 整数乘法
+    ModInteger, // 整数取余
+
+    /// @brief icmp 比较指令
+    GtInteger,    // 大于 icmp sgt/ugt
+    LtIntegr,     // 小于  icmp slt/ult
+    EqInTeger,    // ==  icmp eq
+    GeInTeger,    // >=
+    LeInteger,    // <=
+    NotEqInteger, // !=
 
     Unknown // 未知
 };
@@ -114,6 +122,26 @@ public:
     /// @brief 是否是LoadInst
     /// @return
     bool isLoadInst();
+
+    /// @brief 是否是二元指令
+    /// @return
+    bool isBinaryInst();
+
+    /// @brief 是否是 getelementptr 指令
+    /// @return
+    bool isGetelemPtrInst();
+
+    /// @brief 是否是整数比较指令
+    /// @return
+    bool isICmpInst();
+
+    /// @brief 是否是ret Inst
+    /// @return
+    bool isRetInst();
+
+    /// @brief 是否是 CallInst
+    /// @return
+    bool isCallInst();
 
     /// @brief 判断指令是否是死指令
     /// @return

@@ -113,6 +113,42 @@ bool Instruction::isLoadInst()
     return op == Opcode::Load;
 }
 
+/// @brief 是否是二元指令
+/// @return
+bool Instruction::isBinaryInst()
+{
+    return (int)op >= 8 && (int)op <= 12;
+}
+
+/// @brief 是否是 getelementptr 指令
+/// @return
+bool Instruction::isGetelemPtrInst()
+{
+    return op == Opcode::GetelementPtr;
+}
+
+/// @brief 是否是整数比较指令
+/// @return
+bool Instruction::isICmpInst()
+{
+    // 目前 是 13-18是
+    return (int)op >= 13 && (int)op <= 18;
+}
+
+/// @brief 是否是ret Inst
+/// @return
+bool Instruction::isRetInst()
+{
+    return op == Opcode::Ret;
+}
+
+/// @brief 是否是 CallInst
+/// @return
+bool Instruction::isCallInst()
+{
+    return op == Opcode::Call;
+}
+
 /// @brief 获取指令的字符串翻译
 /// @param inst
 /// @param cnt

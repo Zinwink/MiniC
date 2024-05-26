@@ -14,6 +14,7 @@
 #include "Instruction.h"
 #include "DerivedTypes.h"
 #include "Type.h"
+#include "Argument.h"
 
 class AllocaInst;
 class StoreInst;
@@ -41,8 +42,14 @@ class AllocaInst : public Instruction
     friend class Instruction;
 
 private:
-    string AllocaName;   // 名字
-    Type *AllocatedType; //  Alloca指令申请的类型
+    string AllocaName;    // 名字
+    Type *AllocatedType;  //  Alloca指令申请的类型
+    ArgPtr arg = nullptr; // 用于判断是否是为函数形参开辟的空间
+
+    // 相对于 fp的偏移。一般而言其 地址为 [fp,#-num]
+    // 特殊地 如果alloca 是为函数形参声明的空间 前4个空间仍然满足 [fp,#-num]
+    // 但是 除前4个形参外的 Alloca 空间实际上 指向的为调用函数时压栈的空间 [fp,#(8+(argNo-4)*4)] argNo从0开始
+    uint64_t offset;
 
 public:
     /// @brief 析构函数
@@ -52,6 +59,7 @@ public:
         // 防止反复释放
         delete AllocatedType;
         AllocatedType = nullptr;
+        arg.reset();
     };
 
     /// @brief 无参构造
@@ -83,9 +91,29 @@ public:
         }
     }
 
+    /// @brief 判断是否是为函数形参声明的栈空间
+    /// @return
+    inline bool isAllocaArgument() { return arg != nullptr; }
+
+    /// @brief 返回 Alloca 申请的空间对应的函数形参
+    /// @return
+    inline ArgPtr &getAllocaArg() { return arg; }
+
+    /// @brief 设置Alloca对应的函数形参
+    /// @param _arg
+    inline void setAllocaArg(ArgPtr _arg) { arg = _arg; }
+
     /// @brief 获取Value名
     /// @return
-    string getName() override { return AllocaName; }
+    inline string getName() override { return AllocaName; }
+
+    /// @brief 获取相对于当前fp的偏移
+    /// @return
+    inline uint64_t getOffset() { return offset; }
+
+    /// @brief 设置偏移
+    /// @param off 
+    inline void setOffset(uint64_t off) { offset = off; }
 
     /// @brief 设置Value名
     /// @param name
@@ -97,7 +125,7 @@ public:
 
     /// @brief 获取存储类型
     /// @return
-    Type *getAllocatedType() { return AllocatedType; }
+    inline Type *getAllocatedType() { return AllocatedType; }
 
     /// @brief 静态函数  获取指令对象指针
     /// @param name

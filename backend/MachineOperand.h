@@ -20,6 +20,8 @@ class MachineInst;
 /// @brief 智能指针
 using MOperaPtr = std::shared_ptr<MachineOperand>;
 using MInstPtr = std::shared_ptr<MachineInst>;
+class MachineModule;
+using MModulePtr = std::shared_ptr<MachineModule>;
 
 /// @brief 机器指令操作数  可以是立即数 寄存器值 标签地址
 class MachineOperand
@@ -127,7 +129,13 @@ public:
     /// @brief 根据 IR指令操作数得到对应的汇编操作数
     /// @param val
     /// @return
-    static MOperaPtr get(ValPtr val);
+    static MOperaPtr get(ValPtr val, MModulePtr Mmodule);
+
+    /// @brief 将立即数加载到寄存器
+    /// @param imm
+    /// @param Mmodule
+    /// @return
+    static MOperaPtr imm2Reg(MOperaPtr imm, MModulePtr Mmodule);
 
     /// @brief 拷贝生成相同的操作数
     /// @param op

@@ -11,6 +11,8 @@
 #include "Value.h"
 #include "User.h"
 #include "Module.h"
+#include "Instruction.h"
+#include "DerivedInst.h"
 
 /// @brief User,Value中的属性形成了环，释放时需要先调用释放内部引用计数
 void Value::clear()
@@ -29,6 +31,46 @@ void Value::replaceAllUsesWith(ValPtr _self, ValPtr newVal)
         // 替换User中操作数完成后 将User冲UserList中删除
         iter = _self->UserList.erase(iter);
     }
+}
+
+/// @brief 是否是指令产生的临时变量 如 call,BinaryInst,load,Icmp等指令产生的结果
+/// @return
+bool Value::isTemporary()
+{
+    // 临时变量由指令产生
+    if (!isInstruct())
+    {
+        return false;
+    }
+    else
+    {
+        Instruction *inst = static_cast<Instruction *>(this);
+        if (inst->isBinaryInst())
+        {
+            return true;
+        }
+        else if (inst->isICmpInst())
+        {
+            return true;
+        }
+        else if (inst->isLoadInst())
+        {
+            return true;
+        }
+        else if (inst->isCallInst())
+        {
+            if (inst->getType()->isVoidType())
+            {
+                // 调用函数无返回值
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 /// @brief 获取 Val的 llvm 标识  可以是函数 全局变量 常量 %编号形式

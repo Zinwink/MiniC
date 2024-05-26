@@ -24,6 +24,7 @@ MachineFunc::MachineFunc(MModulePtr p, uint64_t _funcNo)
 void MachineFunc::clear()
 {
     parent.reset();
+    IRfun.reset();
     for (auto &b : blockList)
     {
         b->clear();
