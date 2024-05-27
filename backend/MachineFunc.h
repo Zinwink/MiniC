@@ -13,6 +13,8 @@
 #include <memory>
 #include "MachineBlock.h"
 #include "Function.h"
+#include "Value.h"
+#include "BasicBlock.h"
 
 class MachineFunc;
 class MachineModule;
@@ -37,8 +39,8 @@ private:
     /// @brief 函数编号
     uint64_t funcNo;
 
-    /// @brief 当前基本块编号
-    uint64_t curBlockNo = 0;
+    /// @brief 记录函数使用的 全局变脸 常量标签地址
+    std::unordered_map<ValPtr, string> addrPool;  
 
     /// @brief 函数需要保存记录的寄存器 例如push {r1,r3,fp,lr} 然后在函数末尾 pop恢复
     std::set<int> regsSave;
@@ -51,13 +53,6 @@ public:
     /// @brief 获取函数编号
     /// @return
     inline uint64_t getFuncNo() { return funcNo; }
-
-    /// @brief 获取当前基本块编号
-    /// @return
-    inline uint64_t getcurBlockNo() { return curBlockNo; }
-
-    /// @brief 当前基本块编号自增
-    inline void curBlockNoAdd() { curBlockNo++; }
 
     /// @brief 加入需要保存原值寄存器
     /// @param reg

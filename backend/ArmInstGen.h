@@ -45,6 +45,11 @@ private:
     /// @brief IR指令类型--对应转化ArmInst处理函数
     std::unordered_map<Opcode, IR2ArmInst_handler_t> IR2ArmInst_handers;
 
+    /// @brief IR指令对应的处理
+    /// @param IRinst
+    /// @return
+    bool IR2Arm(InstPtr IRinst);
+
     /// @brief 将AllocaInst IR 处理
     /// @param alloca
     /// @return
@@ -115,6 +120,8 @@ public:
         machineModule.reset();
         IRModule.reset();
     }
+
+    
 
     /// @brief 产生ArmInst
     /// @return

@@ -10,12 +10,35 @@
  */
 
 #include "ArmInstGen.h"
+#include <iostream>
+
+/// @brief IR指令对应的处理
+/// @param IRinst
+/// @return
+bool ArmInstGen::IR2Arm(InstPtr IRinst)
+{
+    bool result = false;
+    Opcode op = IRinst->getOpcode();
+    auto iter = IR2ArmInst_handers.find(op);
+    if (iter != IR2ArmInst_handers.end())
+    {
+        // 找到了
+        result = (this->*(iter->second))(IRinst);
+    }
+    else
+    {
+        // 未找到对应操作
+        std::cout << "Unkown IRInst type:" << IRinst->getOpcodeName() << std::endl;
+    }
+    return result;
+}
 
 /// @brief 将AllocaInst IR 处理
 /// @param alloca
 /// @return
 bool ArmInstGen::Alloca2ArmInst(InstPtr alloca)
 {
+    
     return true;
 }
 

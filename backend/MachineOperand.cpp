@@ -187,7 +187,7 @@ MOperaPtr MachineOperand::get(ValPtr val, MModulePtr Mmodule)
         {
             // >=4  大于等于4采用栈内存的形式
             MOperaPtr argVreg = get(VREG, Mmodule->getNo(val));
-            MOperaPtr ldrDst = argVreg;
+            MOperaPtr ldrDst = copy(argVreg);
             MOperaPtr ldrSrc1 = get(REG, 11);
             MOperaPtr offset = get(IMM, 4 * (arg->getArgNo() - 4) + 8); // 相对于fp
             MLoadInstPtr ldr = MLoadInst::get(Mmodule->getCurBlock(), MachineInst::LDR, ldrDst, ldrSrc1, offset);
@@ -219,7 +219,7 @@ MOperaPtr MachineOperand::imm2VReg(MOperaPtr imm, MModulePtr Mmodule)
         MLoadInstPtr ldr = MLoadInst::get(Mmodule->getCurBlock(), MachineInst::LDR, vreg, imm);
         Mmodule->getCurBlock()->addInstBack(ldr);
     }
-    return vreg;
+    return copy(vreg);
 }
 
 /// @brief 拷贝生成相同的操作数
