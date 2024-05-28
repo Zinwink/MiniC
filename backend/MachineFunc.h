@@ -30,6 +30,9 @@ private:
     /// @brief 基本块列表
     std::list<MBlockPtr> blockList;
 
+    /// @brief 函数编号
+    uint32_t funcNo;
+
     /// @brief 所需申请的栈空间
     uint64_t stackSize = 0;
 
@@ -52,10 +55,21 @@ public:
     /// @param block
     inline void addBlockBack(MBlockPtr block) { blockList.push_back(block); }
 
+    /// @brief 设置函数编号
+    /// @param no
+    inline void setFuncNo(uint32_t no) { funcNo = no; }
+
+    /// @brief 获取函数编号
+    /// @return
+    inline uint32_t getFuncNo() { return funcNo; }
+
     /// @brief 增加该函数使用的标签地址
     /// @param val
     /// @param str
-    inline void insertAddrPool(ValPtr val, string &str);
+    inline void insertAddrPool(ValPtr val, string &str)
+    {
+        addrPool.emplace(val, str);
+    }
 
     /// @brief 获取常量 全局变量标签池
     /// @return

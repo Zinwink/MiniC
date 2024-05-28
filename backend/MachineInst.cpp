@@ -14,6 +14,8 @@
 #include "MachineOperand.h"
 #include <cassert>
 #include <algorithm>
+#include "Instruction.h"
+#include "DerivedInst.h"
 
 //************************** MachineInst **************************************
 MBlockPtr MachineInst::getParent()
@@ -533,4 +535,47 @@ std::string MBranchInst::toStr()
     str += " ";
     str += uses[0]->toStr();
     return str;
+}
+
+/// @brief 根据ICmp IR比较指令获取条件后缀
+/// @param icmp
+/// @return
+MachineInst::condSuffix IRCond2Machine(ICmpInstPtr icmp)
+{
+    /*
+        GtInteger,        // 大于 icmp sgt/ugt
+        LtIntegr,     // 小于  icmp slt/ult
+        EqInTeger,    // ==  icmp eq
+        GeInTeger,    // >=
+        LeInteger,    // <=
+        NotEqInteger, // !=
+    */
+    MachineInst::condSuffix cond;
+    switch (icmp->getOpcode())
+    {
+    case Opcode::GtInteger:
+        cond = MachineInst::condSuffix::GT;
+        break;
+
+    case Opcode::LtIntegr:
+        cond = MachineInst::condSuffix::LT;
+        break;
+    case Opcode::EqInTeger:
+        cond = MachineInst::condSuffix::EQ;
+        break;
+    case Opcode::GeInTeger:
+        cond = MachineInst::condSuffix::GE;
+        break;
+    case Opcode::LeInteger:
+        cond = MachineInst::condSuffix::LE;
+        break;
+    case Opcode::NotEqInteger:
+        cond = MachineInst::condSuffix::NE;
+        break;
+
+    default:
+        cond = MachineInst::condSuffix::NONE;
+        break;
+    }
+    return cond;
 }

@@ -73,6 +73,45 @@ bool Value::isTemporary()
     return false;
 }
 
+/// @brief 是否是Alloca
+/// @return
+bool Value::isAllocaInst()
+{
+    bool res = false;
+    if (isInstruct())
+    {
+        Instruction *inst = static_cast<Instruction *>(this);
+        res = inst->isAllocaInst();
+    }
+    return res;
+}
+
+/// @brief 是否是 getelementptr 指令
+/// @return
+bool Value::isGetelemPtrInst()
+{
+    bool res = false;
+    if (isInstruct())
+    {
+        Instruction *inst = static_cast<Instruction *>(this);
+        res = inst->isGetelemPtrInst();
+    }
+    return res;
+}
+
+/// @brief 是否是整数比较指令
+/// @return
+bool Value::isICmpInst()
+{
+    bool res = false;
+    if (isInstruct())
+    {
+        Instruction *inst = static_cast<Instruction *>(this);
+        res = inst->isICmpInst();
+    }
+    return res;
+}
+
 /// @brief 获取 Val的 llvm 标识  可以是函数 全局变量 常量 %编号形式
 /// @param val
 /// @param cnt

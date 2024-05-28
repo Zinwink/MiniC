@@ -128,7 +128,7 @@ public:
     inline Type *getAllocatedType() { return AllocatedType; }
 
     /// @brief 获取alloca 申请的内存大小
-    /// @return 
+    /// @return
     uint32_t getAllocaSize();
 
     /// @brief 静态函数  获取指令对象指针

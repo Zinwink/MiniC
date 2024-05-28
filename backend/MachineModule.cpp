@@ -49,6 +49,12 @@ uint32_t MachineModule::getRegNo()
     return counter->getRegNo();
 }
 
+/// @brief 重置计数器
+void MachineModule::CnterReset()
+{
+    counter->reset();
+}
+
 //************************************* MCount ******************************************
 
 /// @brief 获取编号 当记录中存在时 取出 不存在时放入 并增加计数
@@ -100,5 +106,6 @@ uint32_t MCount::getNo(ValPtr val)
             RegNo++;
         }
     }
+    assert(res != -1 && "the counter not support the usage!");
     return res;
 }

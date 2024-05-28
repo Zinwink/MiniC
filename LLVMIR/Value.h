@@ -153,6 +153,18 @@ public:
         return getSubclassID() == Value::InstructionVal;
     }
 
+    /// @brief 是否是Alloca
+    /// @return
+    bool isAllocaInst();
+
+    /// @brief 是否是 getelementptr 指令
+    /// @return
+    bool isGetelemPtrInst();
+
+    /// @brief 是否是整数比较指令
+    /// @return
+    bool isICmpInst();
+
     /// @brief 是否是函数形参
     /// @return
     inline bool isArgument()

@@ -49,7 +49,7 @@ public:
     inline std::vector<MFuncPtr> &getFuncList() { return funcList; }
 
     /// @brief 添加函数
-    /// @param fun 
+    /// @param fun
     inline void addFunc(MFuncPtr fun) { funcList.push_back(fun); }
 
     /// @brief 获取全局变量列表
@@ -62,7 +62,7 @@ public:
 
     /// @brief 获取当前函数编号
     /// @return
-    inline uint64_t getCurFuncNo() { return curFuncNo; }
+    inline uint64_t getCurFuncNo() { return curFun->getFuncNo(); }
 
     /// @brief 当前函数编号自增
     inline void curFuncNoAdd() { curFuncNo++; }
@@ -76,6 +76,7 @@ public:
     inline void setCurFun(MFuncPtr fun)
     {
         curFun = fun;
+        curFun->setFuncNo(curFuncNo); // 设置编号
         curFuncNo++;
     }
 
@@ -87,12 +88,15 @@ public:
     /// @param b
     inline void setCurBlock(MBlockPtr b) { curBlock = b; }
 
+    /// @brief 重置计数器
+    void CnterReset();
+
     /// @brief 获取编号 全局变脸 常量标签地址  临时变量的虚拟寄存器编号
     /// @param val
     /// @return
     uint32_t getNo(ValPtr val);
 
-    /// @brief 不插入记录 获取相应的
+    /// @brief 不插入记录 生成并获取相应的编号
     /// @return
     uint32_t getRegNo();
 

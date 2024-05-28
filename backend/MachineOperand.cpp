@@ -177,6 +177,7 @@ MOperaPtr MachineOperand::get(ValPtr val, MModulePtr Mmodule)
         Addrlabel += std::to_string(Mmodule->getCurFuncNo());
         Addrlabel += "_";
         Addrlabel += std::to_string(Mmodule->getNo(val));
+        Mmodule->getCurFun()->insertAddrPool(val, Addrlabel);
         mop = get(Addrlabel);
     }
     else if (val->isTemporary())
@@ -230,6 +231,29 @@ MOperaPtr MachineOperand::imm2VReg(MOperaPtr imm, MModulePtr Mmodule)
     }
     return copy(vreg);
 }
+
+/// @brief 自动处理 Imm 类型操作数 如果Imm 符合立即数规范则保持原样 否则使用ldr伪指令加载到寄存器
+/// @param imm
+/// @param MModulePtr
+/// @return
+MOperaPtr MachineOperand::AutoDealWithImm(MOperaPtr imm, MModulePtr Mmodule)
+{
+    assert(imm->isImm() && "imm is not a imm type!");
+    int value = imm->getVal();
+    if (Arm32::canBeImmOperand(value))
+    {
+        return imm;
+    }
+    else
+    {
+        MOperaPtr vreg = get(VREG, Mmodule->getRegNo()); // 生成寄存器
+        MLoadInstPtr ldr = MLoadInst::get(Mmodule->getCurBlock(), MachineInst::LDR, vreg, imm);
+        Mmodule->getCurBlock()->addInstBack(ldr);
+        return copy(vreg);
+    }
+}
+
+
 
 /// @brief 拷贝生成相同的操作数
 /// @param op

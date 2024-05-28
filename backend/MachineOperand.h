@@ -131,11 +131,17 @@ public:
     /// @return
     static MOperaPtr get(ValPtr val, MModulePtr Mmodule);
 
-    /// @brief 将立即数加载到寄存器
+    /// @brief 将立即数加载到寄存器，符合寄存器规范的使用mov指令，不符合的使用ldr伪指令
     /// @param imm
     /// @param Mmodule
     /// @return
     static MOperaPtr imm2VReg(MOperaPtr imm, MModulePtr Mmodule);
+
+    /// @brief 自动处理 Imm 类型操作数 如果Imm 符合立即数规范则保持原样 否则使用ldr伪指令加载到寄存器
+    /// @param imm
+    /// @param MModulePtr
+    /// @return
+    static MOperaPtr AutoDealWithImm(MOperaPtr imm, MModulePtr Mmodule);
 
     /// @brief 拷贝生成相同的操作数
     /// @param op

@@ -32,6 +32,9 @@ private:
     /// @brief LLVMIR Module
     ModulePtr IRModule = nullptr;
 
+    /// @brief IR基本块和MachinBlock的对应
+    std::unordered_map<BasicBlockPtr, MBlockPtr> IRBlk2MBlk;
+
     // /// @brief 用于标记当前函数
     // MFuncPtr curMFun = nullptr;
 
@@ -120,8 +123,6 @@ public:
         machineModule.reset();
         IRModule.reset();
     }
-
-    
 
     /// @brief 产生ArmInst
     /// @return

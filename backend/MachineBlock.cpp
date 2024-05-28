@@ -50,6 +50,9 @@ MachineBlock::MachineBlock(MFuncPtr p, uint64_t n)
     parent = p;
     BBno = n;
     label = string(".LBB");
+    label += std::to_string(parent->getFuncNo());
+    label += "_";
+    label += std::to_string(n);
 }
 
 /// @brief 将汇编指令添加到末尾

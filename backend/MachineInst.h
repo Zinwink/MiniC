@@ -13,6 +13,7 @@
 #include <memory>
 #include <vector>
 #include "MachineOperand.h"
+#include "DerivedInst.h"
 
 class MachineBlock;
 class MachineInst;
@@ -292,3 +293,8 @@ public:
     /// @return
     std::string toStr() override;
 };
+
+/// @brief 根据ICmp IR比较指令获取条件后缀
+/// @param icmp
+/// @return
+MachineInst::condSuffix IRCond2Machine(ICmpInstPtr icmp);
