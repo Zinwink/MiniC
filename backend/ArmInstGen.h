@@ -32,11 +32,11 @@ private:
     /// @brief LLVMIR Module
     ModulePtr IRModule = nullptr;
 
-    /// @brief 用于标记当前函数
-    MFuncPtr curMFun = nullptr;
+    // /// @brief 用于标记当前函数
+    // MFuncPtr curMFun = nullptr;
 
-    /// @brief 标记当前基本块
-    MBlockPtr curBlock = nullptr;
+    // /// @brief 标记当前基本块
+    // MBlockPtr curBlock = nullptr;
 
 private:
     /// @brief 将LLVM IR转化为MachineInst

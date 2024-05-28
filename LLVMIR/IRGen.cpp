@@ -342,7 +342,7 @@ bool IRGen::ir_func_formal_params(ast_node *node, LabelParams blocks)
             }
             AllocaInstPtr alloca = AllocaInst::get(argName, Type::copy(arg->getType())); // 创建 Alloca
             StoreInstPtr store = StoreInst::get(arg, alloca);
-            alloca->setAllocaArg(arg);
+            alloca->setAllocaArg(arg); //设置对应的形参
             fun_f->insertAllocaInst(alloca); // 加入AllocaInst
             alloca->setBBlockParent(fun_f->getEntryBlock());
             fun_f->getEntryBlock()->AddInstBack(store); // 加入store指令

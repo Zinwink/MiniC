@@ -48,9 +48,17 @@ public:
     /// @return
     inline std::vector<MFuncPtr> &getFuncList() { return funcList; }
 
+    /// @brief 添加函数
+    /// @param fun 
+    inline void addFunc(MFuncPtr fun) { funcList.push_back(fun); }
+
     /// @brief 获取全局变量列表
     /// @return
     inline std::vector<GlobalVariPtr> &getGlobalVars() { return globalVaris; }
+
+    /// @brief 添加全局变量
+    /// @param g
+    inline void addGlobalVaris(GlobalVariPtr &g) { globalVaris.push_back(g); }
 
     /// @brief 获取当前函数编号
     /// @return
@@ -85,7 +93,7 @@ public:
     uint32_t getNo(ValPtr val);
 
     /// @brief 不插入记录 获取相应的
-    /// @return 
+    /// @return
     uint32_t getRegNo();
 
     /// @brief 构造函数

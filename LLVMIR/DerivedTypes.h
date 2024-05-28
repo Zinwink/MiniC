@@ -174,7 +174,7 @@ public:
     /// @return
     std::vector<int> getDimValues();
 
-    /// @brief 获取数组的维度
+    /// @brief 获取数组的维度 (如： a[2][3][4] 维度为3)
     /// @return
     int getDims();
 

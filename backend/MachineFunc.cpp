@@ -14,17 +14,24 @@
 /// @brief 构造函数
 /// @param p 属于的module
 /// @param _funcNo 函数编号
-MachineFunc::MachineFunc(MModulePtr p, uint64_t _funcNo)
+MachineFunc::MachineFunc(MModulePtr p)
 {
     parent = p;
-    funcNo = _funcNo;
+}
+
+/// @brief 创建智能指针类型
+/// @param p
+/// @return
+MFuncPtr MachineFunc::get(MModulePtr p)
+{
+    MFuncPtr fun = std::make_shared<MachineFunc>(p);
+    return fun;
 }
 
 /// @brief 手动打破环 使智能指针自动释放
 void MachineFunc::clear()
 {
     parent.reset();
-    IRfun.reset();
     for (auto &b : blockList)
     {
         b->clear();

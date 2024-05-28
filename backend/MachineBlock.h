@@ -46,6 +46,10 @@ public:
     /// @return
     inline std::vector<MBlockPtr> &getSuccs() { return succs; }
 
+    /// @brief 获取编号
+    /// @return
+    inline uint64_t getBBno() { return BBno; }
+
     /// @brief 获取基本块名
     /// @return
     inline std::string &getLabelName() { return label; }
@@ -95,8 +99,8 @@ public:
     void removeSucc(MBlockPtr block);
 
     /// @brief 获取块的智能指针对象
-    /// @param p 
-    /// @param n 
-    /// @return 
+    /// @param p
+    /// @param n
+    /// @return
     static MBlockPtr get(MFuncPtr p, uint64_t n);
 };

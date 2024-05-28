@@ -162,6 +162,15 @@ MOperaPtr MachineOperand::get(ValPtr val, MModulePtr Mmodule)
             mop = get(IMM, intval->getValue());
         }
     }
+    else if (val->isBasicBlockVal())
+    {
+        // 操作数是跳转基本块标签
+        string MachineBlockStr = ".LBB";
+        MachineBlockStr += std::to_string(Mmodule->getCurFuncNo());
+        MachineBlockStr += "_";
+        MachineBlockStr += std::to_string(Mmodule->getNo(val));
+        mop = get(MachineBlockStr);
+    }
     else if (val->isGlobalVariable())
     {
         string Addrlabel = ".LCPI";

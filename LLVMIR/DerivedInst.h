@@ -49,7 +49,7 @@ private:
     // 相对于 fp的偏移。一般而言其 地址为 [fp,#-num]
     // 特殊地 如果alloca 是为函数形参声明的空间 前4个空间仍然满足 [fp,#-num]
     // 但是 除前4个形参外的 Alloca 空间实际上 指向的为调用函数时压栈的空间 [fp,#(8+(argNo-4)*4)] argNo从0开始
-    uint64_t offset;
+    int64_t offset;
 
 public:
     /// @brief 析构函数
@@ -109,11 +109,11 @@ public:
 
     /// @brief 获取相对于当前fp的偏移
     /// @return
-    inline uint64_t getOffset() { return offset; }
+    inline int64_t getOffset() { return offset; }
 
     /// @brief 设置偏移
-    /// @param off 
-    inline void setOffset(uint64_t off) { offset = off; }
+    /// @param off
+    inline void setOffset(int64_t off) { offset = off; }
 
     /// @brief 设置Value名
     /// @param name
@@ -127,12 +127,15 @@ public:
     /// @return
     inline Type *getAllocatedType() { return AllocatedType; }
 
+    /// @brief 获取alloca 申请的内存大小
+    /// @return 
+    uint32_t getAllocaSize();
+
     /// @brief 静态函数  获取指令对象指针
     /// @param name
     /// @param _allocatedTy
     /// @return
-    static AllocaInstPtr
-    get(string name, Type *_allocatedTy);
+    static AllocaInstPtr get(string name, Type *_allocatedTy);
 };
 
 /// @brief storeInst

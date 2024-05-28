@@ -15,6 +15,7 @@
 #include "Function.h"
 #include "Constant.h"
 
+// *********************************** AllocaInst ***********************************************
 /// @brief 静态函数  获取指令对象指针
 /// @param name
 /// @param _allocatedTy
@@ -27,6 +28,42 @@ AllocaInstPtr AllocaInst::get(string name, Type *_allocatedTy)
     return alloca;
 }
 
+/// @brief 获取alloca 申请的内存大小
+/// @return
+uint32_t AllocaInst::getAllocaSize()
+{
+    // 根据 alloca 的 Type *AllocatedType; 并结合是否是函数形参的alloca进行判断
+    if (AllocatedType->isIntegerType())
+    {
+        // alloca 申请的内存是 int类型 4字节
+        return 4;
+    }
+    else if (AllocatedType->isArrayType())
+    {
+        // alloca 申请的内存是数组类型 根据数组的大小判断
+        ArrayType *arr = static_cast<ArrayType *>(AllocatedType); // 转型
+
+        // 目前实现的内容来看 数组类型装的元素 的字节数一定为4字节 故在此简单判断编写
+        std::vector<int> eachDimsV = arr->getDimValues();
+        int numElems = 1;
+        for (auto &dim : eachDimsV)
+        {
+            // 累乘获取元素数目
+            numElems *= dim;
+        }
+        // 暂且是这样 目前数组单个值元素 是4字节
+        return numElems * 4;
+    }
+    else if (AllocatedType->isPointerType())
+    {
+        // alloca 的是pointerTy  目前的实现内容来看只能是对形参为数组地址的alloca
+        return 4;
+    }
+    // 其他情况（实现的内容里不包含 先默认为-1）
+    return -1;
+}
+
+//************************************ StoreInst  **************************************************************
 /// @brief 创建指令StoreInst
 /// @param val
 /// @param Ptr
