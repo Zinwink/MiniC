@@ -335,6 +335,41 @@ BranchInstPtr BranchInst::get(ValPtr cond, ValPtr ifTrue, ValPtr ifFalse)
 
 //******************** getelementptrInst ************************
 
+/// @brief 获取gainDim对应的Bytes 字节数 如果gainDim 指向的是数组的最后一个维度元素 则为4字节
+/// @return
+int getelementptrInst::getgainDimBytes()
+{
+    // 计算字节数 没有考虑其他元素类型 目前数组只有 int
+
+    int res = -1;
+    ValPtr baseAddr = getOperand(0); // 获取基址
+    Type *addrTy = baseAddr->getType();
+    // addrTy肯定是指针类型
+    PointerType *addrTyP = static_cast<PointerType *>(addrTy);
+    Type *containedTy = addrTyP->getElemntTy();
+    if (containedTy->isIntegerType())
+    {
+        // 基地址是 int *一般这是数组形参引入的 如果是声明数组 肯定会有元素个数[3 x i32] *
+        res = 4;
+    }
+    else
+    {
+        assert(containedTy->isArrayType() && "not a array type!");
+        ArrayType *containdArrTy = static_cast<ArrayType *>(containedTy);
+        std::vector<int> dimsV = containdArrTy->getDimValues(); // 获取各个维度的数值
+        // 基地址是 [3 x i32]* 等类型
+        // 如果 gainDIm 为0 则1字节数 为 4* (dimsV中所有各个维度的乘积)
+        res = 1;
+        for (size_t i = gainDim; i < dimsV.size(); i++)
+        {
+            res *= dimsV[i];
+        }
+        res *= 4;
+    }
+    assert(res != -1 && "gainDim may out of the array dims range!");
+    return res;
+}
+
 /// @brief 构造函数
 /// @param arrayBaseAdress
 /// @param gainDim

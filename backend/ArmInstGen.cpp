@@ -11,6 +11,7 @@
 
 #include "ArmInstGen.h"
 #include "MachineOperand.h"
+#include "PlatformArm32.h"
 #include <iostream>
 
 /// @brief IR指令对应的处理
@@ -51,6 +52,7 @@ bool ArmInstGen::Alloca2ArmInst(InstPtr alloca)
         {
             // alloca 非前4个形参 无需申请栈空间 使用 fp+ #num 访问就行
             // 目前函数形参是指针或者int 类型 alloca空间肯定是4
+            // 对于后4函数形参alloca 偏移后继可能需要修正
             IRalloca->setOffset(4 * (argNO - 4) + 8);
         }
         else
@@ -103,6 +105,18 @@ bool ArmInstGen::Store2ArmInst(InstPtr store)
         MStorePtr str = MStore::get(curblk, MachineInst::STR, MStrval, MachineOperand::get(MachineOperand::REG, 11), offsetImm);
         // 将该指令加入
         curblk->addInstBack(str);
+
+        // 如果alloca是函数形参的alloca并且是后4个形参的alloca  则需要修正
+        if (alloca->isAllocaArgument())
+        {
+            uint32_t argNo = alloca->getAllocaArg()->getArgNo();
+            if (argNo > 3)
+            {
+                // 需要修正
+                machineModule->getCurFun()->addAdjustInst(str);
+            }
+        }
+
         return true;
     }
     else if (Ptr->isGlobalVariable())
@@ -120,11 +134,11 @@ bool ArmInstGen::Store2ArmInst(InstPtr store)
     }
     else if (Ptr->isGetelemPtrInst())
     {
-        // getelementptr 本身的操作数有 一个数组基址 可以是alloca,也可能是函数形参传递的数组基址
-        // 另一个操作数为偏移， 非字节偏移
-        // 设计中 还有一个gainDim,用于获取在什么维度的偏移
-        // 以目前的设计情况来看，除了调用函数时进行数组传参gainDim 为0外，其余均非0
-
+        // getelementptr 可直接得到存放地址的寄存器
+        MOperaPtr addrReg = MachineOperand::get(Ptr, machineModule);
+        // 创建store指令
+        MStorePtr str = MStore::get(curblk, MachineInst::STR, MStrval, addrReg);
+        curblk->addInstBack(str);
         return true;
     }
     std::cout << "not support this usage currently" << std::endl;
@@ -136,6 +150,66 @@ bool ArmInstGen::Store2ArmInst(InstPtr store)
 /// @return
 bool ArmInstGen::Ret2ArmInst(InstPtr ret)
 {
+    // 先使用 mov sp, fp 释放占空间   sp:13 fp:11 lr:14
+    // 然后使用 pop 恢复寄存器
+    // 最后使用 bx lr 跳转
+    MBlockPtr curblk = machineModule->getCurBlock();
+    std::vector<ValPtr> &operands = ret->getOperandsList();
+
+    // 创建 mov 指令释放栈空间  mov sp,fp
+    MMovInstPtr mov_sp_fp = MMovInst::get(curblk, MachineInst::MOV, MachineOperand::createReg(13), MachineOperand::createReg(11));
+    // 创建 pop pop 的寄存器还无法确定 需要寄存器分配之后
+    MStackInstPtr pop = MStackInst::get(curblk, MachineInst::POP, {});
+    // 创建 bx lr指令 供后继使用
+    MBranchInstPtr bx = MBranchInst::get(curblk, MachineInst::BX, MachineOperand::createReg(14));
+
+    if (operands.size() == 0)
+    {
+        // 函数无返回值 先使用mov_sp_fp释放栈空间 再pop 然后 bx lr
+        curblk->addInstBack(mov_sp_fp);
+        curblk->addInstBack(pop);
+        // pop 的操作数需要后期 修改
+        machineModule->getCurFun()->addAdjustInst(pop);
+        curblk->addInstBack(bx);
+    }
+    else
+    {
+        // 函数有 返回值 先将返回值移动到 r0寄存器 然后再同样操作
+        ValPtr irRetval = ret->getOperand(0);
+        MOperaPtr retMop = MachineOperand::get(irRetval, machineModule);
+        // 主要检查一下retMop的类型 如果是IMM 需要检查是否符合立即数规则  否则是VREG,REG 直接使用即可
+        // 创建返回值寄存器 r0
+        MOperaPtr r0 = MachineOperand::createReg(0);
+        // 将返回值加载到r0
+        if (retMop->isImm())
+        {
+            int32_t immV = retMop->getVal();   // 获取值
+            if (!Arm32::canBeImmOperand(immV)) // 数值不能作为立即数使用
+            {
+                // 加载到r0
+                MLoadInstPtr ldr = MLoadInst::get(curblk, MachineInst::LDR, r0, retMop);
+                curblk->addInstBack(ldr);
+            }
+            else
+            {
+                // 可以直接作为立即数 使用mov指令
+                MMovInstPtr mov = MMovInst::get(curblk, MachineInst::MOV, r0, retMop);
+                curblk->addInstBack(mov);
+            }
+        }
+        else
+        {
+            // 使用mov 指令
+            MMovInstPtr mov = MMovInst::get(curblk, MachineInst::MOV, r0, retMop);
+            curblk->addInstBack(mov);
+        }
+        // 释放栈空间
+        curblk->addInstBack(mov_sp_fp);
+        curblk->addInstBack(pop);
+        // pop 的操作数需要后期 修改
+        machineModule->getCurFun()->addAdjustInst(pop);
+        curblk->addInstBack(bx);
+    }
     return true;
 }
 
@@ -144,6 +218,8 @@ bool ArmInstGen::Ret2ArmInst(InstPtr ret)
 /// @return
 bool ArmInstGen::Load2ArmInst(InstPtr load)
 {
+    // IR 的LoadInst 的操作数 可以是 AllocaInst 也可以是 getelementptr
+
     return true;
 }
 
@@ -152,6 +228,7 @@ bool ArmInstGen::Load2ArmInst(InstPtr load)
 /// @return
 bool ArmInstGen::Call2ArmInst(InstPtr call)
 {
+
     return true;
 }
 
@@ -235,6 +312,68 @@ bool ArmInstGen::CondBr2ArmInst(InstPtr br)
 /// @return
 bool ArmInstGen::Getelem2ArmInst(InstPtr getelem)
 {
+    MBlockPtr curblk = machineModule->getCurBlock();
+    // 目前来看 getelementptr指令的基地址可以是 Argument，AllocaInst, LoadInst，也可以是全局变量地址 GlobalVariable
+    // 基地址为loadInst 对应 load alloca (而alloca是对形参的空间申请)，经过处理会将基地址加载到寄存器
+    // 基地址为 Argument 对应优化后 删除了无用的alloca 直接传递的结果，经过处理会将基地址加载到寄存器
+    // 基地址为allocaInst 为 函数中声明数组的Alloca 带有偏移信息
+    // 对于Argument LoadInst GlobalVaribal 直接使用MachineOperand编写的 get(ValPtr, Mmodule)即可自动处理  对于AllocaInst 处理较为特殊
+    getelemInstPtr gep = std::static_pointer_cast<getelementptrInst>(getelem);
+    int gainDim = gep->getgainDim();
+    int gainDimBytes = gep->getgainDimBytes();
+    ValPtr baseAddr = gep->getOperand(0);
+    ValPtr offset = gep->getOperand(1);                             // 偏移 可以是临时变量 也可以是常数
+    MOperaPtr Moffset = MachineOperand::get(offset, machineModule); // 获取offset对应操作数
+    if (baseAddr->isAllocaInst())
+    {
+        AllocaInstPtr alloca = std::static_pointer_cast<AllocaInst>(baseAddr);
+        assert(alloca->isAllocaArgument() && "IR may have some errors!"); // 一定是函数中的数组声明
+        int allocaOffset = alloca->getOffset();                           // 获取相对于fp的偏移 负数
+        // 先讨论 getelementptr指令的offset为常数的情况
+        if (Moffset->isImm())
+        {
+            int offsetval = Moffset->getVal();
+            int alloffset = offsetval + allocaOffset; // 相对于 fp的总偏移
+            MOperaPtr newOffset = MachineOperand::get(MachineOperand::IMM, alloffset);
+            newOffset = MachineOperand::AutoDealWithImm(newOffset, machineModule); // 自动处理
+            // 下面创建 fp + 偏移 获取数组索引地址
+            MBinaryInstPtr add = MBinaryInst::get(curblk, MachineInst::ADD, MachineOperand::get(getelem, machineModule), MachineOperand::createReg(11), newOffset);
+            // 将指令加入块中
+            curblk->addInstBack(add);
+        }
+        else
+        {
+            // getelementptr指令的offset不为常数
+            //  先将 Moffset 和 allocaOffset 进行加法运算
+            MOperaPtr addVreg = Moffset;
+            if (allocaOffset != 0)
+            {
+                MOperaPtr allocaOffsetImm = MachineOperand::get(MachineOperand::IMM, allocaOffset);
+                allocaOffsetImm = MachineOperand::AutoDealWithImm(allocaOffsetImm, machineModule); // 自动处理IMM
+                // 偏移结果 addVreg
+                addVreg = MachineOperand::get(MachineOperand::VREG, machineModule->getRegNo());
+                MBinaryInstPtr add1 = MBinaryInst::get(curblk, MachineInst::ADD, MachineOperand::copy(addVreg), Moffset, allocaOffsetImm);
+                curblk->addInstBack(add1);
+            }
+            // 下面创建 加法指令 获取 fp + reg  地址
+            MBinaryInstPtr add2 = MBinaryInst::get(curblk, MachineInst::ADD, MachineOperand::get(getelem, machineModule), MachineOperand::createReg(11), addVreg);
+            curblk->addInstBack(add2);
+        }
+    }
+    else
+    {
+        // 获取基址寄存器
+        MOperaPtr MbaseReg = MachineOperand::get(baseAddr, machineModule);
+        // 下面讨论 Moffset的情况
+        if (Moffset->isImm())
+        {
+            Moffset = MachineOperand::AutoDealWithImm(Moffset, machineModule); // 自动处理转化
+        }
+        // 创建 加法 获取最终位置
+        MBinaryInstPtr add = MBinaryInst::get(curblk, MachineInst::ADD, MachineOperand::get(getelem, machineModule), MbaseReg, Moffset);
+        curblk->addInstBack(add);
+    }
+
     return true;
 }
 
@@ -243,6 +382,7 @@ bool ArmInstGen::Getelem2ArmInst(InstPtr getelem)
 /// @return
 bool ArmInstGen::IAdd2ArmInst(InstPtr iadd)
 {
+
     return true;
 }
 
@@ -264,8 +404,9 @@ bool ArmInstGen::run()
 
         // 1. 创建一个对应的machineFunc
         MFuncPtr Mfun = MachineFunc::get(machineModule);
-        machineModule->addFunc(Mfun);   // 加入函数
-        machineModule->setCurFun(Mfun); // 标记当前函数
+        Mfun->setmaxCallFunParmas(irfun->getMaxCallFunArgsNum()); // 设置最大调用函数参数数目
+        machineModule->addFunc(Mfun);                             // 加入函数
+        machineModule->setCurFun(Mfun);                           // 标记当前函数
 
         // 先将 irblocks编号一下 并顺便对应创建一个MachineBlock
         for (auto &irblk : irblocks)

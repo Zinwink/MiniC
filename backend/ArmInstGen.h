@@ -35,11 +35,6 @@ private:
     /// @brief IR基本块和MachinBlock的对应
     std::unordered_map<BasicBlockPtr, MBlockPtr> IRBlk2MBlk;
 
-    // /// @brief 用于标记当前函数
-    // MFuncPtr curMFun = nullptr;
-
-    // /// @brief 标记当前基本块
-    // MBlockPtr curBlock = nullptr;
 
 private:
     /// @brief 将LLVM IR转化为MachineInst

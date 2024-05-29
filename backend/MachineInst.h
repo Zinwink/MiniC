@@ -93,7 +93,11 @@ public:
     virtual void clear(); // 手动清理 打破引用环 使智能指针自动释放
     inline std::vector<MOperaPtr> &getDef() { return defs; }
     inline std::vector<MOperaPtr> &getUse() { return uses; }
-
+    inline MinstTy getMinstTy() { return type; }  // 获取指令类型
+    inline bool isPOP() { return type == POP; }   // 是否是pop
+    inline bool isPush() { return type == PUSH; } // 是否是push 类型
+    inline bool isLoad() { return type = LDR; }   // 是否是load指令
+    inline bool isStore() { return type == STR; } // 是否是store指令
     /// @brief 将旧的操作数替换为新的
     /// @param srcOld
     /// @param srcNew
@@ -162,6 +166,10 @@ public:
     /// @param offset
     MLoadInst(MBlockPtr p, MinstTy instTy, MOperaPtr dst, MOperaPtr src1, MOperaPtr offset);
 
+    /// @brief 对偏移进行修正 加上偏置bias (主要用于修正函数后4形参偏移地址)
+    /// @param bias
+    void AddOffsetBias(int64_t bias);
+
     /// @brief 创建智能指针对象
     /// @param p
     /// @param instTy
@@ -186,6 +194,10 @@ public:
     /// @param src2
     /// @param offset
     MStore(MBlockPtr p, MinstTy instTy, MOperaPtr src1, MOperaPtr src2, MOperaPtr offset = nullptr);
+
+    /// @brief 对偏移进行修正 加上偏置bias (主要用于修正函数的后4形参的偏移地址)
+    /// @param bias
+    void AddOffsetBias(int64_t bias);
 
     /// @brief 创建智能指针
     /// @param p
@@ -220,6 +232,7 @@ public:
     /// @param _cond
     /// @return
     static MMovInstPtr get(MBlockPtr p, MinstTy instTy, MOperaPtr dst, MOperaPtr src1, condSuffix _cond = condSuffix::NONE);
+
 
     /// @brief 输出字符串
     /// @return
@@ -257,6 +270,10 @@ public:
     /// @param instTy
     /// @param srcs
     MStackInst(MBlockPtr p, MinstTy instTy, std::vector<MOperaPtr> srcs);
+
+    /// @brief 设置push pop的操作数  寄存器分配后回填
+    /// @param regs
+    void setRegs(std::vector<MOperaPtr> &regs);
 
     /// @brief 创建智能指针对象
     /// @param p

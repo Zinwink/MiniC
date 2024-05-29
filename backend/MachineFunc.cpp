@@ -17,6 +17,8 @@
 MachineFunc::MachineFunc(MModulePtr p)
 {
     parent = p;
+    addSaveReg(11); // fp
+    addSaveReg(14); // lr
 }
 
 /// @brief 创建智能指针类型
@@ -43,4 +45,40 @@ void MachineFunc::clear()
 MachineFunc::~MachineFunc()
 {
     MachineFunc::clear();
+}
+
+/// @brief 修正InstToAdjust中的指令
+void MachineFunc::AdjustInsts()
+{
+    // 目前没有浮点寄存器
+    for (auto &minst : InstToAdjust)
+    {
+        if (minst->isPOP())
+        {
+            // 获取savedRegs
+            std::vector<MOperaPtr> savedRegsVect;
+            for (auto &regNo : regsSave)
+            {
+                // 先创建一下寄存器操作数
+                MOperaPtr regOPerator = MachineOperand::get(MachineOperand::REG, regNo);
+                // 加入到列表中
+                savedRegsVect.push_back(std::move(regOPerator));
+            }
+            MStackInstPtr stk = std::static_pointer_cast<MStackInst>(minst);
+            stk->setRegs(savedRegsVect); // 设置pop的寄存器  pop {r4, r5, r6, fp,lr}
+        }
+        if (minst->isLoad())
+        {
+            // 用于矫正 函数后4形参的偏移  其偏移为高地址
+            MLoadInstPtr ldr = std::static_pointer_cast<MLoadInst>(minst);
+            int bias = 4 * (regsSave.size() - 2);
+            ldr->AddOffsetBias(bias); // 新增偏置
+        }
+        if (minst->isStore())
+        { // 用于矫正 函数后4形参的偏移  其偏移为高地址
+            MStorePtr str = std::static_pointer_cast<MStore>(minst);
+            int bias = 4 * (regsSave.size() - 2);
+            str->AddOffsetBias(bias); // 新增偏置
+        }
+    }
 }

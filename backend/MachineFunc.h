@@ -33,6 +33,9 @@ private:
     /// @brief 函数编号
     uint32_t funcNo;
 
+    /// @brief MachineFunc中调用函数的最大参数数目
+    uint32_t maxCallFunParmas = 0;
+
     /// @brief 所需申请的栈空间
     uint64_t stackSize = 0;
 
@@ -41,6 +44,12 @@ private:
 
     /// @brief 函数需要保存记录的寄存器 例如push {r1,r3,fp,lr} 然后在函数末尾 pop恢复
     std::set<int> regsSave;
+
+    /// 对于变量 alloca 数组alloca 其初始偏移为 fp -num, 由于会push 除lr,fp外的寄存器
+    /// 会影响偏移 因此需要矫正.  如push {r4,r5,fp,lr}  fp向下低8字节存放r5,r4的旧值， 引入新的矫正偏移8
+    /// 对于push pop操作，由于saveRegs需要在寄存器分配之后确定，因此在分配完成后也需要对push,pop进行修正
+    /// @brief 可能需要校正的一些指令 (主要受regsSave保存寄存器的影响: 会影响偏移或者是还未进行寄存器分配前时不确定的push pop操作)
+    std::vector<MInstPtr> InstToAdjust;
 
 public:
     /// @brief 获取函数的入口块
@@ -59,9 +68,17 @@ public:
     /// @param no
     inline void setFuncNo(uint32_t no) { funcNo = no; }
 
+    /// @brief 设置最大调用参数数目
+    /// @param no
+    inline void setmaxCallFunParmas(uint32_t no) { maxCallFunParmas = no; }
+
     /// @brief 获取函数编号
     /// @return
-    inline uint32_t getFuncNo() { return funcNo; }
+    inline uint32_t
+    getFuncNo()
+    {
+        return funcNo;
+    }
 
     /// @brief 增加该函数使用的标签地址
     /// @param val
@@ -87,6 +104,8 @@ public:
         return stackSize;
     }
 
+    inline void addAdjustInst(MInstPtr inst) { InstToAdjust.push_back(inst); }
+
     /// @brief 构造函数
     /// @param p 属于的module
     /// @param _funcNo 函数编号
@@ -97,6 +116,9 @@ public:
 
     /// @brief 手动打破环 使智能指针自动释放
     void clear();
+
+    /// @brief 修正InstToAdjust中的指令
+    void AdjustInsts();
 
     /// @brief 创建智能指针类型
     /// @param p

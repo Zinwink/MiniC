@@ -115,6 +115,11 @@ public:
     /// @return
     bool operator==(MachineOperand &other);
 
+    /// @brief 重载 < 主要用于 set 排序
+    /// @param other
+    /// @return
+    bool operator<(MachineOperand &other);
+
     /// @brief 创建操作数
     /// @param ty 操作数类型
     /// @param _val 数据 如果是 VREG,REG val表示寄存器编号 如果是IMM val表示数值
@@ -130,6 +135,11 @@ public:
     /// @param val
     /// @return
     static MOperaPtr get(ValPtr val, MModulePtr Mmodule);
+
+    /// @brief 创建物理寄存器类型
+    /// @param regNo 物理寄存器编号
+    /// @return
+    static MOperaPtr createReg(uint32_t regNo);
 
     /// @brief 将立即数加载到寄存器，符合寄存器规范的使用mov指令，不符合的使用ldr伪指令
     /// @param imm

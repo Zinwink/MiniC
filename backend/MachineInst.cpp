@@ -251,6 +251,18 @@ MLoadInst::MLoadInst(MBlockPtr p, MinstTy instTy, MOperaPtr dst, MOperaPtr src1,
     uses.push_back(std::move(offset));
 }
 
+/// @brief 对偏移进行修正 加上偏置bias 主要用于修正 函数后4形参的偏移
+/// @param bias
+void MLoadInst::AddOffsetBias(int64_t bias)
+{
+    assert(uses.size() == 2 && "this loadInst has no offset! don't need to correct");
+    assert(uses[1]->isImm() && "the offset is not Imm !");
+    int64_t originOffset = uses[1]->getVal();
+    int64_t newOffset = originOffset + bias;
+    MOperaPtr offsetOp = MachineOperand::get(MachineOperand::IMM, newOffset);
+    uses[1] = std::move(offsetOp); // 设置新的偏移
+}
+
 /// @brief 创建智能指针对象
 /// @param p
 /// @param instTy
@@ -333,6 +345,18 @@ MStore::MStore(MBlockPtr p, MinstTy instTy, MOperaPtr src1, MOperaPtr src2, MOpe
         offset->setParent(shared_from_this());
         uses.push_back(std::move(offset));
     }
+}
+
+/// @brief 对偏移进行修正 加上偏置bias 主要用于修正函数后4形参的偏移
+/// @param bias
+void MStore::AddOffsetBias(int64_t bias)
+{
+    assert(uses.size() == 3 && "this StoreInst has no offset! don't need to correct");
+    assert(uses[2]->isImm() && "the offset is not Imm !");
+    int64_t originOffset = uses[2]->getVal();
+    int64_t newOffset = originOffset + bias;
+    MOperaPtr offsetOp = MachineOperand::get(MachineOperand::IMM, newOffset);
+    uses[2] = std::move(offsetOp); // 设置新的偏移
 }
 
 /// @brief 创建智能指针
@@ -465,6 +489,20 @@ MStackInst::MStackInst(MBlockPtr p, MinstTy instTy, std::vector<MOperaPtr> srcs)
         src->setParent(shared_from_this());
         uses.push_back(std::move(src));
     }
+}
+
+/// @brief 设置push pop的操作数  寄存器分配后回填
+/// @param regs
+void MStackInst::setRegs(std::vector<MOperaPtr> &regs)
+{
+    uses.clear();
+    for (auto &src : regs)
+    {
+        src->setParent(shared_from_this());
+        uses.push_back(std::move(src));
+    }
+    regs.clear();
+    regs.shrink_to_fit();
 }
 
 /// @brief 创建智能指针对象

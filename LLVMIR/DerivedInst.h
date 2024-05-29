@@ -489,6 +489,10 @@ public:
     /// @return
     int getgainDim() { return gainDim; }
 
+    /// @brief 获取gainDim对应的Bytes 字节数 如果gainDim 指向的是数组的最后一个维度元素 则为4字节
+    /// @return
+    int getgainDimBytes();
+
     /// @brief 构造函数
     /// @param arrayBaseAdress
     /// @param gainDim

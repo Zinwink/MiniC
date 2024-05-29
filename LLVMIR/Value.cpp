@@ -69,6 +69,11 @@ bool Value::isTemporary()
                 return true;
             }
         }
+        else if (inst->isGetelemPtrInst())
+        {
+            // 该指令产生 一个数组元素地址的临时变量寄存器
+            return true;
+        }
     }
     return false;
 }

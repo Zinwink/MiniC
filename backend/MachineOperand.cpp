@@ -127,6 +127,26 @@ bool MachineOperand::operator==(MachineOperand &other)
     return false;
 }
 
+/// @brief 重载 < 主要用于 set 排序
+/// @param other
+/// @return
+bool MachineOperand::operator<(MachineOperand &other)
+{
+    if (type == other.type)
+    {
+        if (type == IMM)
+        {
+            return val < other.val;
+        }
+        return reg_no < other.reg_no;
+    }
+    else
+    {
+        // 无用
+        return type < other.type;
+    }
+}
+
 /// @brief 创建操作数
 /// @param ty
 /// @param _val
@@ -134,6 +154,15 @@ bool MachineOperand::operator==(MachineOperand &other)
 MOperaPtr MachineOperand::get(OprandType ty, int _val)
 {
     MOperaPtr op = std::make_shared<MachineOperand>(ty, _val);
+    return op;
+}
+
+/// @brief 创建物理寄存器类型
+/// @param regNo 物理寄存器编号
+/// @return
+MOperaPtr MachineOperand::createReg(uint32_t regNo)
+{
+    MOperaPtr op = get(REG, regNo);
     return op;
 }
 
@@ -202,10 +231,14 @@ MOperaPtr MachineOperand::get(ValPtr val, MModulePtr Mmodule)
             MOperaPtr offset = get(IMM, 4 * (arg->getArgNo() - 4) + 8); // 相对于fp
             MLoadInstPtr ldr = MLoadInst::get(Mmodule->getCurBlock(), MachineInst::LDR, ldrDst, ldrSrc1, offset);
             Mmodule->getCurBlock()->addInstBack(ldr); // 加入到当前块中
+
+            // 后继可能有 saveRegs 需要对该后4函数形参进行修正
+            Mmodule->getCurFun()->addAdjustInst(ldr);
+
             mop = argVreg;
         }
     }
-
+    assert(mop != nullptr && "not support this usage!");
     return mop;
 }
 
@@ -252,8 +285,6 @@ MOperaPtr MachineOperand::AutoDealWithImm(MOperaPtr imm, MModulePtr Mmodule)
         return copy(vreg);
     }
 }
-
-
 
 /// @brief 拷贝生成相同的操作数
 /// @param op
