@@ -114,7 +114,7 @@ bool ArmInstGen::Store2ArmInst(InstPtr store)
         MOperaPtr offsetImm = MachineOperand::get(MachineOperand::IMM, offset); // 操作数
         // 自动处理IMM 操作数
         // 可直接使用则返回本身 否则进行ldr 并返回存储该值的寄存器
-        offsetImm = MachineOperand::AutoDealWithImm(offsetImm, machineModule);
+        offsetImm = MachineOperand::AutoDealWithImm(offsetImm, machineModule,true);
         // 创建 str指令   str r1, [fp,#-4] 或者 str r1, [fp,r2]
         MStorePtr str = MStore::get(curblk, MachineInst::STR, MStrval, MachineOperand::get(MachineOperand::REG, 11), offsetImm);
         // 将该指令加入
@@ -450,7 +450,7 @@ bool ArmInstGen::Getelem2ArmInst(InstPtr getelem)
             int offsetval = Moffset->getVal();
             int alloffset = offsetval + allocaOffset; // 相对于 fp的总偏移
             MOperaPtr newOffset = MachineOperand::get(MachineOperand::IMM, alloffset);
-            newOffset = MachineOperand::AutoDealWithImm(newOffset, machineModule, true); // 自动处理
+            newOffset = MachineOperand::AutoDealWithImm(newOffset, machineModule); // 自动处理
             // 下面创建 fp + 偏移 获取数组索引地址
             MBinaryInstPtr add = MBinaryInst::get(curblk, MachineInst::ADD, MachineOperand::get(getelem, machineModule), MachineOperand::createReg(11), newOffset);
             // 将指令加入块中
