@@ -304,7 +304,7 @@ bool ArmInstGen::Call2ArmInst(InstPtr call)
             if (offset != 0)
             {
                 offsetImm = MachineOperand::get(MachineOperand::IMM, offset);
-                offsetImm = MachineOperand::AutoDealWithImm(offsetImm, machineModule); // 自动修正IMM
+                offsetImm = MachineOperand::AutoDealWithImm(offsetImm, machineModule, true); // 自动修正IMM
             }
 
             // 创建 STR 指令
