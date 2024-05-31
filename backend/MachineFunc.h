@@ -62,9 +62,17 @@ public:
     /// @return
     inline MBlockPtr &getEntry() { return blockList.front(); }
 
+    /// @brief 获取 MachineBlock 列表
+    /// @return
+    inline std::list<MBlockPtr> &getBlockList() { return blockList; }
+
     /// @brief 加入需要保存原值寄存器
     /// @param reg
-    inline void addSaveReg(int reg) { regsSave.insert(reg); }
+    inline void
+    addSaveReg(int reg)
+    {
+        regsSave.insert(reg);
+    }
 
     /// @brief 将块放入到列表尾部
     /// @param block
@@ -142,7 +150,7 @@ public:
     /// @brief 手动打破环 使智能指针自动释放
     void clear();
 
-    /// @brief 修正InstToAdjust中的指令
+    /// @brief 修正InstToAdjust中的指令  如偏移  需要保护原值的寄存器等
     void AdjustInsts();
 
     /// @brief 输出函数使用的标签地址池

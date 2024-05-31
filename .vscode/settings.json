@@ -60,7 +60,8 @@
         "typeinfo": "cpp",
         "fstream": "cpp",
         "list": "cpp",
-        "*.inc": "cpp"
+        "*.inc": "cpp",
+        "map": "cpp"
     },
     "cody.autocomplete.experimental.ollamaOptions": {
         "url": "http://127.0.0.1:11434",

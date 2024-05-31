@@ -110,15 +110,17 @@ public:
     /// @return
     std::string toStr();
 
-    /// @brief 判断操作数上是否相等  集合set中有用
-    /// @param other
+    /// @brief 相等比较 在之后使用 set Map时使用
+    /// @param left
+    /// @param right
     /// @return
-    bool operator==(MachineOperand &other);
+    friend bool operator==(const MachineOperand &left, const MachineOperand &right);
 
-    /// @brief 重载 < 主要用于 set 排序
-    /// @param other
+    /// @brief < 比较 之后使用 set 时使用
+    /// @param left
+    /// @param right
     /// @return
-    bool operator<(MachineOperand &other);
+    friend bool operator<(const MachineOperand &left, const MachineOperand &right);
 
     /// @brief 创建操作数
     /// @param ty 操作数类型

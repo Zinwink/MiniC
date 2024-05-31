@@ -44,3 +44,11 @@ bool Arm32::canBeImmOperand(int val)
         return Arm32::canBeImmOperand(us);
     }
 }
+
+/// @brief 判断是否是合法偏移
+/// @param offset
+/// @return
+bool Arm32::isLegalDisp(int offset)
+{
+    return offset < 4096 && offset > -4096;
+}

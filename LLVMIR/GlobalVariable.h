@@ -75,6 +75,10 @@ public:
         HasName = 1;
     }
 
+    /// @brief 字节大小
+    /// @return
+    uint32_t byteSizes();
+
     static GlobalVariPtr get(Type *_ty, string name)
     {
         GlobalVariPtr ptr = std::make_shared<GlobalVariable>(_ty, name);

@@ -107,45 +107,47 @@ std::string MachineOperand::toStr()
     return str;
 }
 
-/// @brief 判断操作数上是否相等  集合set中有用
-/// @param other
+/// @brief
+/// @param left
+/// @param right
 /// @return
-bool MachineOperand::operator==(MachineOperand &other)
+bool operator==(const MachineOperand &left, const MachineOperand &right)
 {
-    if (type != other.type)
+    if (left.type != right.type)
     {
         return false;
     }
     // 立即数相等
-    if (type == IMM)
+    if (left.type == MachineOperand::IMM)
     {
-        return val == other.val;
+        return left.val == right.val;
     }
     // 寄存器类型编号相同
-    if (type == REG || type == VREG)
+    if (left.type == MachineOperand::REG || left.type == MachineOperand::VREG)
     {
-        return reg_no = other.reg_no;
+        return left.reg_no == right.reg_no;
     }
     return false;
 }
 
-/// @brief 重载 < 主要用于 set 排序
-/// @param other
+/// @brief
+/// @param left
+/// @param right
 /// @return
-bool MachineOperand::operator<(MachineOperand &other)
+bool operator<(const MachineOperand &left, const MachineOperand &right)
 {
-    if (type == other.type)
+    if (left.type == right.type)
     {
-        if (type == IMM)
+        if (left.type == MachineOperand::IMM)
         {
-            return val < other.val;
+            return left.val < right.val;
         }
-        return reg_no < other.reg_no;
+        return left.reg_no < right.reg_no;
     }
     else
     {
         // 无用
-        return type < other.type;
+        return left.type < right.type;
     }
 }
 
@@ -321,8 +323,6 @@ MOperaPtr MachineOperand::AutoDealWithImm(MOperaPtr imm, MModulePtr Mmodule)
 /// @return
 MOperaPtr MachineOperand::AutoMovReg(MOperaPtr reg, uint32_t regNo, MModulePtr Mmodule)
 {
-
-    // std::cout << reg->toStr() << std::endl;
     assert((reg->isReg() || reg->isVReg()));
     MBlockPtr curblk = Mmodule->getCurBlock();
     if (reg->isReg() && reg->getRegNo() == regNo)

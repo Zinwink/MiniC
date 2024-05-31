@@ -31,6 +31,12 @@ private:
     /// @brief 全局变量列表
     std::vector<GlobalVariPtr> globalVaris;
 
+    /// @brief data段  目前只存 globalvariable
+    std::vector<string> dataSection;
+
+    /// @brief bss段 目前只存 globalvariable相关
+    std::vector<string> bssSection;
+
     /// @brief 编号记录
     MCntPtr counter = nullptr;
 
@@ -107,8 +113,12 @@ public:
     ~MachineModule();
 
     /// @brief 获取指针智能对象
-    /// @return 
+    /// @return
     static MModulePtr get();
+
+    /// @brief 产生全局变量声明 (.data 段和 .bss)
+    /// @return
+    void genGlobalVariDecl();
 
     /// @brief 将Arm指令打印至文件中
     /// @param filePath

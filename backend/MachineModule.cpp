@@ -121,14 +121,90 @@ uint32_t MCount::getNo(ValPtr val)
     return res;
 }
 
+/// @brief 产生全局变量声明
+/// @return
+void MachineModule::genGlobalVariDecl()
+{
+    // 根据 initilizer区分 .data 段和 .bss段
+    for (auto &g : globalVaris)
+    {
+        if (g->getInitilizer() != nullptr)
+        {
+            // data段
+            string str = "\ttype    " + g->getName() + ",%object\n";
+            str += "\t.globl    " + g->getName() + "\n";
+            str += g->getName() + ":\n";
+            if (!g->getElemTy()->isArrayType())
+            {
+                ConstantIntPtr intv = std::static_pointer_cast<ConstantInt>(g->getInitilizer());
+                str += "\t.long  " + std::to_string(intv->getValue()) + "\n";
+                str += "\t.size   " + g->getName() + ", " + "4";
+            }
+            else
+            {
+                // 暂未编写 因为前端还不支持
+            }
+            dataSection.push_back(str);
+        }
+        else
+        {
+            // bss段
+            string str = "\ttype    " + g->getName() + ",%object\n";
+            str += "\t.globl    " + g->getName() + "\n";
+            str += g->getName() + ":\n";
+            if (g->getElemTy()->isArrayType())
+            {
+                str += "\t.zero   " + std::to_string(g->byteSizes()) + "\n";
+            }
+            else
+            {
+                str += "\t.long  " + string("0\n");
+            }
+            str += "\t.size " + g->getName() + " " + std::to_string(g->byteSizes()) + "\n";
+            bssSection.push_back(str);
+        }
+    }
+}
+
 /// @brief 将Arm指令打印至文件中
 /// @param filePath
 void MachineModule::printArm(string filePath)
 {
     std::ofstream file(filePath);
+    // 先产生 Arch cpu 等信息
+    string headArch = R"(.arch armv7ve
+.arm
+.fpu vfpv4
+
+.macro mov32, cond, reg, val
+    movw\cond \reg, #:lower16:\val
+    movt\cond \reg, #:upper16:\val
+.endm
+    )";
+    file << headArch;
+    file << "\n";
+    file << "\t.text" << "\n";
     for (auto &fun : funcList)
     {
         file << fun->output();
         file << "\n";
+    }
+
+    // 下面打印 .data  .bss段
+    genGlobalVariDecl();
+    // .data 段
+    if (dataSection.size() != 0)
+        file << "\t.section .data" << "\n";
+    for (auto &str : dataSection)
+    {
+        file << str << "\n";
+    }
+    // .bss 段
+    file << "\n";
+    if (bssSection.size() != 0)
+        file << "\t.section .bss" << "\n";
+    for (auto &str : bssSection)
+    {
+        file << str << "\n";
     }
 }

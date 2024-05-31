@@ -22,4 +22,9 @@ namespace Arm32
     /// @param val
     /// @return
     bool canBeImmOperand(int val);
+
+    /// @brief 判断是否是合法偏移
+    /// @param offset
+    /// @return
+    bool isLegalDisp(int offset);
 }

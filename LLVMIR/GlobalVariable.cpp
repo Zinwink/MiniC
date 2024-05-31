@@ -34,3 +34,28 @@ string GlobalVariable::toIRstr(GlobalVariPtr g, Counter *cnt)
     string str = string("@") + g->getName() + string(" = global ") + g->getElemTy()->TypeStr() + string(" ") + initiStr;
     return str;
 }
+
+/// @brief 字节大小
+/// @return
+uint32_t GlobalVariable::byteSizes()
+{
+    int res = 0;
+    if (getElemTy()->isIntegerType())
+    {
+        IntegerType *intTy = static_cast<IntegerType *>(getElemTy());
+        res = (intTy->getBitsWidth()) / 8; // 字节数
+    }
+    else if (getElemTy()->isArrayType())
+    {
+        ArrayType *arrTy = static_cast<ArrayType *>(getElemTy());
+        std::vector<int> arrDims = arrTy->getDimValues();
+        // 累乘  目前只有 int 累乘后 乘4 就是了
+        res = 1;
+        for (auto &dim : arrDims)
+        {
+            res *= dim;
+        }
+        res *= 4;
+    }
+    return res;
+}
