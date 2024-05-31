@@ -15,6 +15,7 @@
 #include "DerivedInst.h"
 #include "Constant.h"
 #include "MachineModule.h"
+#include <iostream>
 
 //********************** MachineOperand  **********************************'
 
@@ -97,6 +98,7 @@ std::string MachineOperand::toStr()
         break;
     case LABEL:
         str = label;
+        break;
     default:
         str = "unknown machine operand!";
         break;
@@ -211,6 +213,8 @@ MOperaPtr MachineOperand::get(ValPtr val, MModulePtr Mmodule)
     }
     else if (val->isTemporary())
     {
+        // callInst  调用函数返回值默认使用 r0进行存储
+        // 为了使翻译正常 使用 虚拟寄存器拷贝r0, 后继
         // 临时变量将 使用虚拟寄存器
         mop = get(VREG, Mmodule->getNo(val));
     }
@@ -265,6 +269,30 @@ MOperaPtr MachineOperand::imm2VReg(MOperaPtr imm, MModulePtr Mmodule)
     return copy(vreg);
 }
 
+/// @brief 将立即数加载到物理寄存器
+/// @param imm
+/// @param regNo
+/// @param Mmodule
+/// @return
+MOperaPtr MachineOperand::imm2Reg(MOperaPtr imm, uint32_t regNo, MModulePtr Mmodule)
+{
+    assert(imm->isImm() && "imm is not a imm type!");
+    int value = imm->getVal();
+    MOperaPtr reg = get(REG, regNo); // 生成寄存器
+    if (Arm32::canBeImmOperand(value))
+    {
+        // 使用 MOV 指令
+        MMovInstPtr mov = MMovInst::get(Mmodule->getCurBlock(), MachineInst::MOV, reg, imm);
+        Mmodule->getCurBlock()->addInstBack(mov);
+    }
+    else
+    {
+        MLoadInstPtr ldr = MLoadInst::get(Mmodule->getCurBlock(), MachineInst::LDR, reg, imm);
+        Mmodule->getCurBlock()->addInstBack(ldr);
+    }
+    return copy(reg);
+}
+
 /// @brief 自动处理 Imm 类型操作数 如果Imm 符合立即数规范则保持原样 否则使用ldr伪指令加载到寄存器
 /// @param imm
 /// @param MModulePtr
@@ -283,6 +311,30 @@ MOperaPtr MachineOperand::AutoDealWithImm(MOperaPtr imm, MModulePtr Mmodule)
         MLoadInstPtr ldr = MLoadInst::get(Mmodule->getCurBlock(), MachineInst::LDR, vreg, imm);
         Mmodule->getCurBlock()->addInstBack(ldr);
         return copy(vreg);
+    }
+}
+
+/// @brief 将 vreg 或者 reg 移动到 reg  如果重复则不移动 返回自身
+/// @param reg vreg 或者reg
+/// @param regNo
+/// @param Mmodule
+/// @return
+MOperaPtr MachineOperand::AutoMovReg(MOperaPtr reg, uint32_t regNo, MModulePtr Mmodule)
+{
+
+    // std::cout << reg->toStr() << std::endl;
+    assert((reg->isReg() || reg->isVReg()));
+    MBlockPtr curblk = Mmodule->getCurBlock();
+    if (reg->isReg() && reg->getRegNo() == regNo)
+    {
+        // 无操作
+        return reg;
+    }
+    else
+    {
+        MMovInstPtr mov = MMovInst::get(curblk, MachineInst::MOV, MachineOperand::createReg(regNo), reg);
+        curblk->addInstBack(mov); // 加入mov指令
+        return MachineOperand::createReg(regNo);
     }
 }
 

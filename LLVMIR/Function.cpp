@@ -103,7 +103,6 @@ void Function::insertBBlock(LabelParams blocks, bblockIter iter)
 /// @return
 BasicBlockPtr &Function::getEntryBlock()
 {
-    assert(BlocksList.size() >= 2 && "no Entry Block has been constructed!");
     return BlocksList.front();
 }
 

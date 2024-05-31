@@ -35,7 +35,6 @@ private:
     /// @brief IR基本块和MachinBlock的对应
     std::unordered_map<BasicBlockPtr, MBlockPtr> IRBlk2MBlk;
 
-
 private:
     /// @brief 将LLVM IR转化为MachineInst
     typedef bool (ArmInstGen::*IR2ArmInst_handler_t)(InstPtr IRinst);
@@ -78,6 +77,11 @@ private:
     /// @return
     bool Goto2ArmInst(InstPtr _goto);
 
+    /// @brief ICmp IRInst 对应的操作
+    /// @param icmp
+    /// @return
+    bool ICmp2ArmInst(InstPtr icmp);
+
     /// @brief 有条件 跳转IR处理
     /// @param br
     /// @return
@@ -93,6 +97,26 @@ private:
     /// @return
     bool IAdd2ArmInst(InstPtr iadd);
 
+    /// @brief 整数乘法
+    /// @param imul
+    /// @return
+    bool IMul2ArmInst(InstPtr imul);
+
+    /// @brief 整数减法
+    /// @param isub
+    /// @return
+    bool ISub2ArmInst(InstPtr isub);
+
+    /// @brief 整数除法
+    /// @param idiv
+    /// @return
+    bool IDiv2ArmInst(InstPtr idiv);
+
+    /// @brief 整数取余
+    /// @param srem
+    /// @return
+    bool ISrem2ArmInst(InstPtr srem);
+
 public:
     /// @brief 构造函数
     /// @param _IRModule
@@ -107,10 +131,21 @@ public:
         IR2ArmInst_handers[Opcode::Load] = &ArmInstGen::Load2ArmInst;
         IR2ArmInst_handers[Opcode::Call] = &ArmInstGen::Call2ArmInst;
         IR2ArmInst_handers[Opcode::Goto] = &ArmInstGen::Goto2ArmInst;
+        IR2ArmInst_handers[Opcode::ICMP] = &ArmInstGen::ICmp2ArmInst;
         IR2ArmInst_handers[Opcode::ConditionBr] = &ArmInstGen::CondBr2ArmInst;
         IR2ArmInst_handers[Opcode::GetelementPtr] = &ArmInstGen::Getelem2ArmInst;
         IR2ArmInst_handers[Opcode::AddInteger] = &ArmInstGen::IAdd2ArmInst;
+        IR2ArmInst_handers[Opcode::MulInteger] = &ArmInstGen::IMul2ArmInst;
+        IR2ArmInst_handers[Opcode::SubInteger] = &ArmInstGen::ISub2ArmInst;
+        IR2ArmInst_handers[Opcode::DivInteger] = &ArmInstGen::IDiv2ArmInst;
+        IR2ArmInst_handers[Opcode::ModInteger] = &ArmInstGen::ISrem2ArmInst;
     }
+
+    /// @brief 智能指针对象
+    /// @param _IRModule
+    /// @param _machineModule
+    /// @return
+    static ArmInstGenPtr get(ModulePtr _IRModule, MModulePtr _machineModule);
 
     /// @brief 析构函数
     ~ArmInstGen()

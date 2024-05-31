@@ -117,6 +117,19 @@ bool Value::isICmpInst()
     return res;
 }
 
+/// @brief 判断是 callInst
+/// @return
+bool Value::isCallInst()
+{
+    bool res = false;
+    if (isInstruct())
+    {
+        Instruction *inst = static_cast<Instruction *>(this);
+        res = inst->isCallInst();
+    }
+    return res;
+}
+
 /// @brief 获取 Val的 llvm 标识  可以是函数 全局变量 常量 %编号形式
 /// @param val
 /// @param cnt

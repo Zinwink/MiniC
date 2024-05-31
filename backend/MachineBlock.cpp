@@ -129,3 +129,18 @@ MBlockPtr MachineBlock::get(MFuncPtr p, uint64_t n)
     MBlockPtr block = std::make_shared<MachineBlock>(p, n);
     return block;
 }
+
+/// @brief 块翻译为字符串
+/// @return
+string MachineBlock::toStr()
+{
+    string str = label;
+    str += "\n";
+    for (auto &minst : getInstList())
+    {
+        str += "\t";
+        str += minst->toStr();
+        str += "\n";
+    }
+    return str;
+}

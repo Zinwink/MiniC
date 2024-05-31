@@ -40,12 +40,15 @@ enum class Opcode
     ModInteger, // 整数取余
 
     /// @brief icmp 比较指令
+
     GtInteger,    // 大于 icmp sgt/ugt
     LtIntegr,     // 小于  icmp slt/ult
     EqInTeger,    // ==  icmp eq
     GeInTeger,    // >=
     LeInteger,    // <=
     NotEqInteger, // !=
+
+    ICMP, // 标识ICMP指令
 
     Unknown // 未知
 };

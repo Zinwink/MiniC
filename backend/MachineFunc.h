@@ -33,8 +33,14 @@ private:
     /// @brief 函数编号
     uint32_t funcNo;
 
+    /// @brief 函数名
+    string funcName;
+
+    /// @brief 函数参数个数
+    uint32_t funcArgsNum = 0;
+
     /// @brief MachineFunc中调用函数的最大参数数目
-    uint32_t maxCallFunParmas = 0;
+    int32_t maxCallFunParmas = 0;
 
     /// @brief 所需申请的栈空间
     uint64_t stackSize = 0;
@@ -64,18 +70,37 @@ public:
     /// @param block
     inline void addBlockBack(MBlockPtr block) { blockList.push_back(block); }
 
+    /// @brief 设置函数名
+    /// @param name
+    inline void setFuncName(string name) { funcName = name; }
+
+    /// @brief 获取函数名
+    /// @return
+    inline std::string &getFuncName() { return funcName; }
+
     /// @brief 设置函数编号
     /// @param no
     inline void setFuncNo(uint32_t no) { funcNo = no; }
 
+    /// @brief 设置函数参数数目
+    /// @param n
+    inline void setFuncArgsNum(uint32_t n) { funcArgsNum = n; }
+
+    /// @brief 获取函数参数数目
+    /// @return
+    inline uint32_t getFuncArgsNum() { return funcArgsNum; }
+
     /// @brief 设置最大调用参数数目
     /// @param no
-    inline void setmaxCallFunParmas(uint32_t no) { maxCallFunParmas = no; }
+    inline void setmaxCallFunParmas(int32_t no) { maxCallFunParmas = no; }
+
+    /// @brief 获取寄存器操作数
+    /// @return
+    std::vector<MOperaPtr> getSavedRegs();
 
     /// @brief 获取函数编号
     /// @return
-    inline uint32_t
-    getFuncNo()
+    inline uint32_t getFuncNo()
     {
         return funcNo;
     }
@@ -119,6 +144,14 @@ public:
 
     /// @brief 修正InstToAdjust中的指令
     void AdjustInsts();
+
+    /// @brief 输出函数使用的标签地址池
+    /// @return
+    string printAddrPool();
+
+    /// @brief 输出函数对应的汇编
+    /// @return
+    string output();
 
     /// @brief 创建智能指针类型
     /// @param p

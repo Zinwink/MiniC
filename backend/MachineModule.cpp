@@ -10,6 +10,7 @@
  */
 
 #include "MachineModule.h"
+#include <fstream>
 
 /// @brief 构造函数
 MachineModule::MachineModule()
@@ -17,10 +18,20 @@ MachineModule::MachineModule()
     counter = std::make_shared<MCount>();
 }
 
+/// @brief 获取指针智能对象
+/// @return
+MModulePtr MachineModule::get()
+{
+    MModulePtr mod = std::make_shared<MachineModule>();
+    return mod;
+}
+
 /// @brief 手动清理
 void MachineModule::clear()
 {
     counter.reset();
+    curBlock.reset();
+    curFun.reset();
     for (auto &Mfun : funcList)
     {
         Mfun->clear();
@@ -108,4 +119,16 @@ uint32_t MCount::getNo(ValPtr val)
     }
     assert(res != -1 && "the counter not support the usage!");
     return res;
+}
+
+/// @brief 将Arm指令打印至文件中
+/// @param filePath
+void MachineModule::printArm(string filePath)
+{
+    std::ofstream file(filePath);
+    for (auto &fun : funcList)
+    {
+        file << fun->output();
+        file << "\n";
+    }
 }

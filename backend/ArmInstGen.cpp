@@ -14,6 +14,16 @@
 #include "PlatformArm32.h"
 #include <iostream>
 
+/// @brief 智能指针对象
+/// @param _IRModule
+/// @param _machineModule
+/// @return
+ArmInstGenPtr ArmInstGen::get(ModulePtr _IRModule, MModulePtr _machineModule)
+{
+    ArmInstGenPtr arm = std::make_shared<ArmInstGen>(_IRModule, _machineModule);
+    return arm;
+}
+
 /// @brief IR指令对应的处理
 /// @param IRinst
 /// @return
@@ -21,6 +31,10 @@ bool ArmInstGen::IR2Arm(InstPtr IRinst)
 {
     bool result = false;
     Opcode op = IRinst->getOpcode();
+    if (IRinst->isICmpInst())
+    {
+        op = Opcode::ICMP;
+    }
     auto iter = IR2ArmInst_handers.find(op);
     if (iter != IR2ArmInst_handers.end())
     {
@@ -218,8 +232,48 @@ bool ArmInstGen::Ret2ArmInst(InstPtr ret)
 /// @return
 bool ArmInstGen::Load2ArmInst(InstPtr load)
 {
-    // IR 的LoadInst 的操作数 可以是 AllocaInst 也可以是 getelementptr
-
+    MBlockPtr curblk = machineModule->getCurBlock();
+    // IR 的LoadInst 的操作数 可以是 AllocaInst 也可以是 getelementptr 也可以是 globalVariable
+    ValPtr srcAddr = load->getOperand(0);
+    if (srcAddr->isAllocaInst())
+    {
+        AllocaInstPtr alloca = std::static_pointer_cast<AllocaInst>(srcAddr); // 转型
+        int64_t offset = alloca->getOffset();                                 // 获取偏移
+        // 创建load指令
+        MOperaPtr offsetImm = MachineOperand::get(MachineOperand::IMM, offset);
+        offsetImm = MachineOperand::AutoDealWithImm(offsetImm, machineModule); // 自动处理offsetImm
+        MLoadInstPtr ldr = MLoadInst::get(curblk, MachineInst::LDR, MachineOperand::get(load, machineModule), MachineOperand::createReg(11), offsetImm);
+        curblk->addInstBack(ldr);
+        if (alloca->isAllocaArgument())
+        {
+            // 是对形参的alloca  对于后4形参 偏移需要修正
+            ArgPtr arg = alloca->getAllocaArg();
+            if (arg->getArgNo() > 3)
+            {
+                machineModule->getCurFun()->addAdjustInst(ldr); // 加入到需要修订的列表中
+            }
+        }
+    }
+    else if (srcAddr->isGlobalVariable())
+    {
+        // 需要先从 全局变量地址标签中 取出全局变量地址
+        // 然后通过 存储地址的寄存器 取出值
+        MOperaPtr addrLabel = MachineOperand::get(srcAddr, machineModule); // 标签地址
+        // 2. 创建 ldr 指令将 标签地址加载到寄存器
+        MOperaPtr addrReg = MachineOperand::get(MachineOperand::VREG, machineModule->getRegNo()); // 存放标签地址
+        MLoadInstPtr ldrAddrLabel = MLoadInst::get(curblk, MachineInst::LDR, MachineOperand::copy(addrReg), addrLabel);
+        // 3. 从 ldrAddrLabel 中加载全局变量的值
+        MLoadInstPtr ldrValReg = MLoadInst::get(curblk, MachineInst::LDR, MachineOperand::get(load, machineModule), addrReg);
+        curblk->addInstBack(ldrAddrLabel);
+        curblk->addInstBack(ldrValReg);
+    }
+    else
+    {
+        assert(srcAddr->isGetelemPtrInst());
+        MOperaPtr addrReg = MachineOperand::get(srcAddr, machineModule); // 获取存储地址的寄存器
+        MLoadInstPtr ldr = MLoadInst::get(curblk, MachineInst::LDR, MachineOperand::get(load, machineModule), addrReg);
+        curblk->addInstBack(ldr);
+    }
     return true;
 }
 
@@ -228,6 +282,50 @@ bool ArmInstGen::Load2ArmInst(InstPtr load)
 /// @return
 bool ArmInstGen::Call2ArmInst(InstPtr call)
 {
+    MBlockPtr &curblk = machineModule->getCurBlock();
+    ValPtr funv = call->getOperand(0); // 获取调用的函数
+    // 创建函数名 对应的Label操作数
+    MOperaPtr LabelFun = MachineOperand::get(funv->getName());
+    std::vector<ValPtr> &operands = call->getOperandsList();
+    for (size_t i = 1; i < operands.size(); i++)
+    {
+        MOperaPtr MparamOp = MachineOperand::get(operands[i], machineModule);
+        // 前4号 形参使用 r0-r3
+        if (i <= 4)
+        {
+            // 创建 mov 指令 会自动加入当前块
+            MMovInst::create(curblk, MachineOperand::createReg(i - 1), MparamOp, machineModule);
+        }
+        else
+        {
+            // 后4 形参  使用 str 指令将 形参值保存到栈内存中(偏移需要修正)
+            int offset = 4 * (i - 5); // 形参的初始偏移  sp+#0  sp+#4
+            MOperaPtr offsetImm = nullptr;
+            if (offset != 0)
+            {
+                offsetImm = MachineOperand::get(MachineOperand::IMM, offset);
+                offsetImm = MachineOperand::AutoDealWithImm(offsetImm, machineModule); // 自动修正IMM
+            }
+
+            // 创建 STR 指令
+            if (MparamOp->isImm())
+            {
+                MparamOp = MachineOperand::imm2VReg(MparamOp, machineModule);
+            }
+            MStorePtr str = MStore::get(curblk, MachineInst::STR, MparamOp, MachineOperand::createReg(13), offsetImm);
+            // 加入当前块
+            curblk->addInstBack(str);
+        }
+    }
+    // 创建 bl 跳转指令
+    MBranchInstPtr bl = MBranchInst::get(curblk, MachineInst::BL, LabelFun);
+    curblk->addInstBack(bl);
+    // 跳转调用完毕后 使用mov 指令将 r0存放的返回值取出
+    if (!(call->getType()->isVoidType()))
+    {
+        MMovInstPtr move_vreg_r0 = MMovInst::get(curblk, MachineInst::MOV, MachineOperand::get(call, machineModule), MachineOperand::createReg(0));
+        curblk->addInstBack(move_vreg_r0);
+    }
 
     return true;
 }
@@ -237,11 +335,28 @@ bool ArmInstGen::Call2ArmInst(InstPtr call)
 /// @return
 bool ArmInstGen::Goto2ArmInst(InstPtr _goto)
 {
-    MBlockPtr curblk = machineModule->getCurBlock();
+    MBlockPtr &curblk = machineModule->getCurBlock();
     ValPtr irop = _goto->getOperand(0); // 获取跳转目标 是BasicBlock类型
     MOperaPtr LBB = MachineOperand::get(irop, machineModule);
     MBranchInstPtr B = MBranchInst::get(curblk, MachineInst::B, LBB);
     curblk->addInstBack(B);
+    return true;
+}
+
+/// @brief ICmp IRInst 对应的操作
+/// @param icmp
+/// @return
+bool ArmInstGen::ICmp2ArmInst(InstPtr icmp)
+{
+    MBlockPtr &curblk = machineModule->getCurBlock();
+    // 直接创建 icmp指令
+    ValPtr left = icmp->getOperand(0);
+    ValPtr right = icmp->getOperand(1);
+    MOperaPtr leftM = MachineOperand::get(left, machineModule);
+    MOperaPtr rightM = MachineOperand::get(right, machineModule);
+    MCmpInstPtr cmp = MCmpInst::get(curblk, MachineInst::CMP, std::move(leftM), std::move(rightM));
+    curblk->addInstBack(cmp);
+
     return true;
 }
 
@@ -250,7 +365,7 @@ bool ArmInstGen::Goto2ArmInst(InstPtr _goto)
 /// @return
 bool ArmInstGen::CondBr2ArmInst(InstPtr br)
 {
-    MBlockPtr curblk = machineModule->getCurBlock();
+    MBlockPtr &curblk = machineModule->getCurBlock();
     // 条件跳转有 三个操作数 和ICmp指令连用
     ValPtr cond = br->getOperand(0);    // 条件
     ValPtr IFTrue = br->getOperand(1);  // 真出口
@@ -312,7 +427,7 @@ bool ArmInstGen::CondBr2ArmInst(InstPtr br)
 /// @return
 bool ArmInstGen::Getelem2ArmInst(InstPtr getelem)
 {
-    MBlockPtr curblk = machineModule->getCurBlock();
+    MBlockPtr &curblk = machineModule->getCurBlock();
     // 目前来看 getelementptr指令的基地址可以是 Argument，AllocaInst, LoadInst，也可以是全局变量地址 GlobalVariable
     // 基地址为loadInst 对应 load alloca (而alloca是对形参的空间申请)，经过处理会将基地址加载到寄存器
     // 基地址为 Argument 对应优化后 删除了无用的alloca 直接传递的结果，经过处理会将基地址加载到寄存器
@@ -327,8 +442,8 @@ bool ArmInstGen::Getelem2ArmInst(InstPtr getelem)
     if (baseAddr->isAllocaInst())
     {
         AllocaInstPtr alloca = std::static_pointer_cast<AllocaInst>(baseAddr);
-        assert(alloca->isAllocaArgument() && "IR may have some errors!"); // 一定是函数中的数组声明
-        int allocaOffset = alloca->getOffset();                           // 获取相对于fp的偏移 负数
+        assert(!alloca->isAllocaArgument() && "IR may have some errors!"); // 一定是函数中的数组声明
+        int allocaOffset = alloca->getOffset();                            // 获取相对于fp的偏移 负数
         // 先讨论 getelementptr指令的offset为常数的情况
         if (Moffset->isImm())
         {
@@ -382,7 +497,217 @@ bool ArmInstGen::Getelem2ArmInst(InstPtr getelem)
 /// @return
 bool ArmInstGen::IAdd2ArmInst(InstPtr iadd)
 {
+    MBlockPtr curblk = machineModule->getCurBlock();
+    ValPtr left = iadd->getOperand(0);
+    ValPtr right = iadd->getOperand(1);
+    MOperaPtr leftM = MachineOperand::get(left, machineModule);
+    MOperaPtr rightM = MachineOperand::get(right, machineModule);
+    if (leftM->isImm() && !rightM->isImm())
+    {
+        // 交换次序
+        leftM = MachineOperand::AutoDealWithImm(leftM, machineModule);
+        MBinaryInstPtr add = MBinaryInst::get(curblk, MachineInst::ADD, MachineOperand::get(iadd, machineModule), rightM, leftM);
+        curblk->addInstBack(add);
+        return true;
+    }
+    if (leftM->isImm() && rightM->isImm())
+    {
+        // 左右 都是 IMM  为了简单这里不进行常数合并  常数合并在IR完成
+        // 先将leftM 加载到寄存器上
+        leftM = MachineOperand::imm2VReg(leftM, machineModule);
+        // 处理 rightM
+        rightM = MachineOperand::AutoDealWithImm(rightM, machineModule);
+        // 创建 add指令
+        MBinaryInstPtr add = MBinaryInst::get(curblk, MachineInst::ADD, MachineOperand::get(iadd, machineModule), leftM, rightM);
+        curblk->addInstBack(add);
+        return true;
+    }
+    // 其他情况
+    if (rightM->isImm())
+    {
+        rightM = MachineOperand::AutoDealWithImm(rightM, machineModule);
+    }
+    MBinaryInstPtr add = MBinaryInst::get(curblk, MachineInst::ADD, MachineOperand::get(iadd, machineModule), leftM, rightM);
+    curblk->addInstBack(add);
 
+    return true;
+}
+
+/// @brief 整数乘法
+/// @param imul
+/// @return
+bool ArmInstGen::IMul2ArmInst(InstPtr imul)
+{
+    // mul 和 add的操作一样   转化时不考虑优化
+    MBlockPtr curblk = machineModule->getCurBlock();
+    ValPtr left = imul->getOperand(0);
+    ValPtr right = imul->getOperand(1);
+    MOperaPtr leftM = MachineOperand::get(left, machineModule);
+    MOperaPtr rightM = MachineOperand::get(right, machineModule);
+    if (leftM->isImm() && !rightM->isImm())
+    {
+        // 交换次序
+        leftM = MachineOperand::AutoDealWithImm(leftM, machineModule);
+        MBinaryInstPtr mul = MBinaryInst::get(curblk, MachineInst::MUL, MachineOperand::get(imul, machineModule), rightM, leftM);
+        curblk->addInstBack(mul);
+        return true;
+    }
+    if (leftM->isImm() && rightM->isImm())
+    {
+        // 左右 都是 IMM  为了简单这里不进行常数合并  常数合并在IR完成
+        // 先将leftM 加载到寄存器上
+        leftM = MachineOperand::imm2VReg(leftM, machineModule);
+        // 处理 rightM
+        rightM = MachineOperand::AutoDealWithImm(rightM, machineModule);
+        // 创建 mul指令
+        MBinaryInstPtr mul = MBinaryInst::get(curblk, MachineInst::MUL, MachineOperand::get(imul, machineModule), leftM, rightM);
+        curblk->addInstBack(mul);
+        return true;
+    }
+    // 其他情况
+    if (rightM->isImm())
+    {
+        rightM = MachineOperand::AutoDealWithImm(rightM, machineModule);
+    }
+    MBinaryInstPtr mul = MBinaryInst::get(curblk, MachineInst::MUL, MachineOperand::get(imul, machineModule), leftM, rightM);
+    curblk->addInstBack(mul);
+
+    return true;
+}
+
+/// @brief 整数减法
+/// @param isub
+/// @return
+bool ArmInstGen::ISub2ArmInst(InstPtr isub)
+{
+    // 减法 不能交换  和add 略微有些差异
+    MBlockPtr curblk = machineModule->getCurBlock();
+    ValPtr left = isub->getOperand(0);
+    ValPtr right = isub->getOperand(1);
+    MOperaPtr leftM = MachineOperand::get(left, machineModule);
+    MOperaPtr rightM = MachineOperand::get(right, machineModule);
+    if (leftM->isImm())
+    {
+        // 加载到寄存器
+        leftM = MachineOperand::imm2VReg(leftM, machineModule);
+    }
+    if (rightM->isImm())
+    {
+        // 根据数值 判定是否可以作为立即数 否则 使用伪指令加载
+        rightM = MachineOperand::AutoDealWithImm(rightM, machineModule);
+    }
+    // 创建 sub指令
+    MBinaryInstPtr sub = MBinaryInst::get(curblk, MachineInst::SUB, MachineOperand::get(isub, machineModule), leftM, rightM);
+    curblk->addInstBack(sub);
+
+    return true;
+}
+
+/// @brief 整数除法
+/// @param idiv
+/// @return
+bool ArmInstGen::IDiv2ArmInst(InstPtr idiv)
+{
+    // 除法 不能交换  和add 略微有些差异
+    // 转化时不考虑优化
+    MBlockPtr curblk = machineModule->getCurBlock();
+    ValPtr left = idiv->getOperand(0);
+    ValPtr right = idiv->getOperand(1);
+    MOperaPtr leftM = MachineOperand::get(left, machineModule);
+    MOperaPtr rightM = MachineOperand::get(right, machineModule);
+    if (leftM->isImm())
+    {
+        // 加载到寄存器
+        leftM = MachineOperand::imm2VReg(leftM, machineModule);
+    }
+    if (rightM->isImm())
+    {
+        // 根据数值 判定是否可以作为立即数 否则 使用伪指令加载
+        rightM = MachineOperand::AutoDealWithImm(rightM, machineModule);
+    }
+    // 创建 sub指令
+    MBinaryInstPtr div = MBinaryInst::get(curblk, MachineInst::SDIV, MachineOperand::get(idiv, machineModule), leftM, rightM);
+    curblk->addInstBack(div);
+    return true;
+}
+
+/// @brief 整数取余
+/// @param srem
+/// @return
+bool ArmInstGen::ISrem2ArmInst(InstPtr srem)
+{
+    // 使用 __aeabi_idivmod实现
+    // 需要将 被除数 除数 放入 r0,r1
+    MBlockPtr curblk = machineModule->getCurBlock();
+    MFuncPtr curfun = machineModule->getCurFun();
+    ValPtr left = srem->getOperand(0);
+    ValPtr right = srem->getOperand(1);
+    MOperaPtr leftM = MachineOperand::get(left, machineModule);
+    MOperaPtr rightM = MachineOperand::get(right, machineModule);
+    // 调用前先保留 r0,r1 的旧值
+    if (curfun->getFuncName() != "main")
+    {
+        if (curfun->getFuncArgsNum() >= 2)
+        {
+            MStackInstPtr push = MStackInst::get(curblk, MachineInst::PUSH, {MachineOperand::createReg(0), MachineOperand::createReg(1)});
+            curblk->addInstBack(push);
+        }
+        else if (curfun->getFuncArgsNum() == 1)
+        {
+            MStackInstPtr push = MStackInst::get(curblk, MachineInst::PUSH, {MachineOperand::createReg(0)});
+            curblk->addInstBack(push);
+        }
+    }
+
+    if (leftM->isImm())
+    {
+        leftM = MachineOperand::imm2Reg(leftM, 0, machineModule);
+        if (rightM->isImm())
+        {
+            rightM = MachineOperand::imm2Reg(rightM, 1, machineModule);
+        }
+        else
+        {
+            // rightM 不是 r1  (简单优化 省去 mov r1,r1)
+            // 创建mov 指令
+            rightM = MachineOperand::AutoMovReg(rightM, 1, machineModule);
+        }
+    }
+    else
+    {
+        leftM = MachineOperand::AutoMovReg(leftM, 0, machineModule);
+        if (rightM->isImm())
+        {
+            rightM = MachineOperand::imm2Reg(rightM, 1, machineModule);
+        }
+        else
+        {
+            // rightM 不是 r1  (简单优化 省去 mov r1,r1)
+            // 创建mov 指令
+            rightM = MachineOperand::AutoMovReg(rightM, 1, machineModule);
+        }
+    }
+    // 创建 bl 指令 调用 __aeabi_idivmod
+    MBranchInstPtr bl = MBranchInst::get(curblk, MachineInst::BL, MachineOperand::get("__aeabi_idivmod"));
+    curblk->addInstBack(bl);
+    // 将取余结果r1取出(商保存在r0  余数保存在r1)  会产生冗余 但为了简便先这样写
+    MMovInstPtr mov_modRes = MMovInst::get(curblk, MachineInst::MOV, MachineOperand::get(srem, machineModule), MachineOperand::createReg(1));
+    curblk->addInstBack(mov_modRes);
+
+    // 使用pop 将 r0,r1恢复  （目前翻译地有些不好  后期尽量在IR端好好优化 转化 srem取余指令）
+    if (curfun->getFuncName() != "main")
+    {
+        if (curfun->getFuncArgsNum() >= 2)
+        {
+            MStackInstPtr pop = MStackInst::get(curblk, MachineInst::POP, {MachineOperand::createReg(0), MachineOperand::createReg(1)});
+            curblk->addInstBack(pop);
+        }
+        else if (curfun->getFuncArgsNum() == 1)
+        {
+            MStackInstPtr pop = MStackInst::get(curblk, MachineInst::POP, {MachineOperand::createReg(0)});
+            curblk->addInstBack(pop);
+        }
+    }
     return true;
 }
 
@@ -404,6 +729,8 @@ bool ArmInstGen::run()
 
         // 1. 创建一个对应的machineFunc
         MFuncPtr Mfun = MachineFunc::get(machineModule);
+        Mfun->setFuncName(irfun->getName());                      // 函数名
+        Mfun->setFuncArgsNum(irfun->getArgsList().size());        // 函数参数数目
         Mfun->setmaxCallFunParmas(irfun->getMaxCallFunArgsNum()); // 设置最大调用函数参数数目
         machineModule->addFunc(Mfun);                             // 加入函数
         machineModule->setCurFun(Mfun);                           // 标记当前函数

@@ -147,6 +147,20 @@ public:
     /// @return
     static MOperaPtr imm2VReg(MOperaPtr imm, MModulePtr Mmodule);
 
+    /// @brief 将立即数加载到物理寄存器
+    /// @param imm
+    /// @param regNo
+    /// @param Mmodule
+    /// @return
+    static MOperaPtr imm2Reg(MOperaPtr imm, uint32_t regNo, MModulePtr Mmodule);
+
+    /// @brief 将 vreg 或者 reg 移动到 reg  如果重复则不移动
+    /// @param reg vreg 或者reg
+    /// @param regNo
+    /// @param Mmodule
+    /// @return
+    static MOperaPtr AutoMovReg(MOperaPtr reg, uint32_t regNo, MModulePtr Mmodule);
+
     /// @brief 自动处理 Imm 类型操作数 如果Imm 符合立即数规范则保持原样 否则使用ldr伪指令加载到寄存器
     /// @param imm
     /// @param MModulePtr

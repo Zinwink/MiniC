@@ -96,22 +96,34 @@ public:
     inline MinstTy getMinstTy() { return type; }  // 获取指令类型
     inline bool isPOP() { return type == POP; }   // 是否是pop
     inline bool isPush() { return type == PUSH; } // 是否是push 类型
-    inline bool isLoad() { return type = LDR; }   // 是否是load指令
+    inline bool isLoad() { return type == LDR; }  // 是否是load指令
     inline bool isStore() { return type == STR; } // 是否是store指令
+
+    /// @brief 获取 this 智能指针
+    /// @tparam MInst
+    /// @return
+    template <typename MInst>
+    std::shared_ptr<MInst> getSharedThis()
+    {
+        return std::static_pointer_cast<MInst>(MachineInst::shared_from_this());
+    }
+
+    MBlockPtr getParent();                                         // 返回MachineBlock
+    void setParent(MBlockPtr _parent);                             // 设置parent
+    void setCondSuffix(condSuffix _cond) { cond = _cond; }         // 设置指令条件后缀
+    condSuffix getCondSuffix() { return cond; }                    // 获取条件后缀
+    uint64_t getNo() { return no; }                                // 获取行号
+    void setNo(uint64_t _no) { no = _no; }                         // 设置编号
+    virtual std::string toStr() { return "unknow machineInst!"; }; // 输出字符表示
+    std::string MinstTyStr();                                      // 输出指令操作对应的字符串
+    std::string condSuffixStr();                                   // 输出条件字符串
+
     /// @brief 将旧的操作数替换为新的
     /// @param srcOld
     /// @param srcNew
     void replaceUsesWith(MOperaPtr srcOld, MOperaPtr srcNew);
 
-    MBlockPtr getParent();                                 // 返回MachineBlock
-    void setParent(MBlockPtr _parent);                     // 设置parent
-    void setCondSuffix(condSuffix _cond) { cond = _cond; } // 设置指令条件后缀
-    condSuffix getCondSuffix() { return cond; }            // 获取条件后缀
-    uint64_t getNo() { return no; }                        // 获取行号
-    void setNo(uint64_t _no) { no = _no; }                 // 设置编号
-    virtual std::string toStr() = 0;                       // 输出字符表示
-    std::string MinstTyStr();                              // 输出指令操作对应的字符串
-    std::string condSuffixStr();                           // 输出条件字符串
+    MachineInst(){}; // 构造函数
 };
 
 /// @brief  二元指令
@@ -233,6 +245,14 @@ public:
     /// @return
     static MMovInstPtr get(MBlockPtr p, MinstTy instTy, MOperaPtr dst, MOperaPtr src1, condSuffix _cond = condSuffix::NONE);
 
+    /// @brief 根据操作数类型智能创建mov指令 无条件后缀
+    /// @param p
+    /// @param instTy
+    /// @param dst
+    /// @param src1
+    /// @param _cond
+    /// @return
+    static void create(MBlockPtr p, MOperaPtr dst, MOperaPtr src1, MModulePtr Mmodule);
 
     /// @brief 输出字符串
     /// @return

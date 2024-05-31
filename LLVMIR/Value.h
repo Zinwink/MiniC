@@ -165,6 +165,10 @@ public:
     /// @return
     bool isICmpInst();
 
+    /// @brief 判断是 callInst
+    /// @return
+    bool isCallInst();
+
     /// @brief 是否是函数形参
     /// @return
     inline bool isArgument()

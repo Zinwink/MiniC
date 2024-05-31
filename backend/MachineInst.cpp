@@ -16,6 +16,8 @@
 #include <algorithm>
 #include "Instruction.h"
 #include "DerivedInst.h"
+#include "PlatformArm32.h"
+#include "MachineModule.h"
 
 //************************** MachineInst **************************************
 MBlockPtr MachineInst::getParent()
@@ -122,7 +124,7 @@ void MachineInst::replaceUsesWith(MOperaPtr srcOld, MOperaPtr srcNew)
     if (iter != uses.end())
     {
         srcNew->setParent(shared_from_this());
-        *iter = srcNew; // 替换
+        *iter = srcNew;
     }
 }
 
@@ -180,12 +182,9 @@ MBinaryInst::MBinaryInst(MBlockPtr p, MinstTy instTy, MOperaPtr dst, MOperaPtr s
     parent = p;
     type = instTy;
     cond = _cond;
-    dst->setParent(shared_from_this());
-    src1->setParent(shared_from_this());
-    src2->setParent(shared_from_this());
-    defs.push_back(std::move(dst));
-    uses.push_back(std::move(src1));
-    uses.push_back(std::move(src2));
+    defs.push_back(dst);
+    uses.push_back(src1);
+    uses.push_back(src2);
 }
 
 /// @brief 创建智能指针对象
@@ -199,6 +198,9 @@ MBinaryInst::MBinaryInst(MBlockPtr p, MinstTy instTy, MOperaPtr dst, MOperaPtr s
 MBinaryInstPtr MBinaryInst::get(MBlockPtr p, MinstTy instTy, MOperaPtr dst, MOperaPtr src1, MOperaPtr src2, condSuffix _cond)
 {
     MBinaryInstPtr binary = std::make_shared<MBinaryInst>(p, instTy, dst, src1, src2, _cond);
+    dst->setParent(binary);
+    src1->setParent(binary);
+    src2->setParent(binary);
     return binary;
 }
 
@@ -223,14 +225,12 @@ std::string MBinaryInst::toStr()
 /// @param instTy
 /// @param dst
 /// @param src1
-MLoadInst::MLoadInst(MBlockPtr p, MinstTy instTy, MOperaPtr dst, MOperaPtr src1)
+MLoadInst::MLoadInst(MBlockPtr p, MinstTy instTy, MOperaPtr dst, MOperaPtr src1) : MachineInst()
 {
     parent = p;
     type = instTy;
-    dst->setParent(shared_from_this());
-    src1->setParent(shared_from_this());
-    defs.push_back(std::move(dst));
-    uses.push_back(std::move(src1));
+    defs.push_back(dst);
+    uses.push_back(src1);
 }
 
 /// @brief ldr r1, [r1,#2] ldr r1, [fp,r2]   带有偏移的指令或偏移为0
@@ -239,16 +239,13 @@ MLoadInst::MLoadInst(MBlockPtr p, MinstTy instTy, MOperaPtr dst, MOperaPtr src1)
 /// @param dst
 /// @param src1
 /// @param offset
-MLoadInst::MLoadInst(MBlockPtr p, MinstTy instTy, MOperaPtr dst, MOperaPtr src1, MOperaPtr offset)
+MLoadInst::MLoadInst(MBlockPtr p, MinstTy instTy, MOperaPtr dst, MOperaPtr src1, MOperaPtr offset) : MachineInst()
 {
     parent = p;
     type = instTy;
-    dst->setParent(shared_from_this());
-    src1->setParent(shared_from_this());
-    offset->setParent(shared_from_this());
-    defs.push_back(std::move(dst));
-    uses.push_back(std::move(src1));
-    uses.push_back(std::move(offset));
+    defs.push_back(dst);
+    uses.push_back(src1);
+    uses.push_back(offset);
 }
 
 /// @brief 对偏移进行修正 加上偏置bias 主要用于修正 函数后4形参的偏移
@@ -260,6 +257,7 @@ void MLoadInst::AddOffsetBias(int64_t bias)
     int64_t originOffset = uses[1]->getVal();
     int64_t newOffset = originOffset + bias;
     MOperaPtr offsetOp = MachineOperand::get(MachineOperand::IMM, newOffset);
+    offsetOp->setParent(getSharedThis<MLoadInst>());
     uses[1] = std::move(offsetOp); // 设置新的偏移
 }
 
@@ -275,11 +273,16 @@ MLoadInstPtr MLoadInst::get(MBlockPtr p, MinstTy instTy, MOperaPtr dst, MOperaPt
     if (offset == nullptr)
     {
         MLoadInstPtr ldr = std::make_shared<MLoadInst>(p, instTy, dst, src1);
+        dst->setParent(ldr);
+        src1->setParent(ldr);
         return ldr;
     }
     else
     {
         MLoadInstPtr ldr = std::make_shared<MLoadInst>(p, instTy, dst, src1, offset);
+        dst->setParent(ldr);
+        src1->setParent(ldr);
+        offset->setParent(ldr);
         return ldr;
     }
 }
@@ -316,7 +319,6 @@ std::string MLoadInst::toStr()
         {
             str += ", ";
             str += uses[1]->toStr();
-            return str;
         }
         str += "]";
         return str;
@@ -332,18 +334,15 @@ std::string MLoadInst::toStr()
 /// @param src1
 /// @param src2
 /// @param offset
-MStore::MStore(MBlockPtr p, MinstTy instTy, MOperaPtr src1, MOperaPtr src2, MOperaPtr offset)
+MStore::MStore(MBlockPtr p, MinstTy instTy, MOperaPtr src1, MOperaPtr src2, MOperaPtr offset) : MachineInst()
 {
     parent = p;
     type = instTy;
-    src1->setParent(shared_from_this());
-    src2->setParent(shared_from_this());
-    uses.push_back(std::move(src1));
-    uses.push_back(std::move(src2));
+    uses.push_back(src1);
+    uses.push_back(src2);
     if (offset != nullptr)
     {
-        offset->setParent(shared_from_this());
-        uses.push_back(std::move(offset));
+        uses.push_back(offset);
     }
 }
 
@@ -356,6 +355,7 @@ void MStore::AddOffsetBias(int64_t bias)
     int64_t originOffset = uses[2]->getVal();
     int64_t newOffset = originOffset + bias;
     MOperaPtr offsetOp = MachineOperand::get(MachineOperand::IMM, newOffset);
+    offsetOp->setParent(getSharedThis<MStore>());
     uses[2] = std::move(offsetOp); // 设置新的偏移
 }
 
@@ -369,6 +369,12 @@ void MStore::AddOffsetBias(int64_t bias)
 MStorePtr MStore::get(MBlockPtr p, MinstTy instTy, MOperaPtr src1, MOperaPtr src2, MOperaPtr offset)
 {
     MStorePtr str = std::make_shared<MStore>(p, instTy, src1, src2, offset);
+    src1->setParent(str);
+    src2->setParent(str);
+    if (offset != nullptr)
+    {
+        offset->setParent(str);
+    }
     return str;
 }
 
@@ -398,15 +404,13 @@ std::string MStore::toStr()
 /// @param dst
 /// @param src1
 /// @param _cond
-MMovInst::MMovInst(MBlockPtr p, MinstTy instTy, MOperaPtr dst, MOperaPtr src1, condSuffix _cond)
+MMovInst::MMovInst(MBlockPtr p, MinstTy instTy, MOperaPtr dst, MOperaPtr src1, condSuffix _cond) : MachineInst()
 {
     parent = p;
     type = instTy;
     cond = _cond;
-    dst->setParent(shared_from_this());
-    src1->setParent(shared_from_this());
-    defs.push_back(std::move(dst));
-    uses.push_back(std::move(src1));
+    defs.push_back(dst);
+    uses.push_back(src1);
 }
 
 /// @brief 创建智能指针对象
@@ -419,7 +423,46 @@ MMovInst::MMovInst(MBlockPtr p, MinstTy instTy, MOperaPtr dst, MOperaPtr src1, c
 MMovInstPtr MMovInst::get(MBlockPtr p, MinstTy instTy, MOperaPtr dst, MOperaPtr src1, condSuffix _cond)
 {
     MMovInstPtr mov = std::make_shared<MMovInst>(p, instTy, dst, src1, _cond);
+    dst->setParent(mov);
+    src1->setParent(mov);
     return mov;
+}
+
+/// @brief 根据操作数类型智能创建mov指令 无条件后缀
+/// @param p
+/// @param instTy
+/// @param dst
+/// @param src1
+/// @param _cond
+/// @return
+void MMovInst::create(MBlockPtr p, MOperaPtr dst, MOperaPtr src1, MModulePtr Mmodule)
+{
+    assert((dst->isReg() || dst->isVReg()) && !src1->isLabel());
+    // 不会对 dst src1进行拷贝 如不希望改变 在外应创建副本
+    if (src1->isImm())
+    {
+        int val = src1->getVal();
+        if (Arm32::canBeImmOperand(val))
+        {
+            // 直接创建mov 指令
+            MMovInstPtr mov = MMovInst::get(p, MachineInst::MOV, dst, src1);
+            Mmodule->getCurBlock()->addInstBack(mov);
+            return;
+        }
+        else
+        {
+            // 使用ldr 伪指令
+            MLoadInstPtr ldr = MLoadInst::get(p, MachineInst::LDR, dst, src1);
+            Mmodule->getCurBlock()->addInstBack(ldr);
+            return;
+        }
+    }
+    // 其他情况 创建 mov 指令
+    else
+    {
+        MMovInstPtr mov = MMovInst::get(p, MachineInst::MOV, dst, src1);
+        Mmodule->getCurBlock()->addInstBack(mov);
+    }
 }
 
 /// @brief 输出字符串
@@ -441,14 +484,12 @@ std::string MMovInst::toStr()
 /// @param instTy
 /// @param src1
 /// @param src2
-MCmpInst::MCmpInst(MBlockPtr p, MinstTy instTy, MOperaPtr src1, MOperaPtr src2)
+MCmpInst::MCmpInst(MBlockPtr p, MinstTy instTy, MOperaPtr src1, MOperaPtr src2) : MachineInst()
 {
     parent = p;
     type = instTy;
-    src1->setParent(shared_from_this());
-    src2->setParent(shared_from_this());
-    uses.push_back(std::move(src1));
-    uses.push_back(std::move(src2));
+    uses.push_back(src1);
+    uses.push_back(src2);
 }
 
 /// @brief 创建智能指针类型
@@ -460,6 +501,8 @@ MCmpInst::MCmpInst(MBlockPtr p, MinstTy instTy, MOperaPtr src1, MOperaPtr src2)
 MCmpInstPtr MCmpInst::get(MBlockPtr p, MinstTy instTy, MOperaPtr src1, MOperaPtr src2)
 {
     MCmpInstPtr cmp = std::make_shared<MCmpInst>(p, instTy, src1, src2);
+    src1->setParent(cmp);
+    src2->setParent(cmp);
     return cmp;
 }
 
@@ -486,8 +529,7 @@ MStackInst::MStackInst(MBlockPtr p, MinstTy instTy, std::vector<MOperaPtr> srcs)
     type = instTy;
     for (auto &src : srcs)
     {
-        src->setParent(shared_from_this());
-        uses.push_back(std::move(src));
+        uses.push_back(src);
     }
 }
 
@@ -498,7 +540,7 @@ void MStackInst::setRegs(std::vector<MOperaPtr> &regs)
     uses.clear();
     for (auto &src : regs)
     {
-        src->setParent(shared_from_this());
+        src->setParent(getSharedThis<MStackInst>());
         uses.push_back(std::move(src));
     }
     regs.clear();
@@ -513,6 +555,10 @@ void MStackInst::setRegs(std::vector<MOperaPtr> &regs)
 MStackInstPtr MStackInst::get(MBlockPtr p, MinstTy instTy, std::vector<MOperaPtr> srcs)
 {
     MStackInstPtr stk = std::make_shared<MStackInst>(p, instTy, srcs);
+    for (auto &src : srcs)
+    {
+        src->setParent(stk); // 设置parent
+    }
     return stk;
 }
 
@@ -521,7 +567,8 @@ MStackInstPtr MStackInst::get(MBlockPtr p, MinstTy instTy, std::vector<MOperaPtr
 std::string MStackInst::toStr()
 {
     string str = MinstTyStr();
-    str += " ";
+
+    str += "   ";
     str += "{";
     for (size_t i = 0; i < uses.size(); i++)
     {
@@ -543,13 +590,12 @@ std::string MStackInst::toStr()
 /// @param instTy
 /// @param src
 /// @param _cond
-MBranchInst::MBranchInst(MBlockPtr p, MinstTy instTy, MOperaPtr src, condSuffix _cond)
+MBranchInst::MBranchInst(MBlockPtr p, MinstTy instTy, MOperaPtr src, condSuffix _cond) : MachineInst()
 {
     parent = p;
     type = instTy;
     cond = _cond;
-    src->setParent(shared_from_this());
-    uses.push_back(std::move(src));
+    uses.push_back(src);
 }
 
 /// @brief 创建智能指针对象 branch
@@ -561,6 +607,7 @@ MBranchInst::MBranchInst(MBlockPtr p, MinstTy instTy, MOperaPtr src, condSuffix 
 MBranchInstPtr MBranchInst::get(MBlockPtr p, MinstTy instTy, MOperaPtr src, condSuffix _cond)
 {
     MBranchInstPtr b = std::make_shared<MBranchInst>(p, instTy, src, _cond);
+    src->setParent(b);
     return b;
 }
 

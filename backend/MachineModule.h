@@ -106,6 +106,14 @@ public:
     /// @brief  析构函数
     ~MachineModule();
 
+    /// @brief 获取指针智能对象
+    /// @return 
+    static MModulePtr get();
+
+    /// @brief 将Arm指令打印至文件中
+    /// @param filePath
+    void printArm(string filePath);
+
     /// @brief 手动清理
     void clear();
 };

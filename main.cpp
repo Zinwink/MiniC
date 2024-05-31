@@ -10,6 +10,8 @@
 #include "IRGen.h"
 #include "ElimBasicBlock.h"
 #include "DeadInstElim.h"
+#include "MachineModule.h"
+#include "ArmInstGen.h"
 
 #include <iostream>
 
@@ -28,6 +30,12 @@ int main()
 
     module->printIR("../tests/test1__13.ll");
     free_ast(ast_root);
+    MModulePtr Mmodule = MachineModule::get();
+    ArmInstGenPtr ArmGen = ArmInstGen::get(module, Mmodule);
+    ArmGen->run();
+    Mmodule->printArm("../tests/test1__13.s");
+    Mmodule->clear();
+
     // 测试遍历ast得到llvm ir  仅测试简单用例
     // ScopeMg *scope = new ScopeMg();
     // IRGenerate *irgen = new IRGenerate(scope, ast_root);

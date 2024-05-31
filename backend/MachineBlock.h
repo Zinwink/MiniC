@@ -98,6 +98,10 @@ public:
     /// @param block
     void removeSucc(MBlockPtr block);
 
+    /// @brief 块翻译为字符串
+    /// @return 
+    string toStr();
+
     /// @brief 获取块的智能指针对象
     /// @param p
     /// @param n

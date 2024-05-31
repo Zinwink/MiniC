@@ -29,7 +29,7 @@ private:
     std::vector<ArgPtr> args;            // 形参列表
     std::list<InstPtr> allocaLists;      // AllocaInst链表
     std::list<BasicBlockPtr> BlocksList; // 基本块列表
-    uint32_t maxCallFuncArgsNum = 0;     // 函数体中调用函数的最大参数数目
+    int32_t maxCallFuncArgsNum = 0;     // 函数体中调用函数的最大参数数目
 
 public:
     /// @brief 构造函数
@@ -64,11 +64,11 @@ public:
 
     /// @brief 返回最大 调用函数的 参数数目
     /// @return
-    inline uint32_t getMaxCallFunArgsNum() { return maxCallFuncArgsNum; }
+    inline int32_t getMaxCallFunArgsNum() { return maxCallFuncArgsNum; }
 
     /// @brief 更新 最大调用函数参数数目
     /// @param argsNum
-    inline void updateMaxCallFunArgsNum(uint32_t argsNum)
+    inline void updateMaxCallFunArgsNum(int32_t argsNum)
     {
         if (argsNum > maxCallFuncArgsNum)
             maxCallFuncArgsNum = argsNum;

@@ -59,7 +59,8 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp",
         "fstream": "cpp",
-        "list": "cpp"
+        "list": "cpp",
+        "*.inc": "cpp"
     },
     "cody.autocomplete.experimental.ollamaOptions": {
         "url": "http://127.0.0.1:11434",
