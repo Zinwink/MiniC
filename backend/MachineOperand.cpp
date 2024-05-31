@@ -298,21 +298,40 @@ MOperaPtr MachineOperand::imm2Reg(MOperaPtr imm, uint32_t regNo, MModulePtr Mmod
 /// @brief 自动处理 Imm 类型操作数 如果Imm 符合立即数规范则保持原样 否则使用ldr伪指令加载到寄存器
 /// @param imm
 /// @param MModulePtr
+/// @param isDisp 是否是栈偏移
 /// @return
-MOperaPtr MachineOperand::AutoDealWithImm(MOperaPtr imm, MModulePtr Mmodule)
+MOperaPtr MachineOperand::AutoDealWithImm(MOperaPtr imm, MModulePtr Mmodule, bool isDisp)
 {
     assert(imm->isImm() && "imm is not a imm type!");
     int value = imm->getVal();
-    if (Arm32::canBeImmOperand(value))
-    {
-        return imm;
+    if (!isDisp)
+    { // 不作为偏移使用
+        if (Arm32::canBeImmOperand(value))
+        {
+            return imm;
+        }
+        else
+        {
+            MOperaPtr vreg = get(VREG, Mmodule->getRegNo()); // 生成寄存器
+            MLoadInstPtr ldr = MLoadInst::get(Mmodule->getCurBlock(), MachineInst::LDR, vreg, imm);
+            Mmodule->getCurBlock()->addInstBack(ldr);
+            return copy(vreg);
+        }
     }
     else
     {
-        MOperaPtr vreg = get(VREG, Mmodule->getRegNo()); // 生成寄存器
-        MLoadInstPtr ldr = MLoadInst::get(Mmodule->getCurBlock(), MachineInst::LDR, vreg, imm);
-        Mmodule->getCurBlock()->addInstBack(ldr);
-        return copy(vreg);
+        // 作为偏移使用 判断偏移数值是否合法
+        if (Arm32::isLegalDisp(value))
+        {
+            return imm;
+        }
+        else
+        {
+            MOperaPtr vreg = get(VREG, Mmodule->getRegNo()); // 生成寄存器
+            MLoadInstPtr ldr = MLoadInst::get(Mmodule->getCurBlock(), MachineInst::LDR, vreg, imm);
+            Mmodule->getCurBlock()->addInstBack(ldr);
+            return copy(vreg);
+        }
     }
 }
 

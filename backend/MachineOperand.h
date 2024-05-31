@@ -167,7 +167,7 @@ public:
     /// @param imm
     /// @param MModulePtr
     /// @return
-    static MOperaPtr AutoDealWithImm(MOperaPtr imm, MModulePtr Mmodule);
+    static MOperaPtr AutoDealWithImm(MOperaPtr imm, MModulePtr Mmodule, bool isDisp = false);
 
     /// @brief 拷贝生成相同的操作数
     /// @param op
