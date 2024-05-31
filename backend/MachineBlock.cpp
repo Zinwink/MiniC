@@ -65,13 +65,42 @@ void MachineBlock::addInstBack(MInstPtr inst)
 /// @brief 在before前插入 inst指令 （用于溢出内存时插入load指令）
 /// @param before
 /// @param inst
-void MachineBlock::insertInstBefore(MInstPtr before, MInstPtr inst)
+std::list<MInstPtr>::iterator MachineBlock::insertInstBefore(MInstPtr before, MInstPtr inst)
 {
     auto iter = std::find(MinstList.begin(), MinstList.end(), before);
     if (iter != MinstList.end())
     {
-        MinstList.insert(iter, inst);
+        auto resIter = MinstList.insert(iter, inst);
+        return resIter;
     }
+    return iter;
+}
+
+/// @brief 在某条指令后插入一条指令 (寄存器分配时对 def 后插入 store保存旧值至栈中)
+/// @param after
+/// @param inst
+std::list<MInstPtr>::iterator MachineBlock::insertInstAfter(MInstPtr after, MInstPtr inst)
+{
+    auto iter = std::find(MinstList.begin(), MinstList.end(), after);
+    if (iter != MinstList.end())
+    {
+        auto resIter = MinstList.insert(std::next(iter), inst);
+        return resIter;
+    }
+    return iter;
+}
+
+/// @brief 插入指令 在指定迭代器
+/// @param iter
+/// @param inst
+std::list<MInstPtr>::iterator MachineBlock::insertInst(std::list<MInstPtr>::iterator iter, MInstPtr inst)
+{
+    if (iter != MinstList.end())
+    {
+        auto resIter = MinstList.insert(iter, inst);
+        return resIter;
+    }
+    return iter;
 }
 
 /// @brief 添加前驱

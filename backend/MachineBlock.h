@@ -80,7 +80,18 @@ public:
     /// @brief 在before前插入 inst指令 （用于溢出内存时插入load指令）
     /// @param before
     /// @param inst
-    void insertInstBefore(MInstPtr before, MInstPtr inst);
+    /// @return
+    std::list<MInstPtr>::iterator insertInstBefore(MInstPtr before, MInstPtr inst);
+
+    /// @brief 在某条指令后插入一条指令 (寄存器分配时对 def 后插入 store保存旧值至栈中)
+    /// @param after
+    /// @param inst
+    std::list<MInstPtr>::iterator insertInstAfter(MInstPtr after, MInstPtr inst);
+
+    /// @brief 插入指令 在指定迭代器
+    /// @param iter
+    /// @param inst
+    std::list<MInstPtr>::iterator insertInst(std::list<MInstPtr>::iterator iter, MInstPtr inst);
 
     /// @brief 添加前驱
     /// @param block
@@ -99,7 +110,7 @@ public:
     void removeSucc(MBlockPtr block);
 
     /// @brief 块翻译为字符串
-    /// @return 
+    /// @return
     string toStr();
 
     /// @brief 获取块的智能指针对象
