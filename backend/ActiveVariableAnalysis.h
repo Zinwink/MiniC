@@ -1,7 +1,7 @@
 /**
  * @file ActiveVariableAnalysis.h
  * @author ZhengWenJie-mole (2732356616@qq.com)
- * @brief 活跃变量分析 用于寄存器分配  声明:相关实现参考自2023年编译原理大赛南开大学的作品(各个队实现的都基本一样)
+ * @brief 活跃变量分析 用于寄存器分配  声明:相关实现参考自2023年编译原理大赛南开大学的作品212，参考自课件CH8-DataflowAnalysis
  * @version 1.0
  * @date 2024-05-25
  *
@@ -20,6 +20,8 @@
 /// @brief 活跃变量分析
 class ActiveVariAnalysis
 {
+    friend class LinearScan;
+
 private:
     /// @brief 主要用于记录 函数中所有 虚拟寄存器的使用位置(可通过map 的键对应指针查看)
     /// MachineOperand中已经重写了 == 号，对于编号相同的虚拟寄存器 其map键是相同的
@@ -104,7 +106,6 @@ public:
         def.clear();
         use.clear();
     }
-
     /// @brief 返回记录
     /// @return
     inline std::map<MachineOperand, std::set<MOperaPtr>> &getAllUsesInfun() { return AllUsesInfun; }

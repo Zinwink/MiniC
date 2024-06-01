@@ -45,6 +45,9 @@ private:
     /// @brief 所需申请的栈空间
     uint64_t stackSize = 0;
 
+    /// @brief 记录当前vregNo  当ArmInstGen翻译完毕 计数哈希表释放 在进行寄存器分配时 寄存器溢出内存需要使用该编号
+    uint32_t curVregNo;
+
     /// @brief 记录函数使用的 全局变脸 常量标签地址
     std::unordered_map<ValPtr, string> addrPool;
 
@@ -68,8 +71,7 @@ public:
 
     /// @brief 加入需要保存原值寄存器
     /// @param reg
-    inline void
-    addSaveReg(int reg)
+    inline void addSaveReg(int reg)
     {
         regsSave.insert(reg);
     }
@@ -135,6 +137,20 @@ public:
     {
         stackSize += size;
         return stackSize;
+    }
+
+    /// @brief 获取从溢出内存加载到虚拟寄存器时新的编号
+    /// @return
+    inline uint32_t genSpillLoadVregNo()
+    {
+        return ++curVregNo;
+    }
+
+    /// @brief 设置更新当前最大虚拟寄存器的编号
+    /// @param no
+    inline void setcurVregNo(uint32_t no)
+    {
+        curVregNo = no;
     }
 
     inline void addAdjustInst(MInstPtr inst) { InstToAdjust.push_back(inst); }

@@ -144,6 +144,13 @@ public:
     /// @return
     inline std::unordered_map<ValPtr, uint32_t> &getRecordMap() { return record; }
 
+    /// @brief 获取当前使用的寄存器编号
+    /// @return
+    inline int32_t getCurUsedMaxRegNo()
+    {
+        return (int32_t)(RegNo)-1;
+    }
+
     /// @brief 获取编号 当记录中存在时 取出 不存在时放入 并增加计数
     /// @param val
     /// @return

@@ -1,7 +1,7 @@
 /**
  * @file ActiveVariableAnalysis.cpp
  * @author ZhengWenJie-mole (2732356616@qq.com)
- * @brief 活跃变量分析 用于寄存器分配  声明:相关实现参考自2023年编译原理大赛南开大学的作品(各个队实现的都基本一样)
+ * @brief 活跃变量分析 用于寄存器分配  声明:相关实现参考自2023年编译原理大赛南开大学的作品212，参考自课件CH8-DataflowAnalysis
  * @version 1.0
  * @version 1.0
  * @date 2024-05-25
@@ -16,6 +16,7 @@
 /// @brief 计算 获取 虚拟寄存器的所有使用位置
 void ActiveVariAnalysis::computeAllUsesInfun(MFuncPtr fun)
 {
+    AllUsesInfun.clear(); // 清理一下 不同函数结果不同
     // 获取块列表
     std::list<MBlockPtr> &blockList = fun->getBlockList();
     for (auto &blk : blockList)
@@ -36,6 +37,8 @@ void ActiveVariAnalysis::computeAllUsesInfun(MFuncPtr fun)
 /// @param fun
 void ActiveVariAnalysis::computeDefUseInfun(MFuncPtr fun)
 {
+    def.clear();  //清理一下def use
+    use.clear();
     std::list<MBlockPtr> &blockList = fun->getBlockList();
     for (auto &blk : blockList)
     {
@@ -65,16 +68,16 @@ void ActiveVariAnalysis::computeLiveVariInfun(MFuncPtr fun)
     computeAllUsesInfun(fun);
     computeDefUseInfun(fun);
     // 计算函数中所有块的 In Out
-    // 改进迭代法(参考自课件CH8-DataflowAnalysis) 初始每个基本块的 In Out 流为空集 并创建一个
+    // 改进迭代法(参考自课件CH8-DataflowAnalysis) 初始每个基本块的 In Out 流为空集 并创建一个队列记录
     std::list<MBlockPtr> &blockList = fun->getBlockList();
-    std::deque<MBlockPtr> blkQue; // 改进算法队列
+    std::deque<MBlockPtr> blkQue; // 改进算法的 队列
     for (auto &blk : blockList)
     {
         blk->getLiveIn().clear();
         blk->getLiveOut().clear();
         blkQue.push_back(blk);
     }
-    // 改进算法 只需跟踪基本块的后继 如果后继不变 则该基本块的流也不变
+    // 使用改进算法 只需跟踪基本块的后继 如果后继不变 则该基本块的流也不变
     while (!blkQue.empty()) // 队列不空
     {
         MBlockPtr blk = blkQue.front();

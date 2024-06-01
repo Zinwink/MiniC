@@ -81,7 +81,7 @@ public:
 
 protected:
     MBlockPtr parent = nullptr;         // 指令属于的块
-    uint64_t no;                        // 指令编号 用于活跃区间
+    uint32_t no;                        // 指令编号 用于活跃区间
     condSuffix cond = condSuffix::NONE; // 条件后缀
     MinstTy type;                       // 指令类型
     std::vector<MOperaPtr> defs;        // def 目的操作数
@@ -112,8 +112,8 @@ public:
     void setParent(MBlockPtr _parent);                             // 设置parent
     void setCondSuffix(condSuffix _cond) { cond = _cond; }         // 设置指令条件后缀
     condSuffix getCondSuffix() { return cond; }                    // 获取条件后缀
-    uint64_t getNo() { return no; }                                // 获取行号
-    void setNo(uint64_t _no) { no = _no; }                         // 设置编号
+    uint32_t getNo() { return no; }                                // 获取行号
+    void setNo(uint32_t _no) { no = _no; }                         // 设置编号
     virtual std::string toStr() { return "unknow machineInst!"; }; // 输出字符表示
     std::string MinstTyStr();                                      // 输出指令操作对应的字符串
     std::string condSuffixStr();                                   // 输出条件字符串

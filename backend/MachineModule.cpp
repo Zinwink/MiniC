@@ -51,13 +51,21 @@ MachineModule::~MachineModule()
 /// @brief 获取编号 全局变脸 常量标签地址  临时变量的虚拟寄存器编号
 /// @param val
 /// @return
-uint32_t MachineModule::getNo(ValPtr val) { return counter->getNo(val); }
+uint32_t MachineModule::getNo(ValPtr val)
+{
+
+    uint32_t res = counter->getNo(val);
+    curFun->setcurVregNo(counter->getCurUsedMaxRegNo());
+    return res;
+}
 
 /// @brief 不插入记录 获取相应的
 /// @return
 uint32_t MachineModule::getRegNo()
 {
-    return counter->getRegNo();
+    uint32_t res = counter->getRegNo();
+    curFun->setcurVregNo(counter->getCurUsedMaxRegNo());
+    return res;
 }
 
 /// @brief 重置计数器
