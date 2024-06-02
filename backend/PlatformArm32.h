@@ -1,7 +1,7 @@
 /**
  * @file PlatformArm32.h
  * @author ZhengWenJie-mole (2732356616@qq.com)
- * @brief
+ * @brief 存放一些工具函数 后端 前端都可使用
  * @version 1.0
  * @date 2024-05-23
  *
@@ -27,4 +27,9 @@ namespace Arm32
     /// @param offset
     /// @return
     bool isLegalDisp(int offset);
+
+    /// @brief 判断是否是2的幂次方 以及幂的次数
+    /// @param n 数值
+    /// @return
+    int isPowerOfTwo(int n);
 }

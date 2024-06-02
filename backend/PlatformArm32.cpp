@@ -52,3 +52,29 @@ bool Arm32::isLegalDisp(int offset)
 {
     return offset < 4096 && offset > -4096;
 }
+
+/// @brief 判断是否是2的幂次方 以及幂的次数
+/// @param n 数值
+/// @return
+int Arm32::isPowerOfTwo(int n)
+{
+    if (n <= 0)
+    {
+        return -1; // 不是2的幂次方
+    }
+    if ((n & (n - 1)) == 0)
+    {
+        // 使用n & (n - 1)可以消除最低位的1，如果结果为0，说明只有一个1
+        int count = 0;
+        while (n > 1)
+        {
+            n >>= 1;
+            count++;
+        }
+        return count;
+    }
+    else
+    {
+        return -1; // 不是2的幂次方
+    }
+}

@@ -449,7 +449,7 @@ bool ArmInstGen::Getelem2ArmInst(InstPtr getelem)
         if (Moffset->isImm())
         {
             int offsetval = Moffset->getVal();
-            int alloffset = offsetval * 4 + allocaOffset; // 相对于 fp的总偏移
+            int alloffset = offsetval * gainDimBytes + allocaOffset; // 相对于 fp的总偏移
             MOperaPtr newOffset = MachineOperand::get(MachineOperand::IMM, alloffset);
             newOffset = MachineOperand::AutoDealWithImm(newOffset, machineModule); // 自动处理
             // 下面创建 fp + 偏移 获取数组索引地址
@@ -462,6 +462,34 @@ bool ArmInstGen::Getelem2ArmInst(InstPtr getelem)
             // getelementptr指令的offset不为常数
             //  先将 Moffset 和 allocaOffset 进行加法运算
             // 由于数组元素是4字节 需要将 Moffset进行处理
+            // 先使用lsl 移位实现 Moffset 乘以 gainDimBytes(由于数组目前元素一定是4字节 因此一定可以化为lsl 不过为了严谨还是增加乘法运算)
+            // 下面的步骤主要用于更新Moffset 带有字节的偏移 (下面这段代码会多次复用  没有封装  后面使用是直接复制这段代码)
+            int powNum = Arm32::isPowerOfTwo(gainDimBytes);
+            if (powNum == -1)
+            {
+                // 不是幂次方 使用MUl指令 但需要将 gainDimBytes 加载到寄存器
+                MOperaPtr gainDimBytesImm = MachineOperand::get(MachineOperand::IMM, gainDimBytes);
+                gainDimBytesImm = MachineOperand::imm2VReg(gainDimBytesImm, machineModule);
+                // 创建乘法指令
+                MOperaPtr mulRes = MachineOperand::get(MachineOperand::VREG, machineModule->getRegNo());
+                MBinaryInstPtr mul = MBinaryInst::get(curblk, MachineInst::MUL, mulRes, Moffset, gainDimBytesImm);
+                curblk->addInstBack(mul);
+                Moffset = MachineOperand::copy(mulRes); // 将 Moffset更新为乘以字节数的 偏移结果 后继使用add 基址加偏移
+            }
+            else if (powNum == 0)
+            {
+                // 是2的幂次方 但为0  无操作
+            }
+            else
+            {
+                // 是不为0的2的幂次方 使用lsl 指令
+                MOperaPtr lslRes = MachineOperand::get(MachineOperand::VREG, machineModule->getRegNo());
+                MOperaPtr powNumImm = MachineOperand::get(MachineOperand::IMM, powNum); // 2的幂次 立即数
+                powNumImm = MachineOperand::AutoDealWithImm(powNumImm, machineModule);  // 自动处理
+                MBinaryInstPtr lsl = MBinaryInst::get(curblk, MachineInst::LSL, lslRes, Moffset, powNumImm);
+                curblk->addInstBack(lsl);
+                Moffset = MachineOperand::copy(lslRes); // 将Moffset更新为字节型偏移供后继使用
+            }
 
             MOperaPtr addVreg = Moffset;
             if (allocaOffset != 0)
@@ -489,7 +517,40 @@ bool ArmInstGen::Getelem2ArmInst(InstPtr getelem)
         // 创建加法 指令 地址寄存器 加偏移
         if (Moffset->isImm())
         {
-            Moffset = MachineOperand::AutoDealWithImm(Moffset, machineModule); // 自动处理转化
+            // 获取数值 得到字节数偏移
+            int offsetval = Moffset->getVal();
+            Moffset = MachineOperand::get(MachineOperand::IMM, offsetval * gainDimBytes); // 更新Moffset为字节数偏移立即数
+            Moffset = MachineOperand::AutoDealWithImm(Moffset, machineModule);            // 自动处理转化
+        }
+        else
+        {
+            // Moffset不是数值类型
+            int powNum = Arm32::isPowerOfTwo(gainDimBytes);
+            if (powNum == -1)
+            {
+                // 不是幂次方 使用MUl指令 但需要将 gainDimBytes 加载到寄存器
+                MOperaPtr gainDimBytesImm = MachineOperand::get(MachineOperand::IMM, gainDimBytes);
+                gainDimBytesImm = MachineOperand::imm2VReg(gainDimBytesImm, machineModule);
+                // 创建乘法指令
+                MOperaPtr mulRes = MachineOperand::get(MachineOperand::VREG, machineModule->getRegNo());
+                MBinaryInstPtr mul = MBinaryInst::get(curblk, MachineInst::MUL, mulRes, Moffset, gainDimBytesImm);
+                curblk->addInstBack(mul);
+                Moffset = MachineOperand::copy(mulRes); // 将 Moffset更新为乘以字节数的 偏移结果 后继使用add 基址加偏移
+            }
+            else if (powNum == 0)
+            {
+                // 是2的幂次方 但为0  无操作
+            }
+            else
+            {
+                // 是不为0的2的幂次方 使用lsl 指令
+                MOperaPtr lslRes = MachineOperand::get(MachineOperand::VREG, machineModule->getRegNo());
+                MOperaPtr powNumImm = MachineOperand::get(MachineOperand::IMM, powNum); // 2的幂次 立即数
+                powNumImm = MachineOperand::AutoDealWithImm(powNumImm, machineModule);  // 自动处理
+                MBinaryInstPtr lsl = MBinaryInst::get(curblk, MachineInst::LSL, lslRes, Moffset, powNumImm);
+                curblk->addInstBack(lsl);
+                Moffset = MachineOperand::copy(lslRes); // 将Moffset更新为字节型偏移供后继使用
+            }
         }
         MBinaryInstPtr add = MBinaryInst::get(curblk, MachineInst::ADD, MachineOperand::get(getelem, machineModule), MachineOperand::copy(glbvAddrReg), Moffset);
         curblk->addInstBack(add);
@@ -498,10 +559,41 @@ bool ArmInstGen::Getelem2ArmInst(InstPtr getelem)
     {
         // 获取基址寄存器
         MOperaPtr MbaseReg = MachineOperand::get(baseAddr, machineModule);
-        // 下面讨论 Moffset的情况
+        // 下面讨论 Moffset的情况 并对 Moffset进行更新
         if (Moffset->isImm())
         {
+            int offsetval = Moffset->getVal();
+            Moffset = MachineOperand::get(MachineOperand::IMM, offsetval * gainDimBytes);
             Moffset = MachineOperand::AutoDealWithImm(Moffset, machineModule); // 自动处理转化
+        }
+        else
+        {
+            int powNum = Arm32::isPowerOfTwo(gainDimBytes);
+            if (powNum == -1)
+            {
+                // 不是幂次方 使用MUl指令 但需要将 gainDimBytes 加载到寄存器
+                MOperaPtr gainDimBytesImm = MachineOperand::get(MachineOperand::IMM, gainDimBytes);
+                gainDimBytesImm = MachineOperand::imm2VReg(gainDimBytesImm, machineModule);
+                // 创建乘法指令
+                MOperaPtr mulRes = MachineOperand::get(MachineOperand::VREG, machineModule->getRegNo());
+                MBinaryInstPtr mul = MBinaryInst::get(curblk, MachineInst::MUL, mulRes, Moffset, gainDimBytesImm);
+                curblk->addInstBack(mul);
+                Moffset = MachineOperand::copy(mulRes); // 将 Moffset更新为乘以字节数的 偏移结果 后继使用add 基址加偏移
+            }
+            else if (powNum == 0)
+            {
+                // 是2的幂次方 但为0  无操作
+            }
+            else
+            {
+                // 是不为0的2的幂次方 使用lsl 指令
+                MOperaPtr lslRes = MachineOperand::get(MachineOperand::VREG, machineModule->getRegNo());
+                MOperaPtr powNumImm = MachineOperand::get(MachineOperand::IMM, powNum); // 2的幂次 立即数
+                powNumImm = MachineOperand::AutoDealWithImm(powNumImm, machineModule);  // 自动处理
+                MBinaryInstPtr lsl = MBinaryInst::get(curblk, MachineInst::LSL, lslRes, Moffset, powNumImm);
+                curblk->addInstBack(lsl);
+                Moffset = MachineOperand::copy(lslRes); // 将Moffset更新为字节型偏移供后继使用
+            }
         }
         // 创建 加法 获取最终位置
         MBinaryInstPtr add = MBinaryInst::get(curblk, MachineInst::ADD, MachineOperand::get(getelem, machineModule), MbaseReg, Moffset);
@@ -627,7 +719,7 @@ bool ArmInstGen::IDiv2ArmInst(InstPtr idiv)
         // 根据数值 判定是否可以作为立即数 否则 使用伪指令加载
         rightM = MachineOperand::imm2VReg(rightM, machineModule);
     }
-    // 创建 sub指令
+    // 创建 DIV指令
     MBinaryInstPtr div = MBinaryInst::get(curblk, MachineInst::SDIV, MachineOperand::get(idiv, machineModule), leftM, rightM);
     curblk->addInstBack(div);
     return true;
