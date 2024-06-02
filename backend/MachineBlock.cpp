@@ -163,7 +163,7 @@ MBlockPtr MachineBlock::get(MFuncPtr p, uint64_t n)
 /// @return
 string MachineBlock::toStr()
 {
-    string str = label;
+    string str = label + ":";
     str += "\n";
     for (auto &minst : getInstList())
     {

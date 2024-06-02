@@ -12,6 +12,7 @@
 #include "DeadInstElim.h"
 #include "MachineModule.h"
 #include "ArmInstGen.h"
+#include "LinearScan.h"
 
 #include <iostream>
 
@@ -33,6 +34,10 @@ int main()
     MModulePtr Mmodule = MachineModule::get();
     ArmInstGenPtr ArmGen = ArmInstGen::get(module, Mmodule);
     ArmGen->run();
+
+    LinearScanPtr linearscan = LinearScan::get(Mmodule);
+    linearscan->allocateReg(); // 分配寄存器
+
     Mmodule->printArm("../tests/test1__13.s");
     Mmodule->clear();
 

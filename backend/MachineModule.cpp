@@ -139,13 +139,13 @@ void MachineModule::genGlobalVariDecl()
         if (g->getInitilizer() != nullptr)
         {
             // data段
-            string str = "\ttype    " + g->getName() + ",%object\n";
-            str += "\t.globl    " + g->getName() + "\n";
+            string str = "\t.type   " + g->getName() + ",%object\n";
+            str += "\t.globl   " + g->getName() + "\n";
             str += g->getName() + ":\n";
             if (!g->getElemTy()->isArrayType())
             {
                 ConstantIntPtr intv = std::static_pointer_cast<ConstantInt>(g->getInitilizer());
-                str += "\t.long  " + std::to_string(intv->getValue()) + "\n";
+                str += "\t.long   " + std::to_string(intv->getValue()) + "\n";
                 str += "\t.size   " + g->getName() + ", " + "4";
             }
             else
@@ -157,8 +157,8 @@ void MachineModule::genGlobalVariDecl()
         else
         {
             // bss段
-            string str = "\ttype    " + g->getName() + ",%object\n";
-            str += "\t.globl    " + g->getName() + "\n";
+            string str = "\t.type   " + g->getName() + ",%object\n";
+            str += "\t.globl   " + g->getName() + "\n";
             str += g->getName() + ":\n";
             if (g->getElemTy()->isArrayType())
             {
@@ -166,9 +166,9 @@ void MachineModule::genGlobalVariDecl()
             }
             else
             {
-                str += "\t.long  " + string("0\n");
+                str += "\t.long   " + string("0\n");
             }
-            str += "\t.size " + g->getName() + " " + std::to_string(g->byteSizes()) + "\n";
+            str += "\t.size   " + g->getName() + ", " + std::to_string(g->byteSizes()) + "\n";
             bssSection.push_back(str);
         }
     }
@@ -180,15 +180,15 @@ void MachineModule::printArm(string filePath)
 {
     std::ofstream file(filePath);
     // 先产生 Arch cpu 等信息
-    string headArch = R"(.arch armv7ve
+    string headArch = R"(   
+.arch armv7ve
 .arm
 .fpu vfpv4
 
 .macro mov32, cond, reg, val
     movw\cond \reg, #:lower16:\val
     movt\cond \reg, #:upper16:\val
-.endm
-    )";
+.endm)";
     file << headArch;
     file << "\n";
     file << "\t.text" << "\n";

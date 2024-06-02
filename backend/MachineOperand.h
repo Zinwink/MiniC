@@ -94,6 +94,14 @@ public:
         reg_no = regno;
     }
 
+    /// @brief 替换成虚拟寄存器 类型(目前主要用于后面的LinearScan寄存器溢出时进行的代码修正)
+    /// @param regno
+    void replaceWithVreg(int regno)
+    {
+        type = VREG;
+        reg_no = regno;
+    }
+
     /// @brief 获取标签
     /// @return
     std::string &getLabel() { return label; }
@@ -108,7 +116,7 @@ public:
 
     /// @brief 操作数对应字符串
     /// @return
-    std::string toStr();
+    std::string toStr() const;
 
     /// @brief 相等比较 在之后使用 set Map时使用
     /// @param left

@@ -108,7 +108,7 @@ public:
         return std::static_pointer_cast<MInst>(MachineInst::shared_from_this());
     }
 
-    MBlockPtr getParent();                                         // 返回MachineBlock
+    MBlockPtr &getParent();                                        // 返回MachineBlock
     void setParent(MBlockPtr _parent);                             // 设置parent
     void setCondSuffix(condSuffix _cond) { cond = _cond; }         // 设置指令条件后缀
     condSuffix getCondSuffix() { return cond; }                    // 获取条件后缀

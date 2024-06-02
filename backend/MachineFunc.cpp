@@ -126,17 +126,17 @@ string MachineFunc::output()
 {
     string str = "";
     // 先得到 函数头
-    str += "\t.globl   ";
+    str += "\t.globl\t";
     str += funcName;
     str += "\n";
-    str += "\t.type   ";
+    str += "\t.type\t";
     str += funcName;
     str += ",%function";
-    str += "\n\t.code   32\n";
+    str += "\n\t.code\t32\n";
     // 打印 函数入口
     str += funcName;
     str += ":\n";
-    str += "\t.fnstart\n";
+    // str += "\t.fnstart\n";
     MBlockPtr entry = getEntry();
     std::vector<MOperaPtr> saveRegs = getSavedRegs();
     MStackInstPtr push = MStackInst::get(entry, MachineInst::PUSH, saveRegs);

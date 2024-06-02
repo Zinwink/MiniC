@@ -55,7 +55,7 @@ MachineOperand::MachineOperand(std::string _label)
 
 /// @brief 操作数对应字符串
 /// @return
-std::string MachineOperand::toStr()
+std::string MachineOperand::toStr() const
 {
     std::string str;
     // 对物理寄存器的命名字符输出
@@ -380,5 +380,5 @@ MOperaPtr MachineOperand::copy(MOperaPtr &op)
     {
         res = get(label);
     }
-    return op;
+    return res;
 }

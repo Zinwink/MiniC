@@ -114,7 +114,7 @@ bool ArmInstGen::Store2ArmInst(InstPtr store)
         MOperaPtr offsetImm = MachineOperand::get(MachineOperand::IMM, offset); // 操作数
         // 自动处理IMM 操作数
         // 可直接使用则返回本身 否则进行ldr 并返回存储该值的寄存器
-        offsetImm = MachineOperand::AutoDealWithImm(offsetImm, machineModule,true);
+        offsetImm = MachineOperand::AutoDealWithImm(offsetImm, machineModule, true);
         // 创建 str指令   str r1, [fp,#-4] 或者 str r1, [fp,r2]
         MStorePtr str = MStore::get(curblk, MachineInst::STR, MStrval, MachineOperand::get(MachineOperand::REG, 11), offsetImm);
         // 将该指令加入
@@ -433,6 +433,7 @@ bool ArmInstGen::Getelem2ArmInst(InstPtr getelem)
     // 基地址为 Argument 对应优化后 删除了无用的alloca 直接传递的结果，经过处理会将基地址加载到寄存器
     // 基地址为allocaInst 为 函数中声明数组的Alloca 带有偏移信息
     // 对于Argument LoadInst GlobalVaribal 直接使用MachineOperand编写的 get(ValPtr, Mmodule)即可自动处理  对于AllocaInst 处理较为特殊
+    // 偏移时是字节偏移 对偏移还要乘以4
     getelemInstPtr gep = std::static_pointer_cast<getelementptrInst>(getelem);
     int gainDim = gep->getgainDim();
     int gainDimBytes = gep->getgainDimBytes();
@@ -448,7 +449,7 @@ bool ArmInstGen::Getelem2ArmInst(InstPtr getelem)
         if (Moffset->isImm())
         {
             int offsetval = Moffset->getVal();
-            int alloffset = offsetval + allocaOffset; // 相对于 fp的总偏移
+            int alloffset = offsetval * 4 + allocaOffset; // 相对于 fp的总偏移
             MOperaPtr newOffset = MachineOperand::get(MachineOperand::IMM, alloffset);
             newOffset = MachineOperand::AutoDealWithImm(newOffset, machineModule); // 自动处理
             // 下面创建 fp + 偏移 获取数组索引地址
@@ -460,6 +461,8 @@ bool ArmInstGen::Getelem2ArmInst(InstPtr getelem)
         {
             // getelementptr指令的offset不为常数
             //  先将 Moffset 和 allocaOffset 进行加法运算
+            // 由于数组元素是4字节 需要将 Moffset进行处理
+
             MOperaPtr addVreg = Moffset;
             if (allocaOffset != 0)
             {
@@ -474,6 +477,22 @@ bool ArmInstGen::Getelem2ArmInst(InstPtr getelem)
             MBinaryInstPtr add2 = MBinaryInst::get(curblk, MachineInst::ADD, MachineOperand::get(getelem, machineModule), MachineOperand::createReg(11), addVreg);
             curblk->addInstBack(add2);
         }
+    }
+    else if (baseAddr->isGlobalVariable())
+    {
+        // 基地址是全局变量指示的地址   需要先将标签地址加载到寄存器中
+        MOperaPtr addrL = MachineOperand::get(baseAddr, machineModule); // 创建地址标签
+        // 需要先将 标签地址 加载到寄存器， 最后通过 str 将寄存器值保存至 [全局变量标签地址寄存器]
+        MOperaPtr glbvAddrReg = MachineOperand::get(MachineOperand::VREG, machineModule->getRegNo()); // 存放全局变量地址的寄存器
+        MLoadInstPtr ldr = MLoadInst::get(curblk, MachineInst::LDR, glbvAddrReg, addrL);
+        curblk->addInstBack(ldr);
+        // 创建加法 指令 地址寄存器 加偏移
+        if (Moffset->isImm())
+        {
+            Moffset = MachineOperand::AutoDealWithImm(Moffset, machineModule); // 自动处理转化
+        }
+        MBinaryInstPtr add = MBinaryInst::get(curblk, MachineInst::ADD, MachineOperand::get(getelem, machineModule), MachineOperand::copy(glbvAddrReg), Moffset);
+        curblk->addInstBack(add);
     }
     else
     {
@@ -544,30 +563,13 @@ bool ArmInstGen::IMul2ArmInst(InstPtr imul)
     ValPtr right = imul->getOperand(1);
     MOperaPtr leftM = MachineOperand::get(left, machineModule);
     MOperaPtr rightM = MachineOperand::get(right, machineModule);
-    if (leftM->isImm() && !rightM->isImm())
+    if (leftM->isImm())
     {
-        // 交换次序
-        leftM = MachineOperand::AutoDealWithImm(leftM, machineModule);
-        MBinaryInstPtr mul = MBinaryInst::get(curblk, MachineInst::MUL, MachineOperand::get(imul, machineModule), rightM, leftM);
-        curblk->addInstBack(mul);
-        return true;
-    }
-    if (leftM->isImm() && rightM->isImm())
-    {
-        // 左右 都是 IMM  为了简单这里不进行常数合并  常数合并在IR完成
-        // 先将leftM 加载到寄存器上
         leftM = MachineOperand::imm2VReg(leftM, machineModule);
-        // 处理 rightM
-        rightM = MachineOperand::AutoDealWithImm(rightM, machineModule);
-        // 创建 mul指令
-        MBinaryInstPtr mul = MBinaryInst::get(curblk, MachineInst::MUL, MachineOperand::get(imul, machineModule), leftM, rightM);
-        curblk->addInstBack(mul);
-        return true;
     }
-    // 其他情况
     if (rightM->isImm())
     {
-        rightM = MachineOperand::AutoDealWithImm(rightM, machineModule);
+        rightM = MachineOperand::imm2VReg(rightM, machineModule);
     }
     MBinaryInstPtr mul = MBinaryInst::get(curblk, MachineInst::MUL, MachineOperand::get(imul, machineModule), leftM, rightM);
     curblk->addInstBack(mul);
@@ -623,7 +625,7 @@ bool ArmInstGen::IDiv2ArmInst(InstPtr idiv)
     if (rightM->isImm())
     {
         // 根据数值 判定是否可以作为立即数 否则 使用伪指令加载
-        rightM = MachineOperand::AutoDealWithImm(rightM, machineModule);
+        rightM = MachineOperand::imm2VReg(rightM, machineModule);
     }
     // 创建 sub指令
     MBinaryInstPtr div = MBinaryInst::get(curblk, MachineInst::SDIV, MachineOperand::get(idiv, machineModule), leftM, rightM);

@@ -34,6 +34,10 @@ private:
     std::set<MOperaPtr> liveOut;
 
 public:
+    /// @brief 返回所属的函数
+    /// @return
+    inline MFuncPtr &getParent() { return parent; }
+
     /// @brief 获取指令列表
     /// @return
     inline std::list<MInstPtr> &getInstList() { return MinstList; }

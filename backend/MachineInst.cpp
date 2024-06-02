@@ -20,7 +20,7 @@
 #include "MachineModule.h"
 
 //************************** MachineInst **************************************
-MBlockPtr MachineInst::getParent()
+MBlockPtr &MachineInst::getParent()
 {
     return parent;
 }
