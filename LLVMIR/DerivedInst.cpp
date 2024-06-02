@@ -14,6 +14,7 @@
 #include "Argument.h"
 #include "Function.h"
 #include "Constant.h"
+#include <iostream>
 
 // *********************************** AllocaInst ***********************************************
 /// @brief 静态函数  获取指令对象指针
@@ -253,6 +254,15 @@ CallInstPtr CallInst::create(ValPtr fun, std::vector<ValPtr> &relArgs, BasicBloc
                 // 为了判断方便 假设调用时实参的维度符合条件 则只需取实参的
                 ConstantIntPtr offset = ConstantInt::get(32);
                 offset->setValue(0);
+                PointerType *argtyPtr = static_cast<PointerType *>(argty);
+                if (argtyPtr->getElemntTy()->isPointerType() && relArgs[i]->isAllocaInst())
+                {
+                    // 创建 load指令
+                    LoadInstPtr load = LoadInst::get(relArgs[i]);
+                    atBack->AddInstBack(load);
+                    load->setBBlockParent(atBack);
+                    relArgs[i] = load;
+                }
                 getelemInstPtr getele = getelementptrInst::get(relArgs[i], 1, offset);
                 relArgs[i] = getele;
                 atBack->AddInstBack(getele);
@@ -384,6 +394,7 @@ getelementptrInst::getelementptrInst(ValPtr arrayBaseAdress, int _gainDim, ValPt
     operands.push_back(offset);
 
     PointerType *ptrTy = static_cast<PointerType *>(arrayBaseAdress->getType());
+
     assert((ptrTy->getElemntTy()->isArrayType() || ptrTy->getElemntTy()->isIntegerType()) && "Error!");
     if (ptrTy->getElemntTy()->isIntegerType())
     {
