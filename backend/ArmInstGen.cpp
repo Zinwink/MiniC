@@ -287,6 +287,10 @@ bool ArmInstGen::Call2ArmInst(InstPtr call)
     // 创建函数名 对应的Label操作数
     MOperaPtr LabelFun = MachineOperand::get(funv->getName());
     std::vector<ValPtr> &operands = call->getOperandsList();
+
+    // bl指令
+    MBranchInstPtr bl = MBranchInst::get(curblk, MachineInst::BL, LabelFun);
+
     for (size_t i = 1; i < operands.size(); i++)
     {
         MOperaPtr MparamOp = MachineOperand::get(operands[i], machineModule);
@@ -295,6 +299,7 @@ bool ArmInstGen::Call2ArmInst(InstPtr call)
         {
             // 创建 mov 指令 会自动加入当前块
             MMovInst::create(curblk, MachineOperand::createReg(i - 1), MparamOp, machineModule);
+            bl->addUse(MachineOperand::createReg(i - 1));
         }
         else
         {
@@ -317,17 +322,16 @@ bool ArmInstGen::Call2ArmInst(InstPtr call)
             curblk->addInstBack(str);
         }
     }
-    // 创建 bl 跳转指令
-    MBranchInstPtr bl = MBranchInst::get(curblk, MachineInst::BL, LabelFun);
+    // 加入 bl 跳转指令
     curblk->addInstBack(bl);
     // 跳转调用完毕后 使用mov 指令将 r0存放的返回值取出
     if (!(call->getType()->isVoidType()))
     {
         MMovInstPtr move_vreg_r0 = MMovInst::get(curblk, MachineInst::MOV, MachineOperand::get(call, machineModule), MachineOperand::createReg(0));
         bl->addDef(MachineOperand::createReg(0)); // 由于 r0-r3 不默认保护 认为调用时 都 def 了
-        bl->addDef(MachineOperand::createReg(1));
-        bl->addDef(MachineOperand::createReg(2));
-        bl->addDef(MachineOperand::createReg(3));
+        // bl->addDef(MachineOperand::createReg(1));
+        // bl->addDef(MachineOperand::createReg(2));
+        // bl->addDef(MachineOperand::createReg(3));
         curblk->addInstBack(move_vreg_r0);
     }
 

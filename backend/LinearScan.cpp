@@ -213,7 +213,7 @@ void LinearScan::AutoUpdateActive(IntervalPtr curInter)
     for (auto riter = active.rbegin(); riter != active.rend();)
     {
         // 逆序遍历  因为active按照end的大小 从大到小排列
-        if ((*riter)->end <= start)
+        if ((*riter)->end < start)
         {
             auto iter = std::prev(riter.base()); // 获取正序迭代器
             // 恢复 该 internal 占用的寄存器
@@ -231,16 +231,16 @@ void LinearScan::AutoUpdateActive(IntervalPtr curInter)
     if (regs.size() > 0)
     {
         // 还有寄存器 分配寄存器 将 curInter插入Active中
-        // auto last = regs.rbegin(); // 取最后一个寄存器使用
-        // curInter->reg = *(regs.rbegin());
-        // active.insert(curInter);
-        // regs.erase(curInter->reg); // 从寄存器池中删除
+        auto last = regs.rbegin(); // 取最后一个寄存器使用
+        curInter->reg = *(regs.rbegin());
+        active.insert(curInter);
+        regs.erase(curInter->reg); // 从寄存器池中删除
 
         // 2. 从最小的 开始取
-        auto first = regs.begin();
-        curInter->reg = *(first);
-        active.insert(curInter);
-        regs.erase(curInter->reg);
+        // auto first = regs.begin();
+        // curInter->reg = *(first);
+        // active.insert(curInter);
+        // regs.erase(curInter->reg);
     }
     else
     {
