@@ -27,16 +27,76 @@ void LinearScan::dealWithVregsAndRealRegs(MFuncPtr fun)
     (同一虚拟寄存器编号 他只会def一次 之后是使用 因此获取函数fun的 AllUses 进行查找相应的def 即可获取 def-use chain)
     遍历fun 获取 def-use chain 同时对指令进行编号
     */
-    auto &allUsesOfFun = LiveAnalysis.AllUsesInfun; // fun 中 AllUsesInFun 列表记录
+    // fun 中 AllUsesInFun 列表记录
+    auto &allUsesOfFun = LiveAnalysis.AllUsesInfun;
     std::list<MBlockPtr> &blockList = fun->getBlockList();
+
+    // 用于记录物理寄存器 在每个block的出口活跃记录(按照名字分类)
+    std::map<MachineOperand, std::set<MOperaPtr>> liveRealReg;
+
+    // 记录物理寄存器的 容器 该容器记录了 物理寄存器def-use chain(可以没有def 有些时候没有显式def指令 如函数中直接使用r0-r3形参)
+    std::multiset<MOperaPtr, cmpUsePosLt> RealRegsusefiled;
+
+    // 记录 RealRegsusefild 的列表
+    std::vector<std::multiset<MOperaPtr, cmpUsePosLt>> RelRegsRecord;
+
+    // 编写一个Lamda 函数 实现 liveRealReg 插入到 RealRegsusfile
+    auto insertFiled = [&](MOperaPtr def = nullptr)
+    {
+        if (def != nullptr)
+        {
+            RealRegsusefiled.insert(def);
+            for (auto &elem : liveRealReg[*def])
+            {
+                RealRegsusefiled.insert(elem);
+            }
+            // 插入完毕   放入 RelRegsRecord列表中
+            RelRegsRecord.push_back(RealRegsusefiled);
+            RealRegsusefiled.clear(); // 清空供下次使用
+        }
+        else
+        {
+            // def 为空 可能是没有显式def  如函数中直接使用形参的 r0-r3 没有显式def指令
+            for (auto &elem : liveRealReg)
+            {
+                for (auto &reg : elem.second)
+                {
+                    RealRegsusefiled.insert(reg);
+                }
+                if (RealRegsusefiled.size() > 0)
+                {
+                    // 有元素
+                    RelRegsRecord.push_back(RealRegsusefiled);
+                    RealRegsusefiled.clear();
+                }
+            }
+        }
+    };
+
     int instNo = 0; // 设置编号
+    int i = 0;      // 每个块末尾的编号
     for (auto &blk : blockList)
     {
-        std::list<MInstPtr> &instList = blk->getInstList();
-
-        for (auto &inst : instList)
+        liveRealReg.clear(); // 更换block时清空
+        for (auto &live : blk->getLiveOut())
         {
-            inst->setNo(instNo++);
+            if (live->isReg())
+            {
+                // 记录出口活跃的物理寄存器对象 只记录 r0,r1,r2,r3
+                if (live->getRegNo() >= 0 && live->getRegNo() <= 3)
+                    liveRealReg[*live].insert(live);
+            }
+        }
+
+        std::list<MInstPtr> &instList = blk->getInstList();
+        i = instList.size() + i; // 当前块 末尾的编号
+        instNo = i;              // 当前指令编号
+
+        // 由于 物理寄存器会有多次def 因此逆序遍历指令列表
+        for (auto riter = instList.rbegin(); riter != instList.rend(); riter++)
+        {
+            auto &inst = *riter;
+            inst->setNo(instNo--);
             auto &defs = inst->getDef();
             for (auto &def : defs)
             {
@@ -45,13 +105,48 @@ void LinearScan::dealWithVregsAndRealRegs(MFuncPtr fun)
                 { // vreg 只被def 一次后继可以use 也可以没有  所以可以这样简单写
                     defUseChains[def].insert(allUsesOfFun[*def].begin(), allUsesOfFun[*def].end());
                 }
-                if (def->isReg())
-                {
+                if (def->isReg() && def->getRegNo() >= 0 && def->getRegNo() <= 3)
+                { // 只记录 r0-r3
                     // 处理物理寄存器 并获取其活跃间隔 加入到Active已分配表中
-                    
+                    // 物理寄存器不太方便获取 def-use chain 因为有时没有显式的def语句
+                    auto &uses = liveRealReg[*def];
+                    auto &allusesReg = LiveAnalysis.getAllUsesInfun()[*def];
+                    // 有 def 有 uses 构成def use chain
+                    insertFiled(def); // 定义的 Lamda函数 在前面定义了
+                    // 有def 有 uses 当前 def-use chain已结束 清理 供下次使用
+                    RealRegsusefiled.clear();
+                    // 更新 liveRealReg[*def]为空  (当前use已经和def相联系了 前面指令def的物理寄存器在之后的use不可见)
+                    liveRealReg.erase(*def); // 删除该键值对
+                }
+            }
+            for (auto &use : inst->getUse())
+            {
+                // 遍历use  只记录 r0-r3
+                if (use->isReg() && use->getRegNo() >= 0 && use->getRegNo() <= 3)
+                {
+                    // 插入使用变量 (可能和上逆序上前的指令的def 形成 def-use chain)
+                    liveRealReg[*use].insert(use);
                 }
             }
         }
+        // 该基本块逆序遍历完毕后 看liveRealReg是否为空(如果某些物理寄存器的use 找不到显式的def 则会出现这种情况)
+        insertFiled(nullptr); // 使用前面定义的Lamda函数
+    }
+    // 函数所有块都遍历完毕后 将RelRegsRecord 遍历产生 物理寄存器的Interval 并加其加入Active表中
+    for (auto &elem : RelRegsRecord)
+    {
+        assert(elem.size() > 0);
+        auto iterBegin = elem.begin();
+        auto iterEnd = elem.rbegin();
+        // 直接使用最后一个和最前一个是因为 multiset已经根据使用位置从小到大排序了
+        int start = (*iterBegin)->getParent()->getNo();
+        int end = (*iterEnd)->getParent()->getNo();
+        // 创建interval
+        IntervalPtr relRegInterval = Interval::get(start, end, true);
+        relRegInterval->reg = (*iterBegin)->getRegNo(); // 设置物理寄存器编号
+        regs.erase(relRegInterval->reg);                // 从寄存器池中删除该寄存器 变为使用状态
+        // 插入active表中
+        active.insert(relRegInterval);
     }
 }
 
@@ -127,7 +222,7 @@ void LinearScan::AutoUpdateActive(IntervalPtr curInter)
         }
         else
         {
-            break; // 之后的无需遍历
+            break; // 之后的无需遍历 因为multiset已经排序
         }
     }
     // 在处理完上面的基础上 对 curInster尝试寄存器分配
@@ -154,6 +249,7 @@ void LinearScan::AutoUpdateActive(IntervalPtr curInter)
         if ((*first)->isPreAlloca)
         {
             // 预分配的不能溢出
+            // 迭代得到下一个 虚拟寄存器的 活跃间隔（multiset已经排序）
             auto next = std::next(first);
             while (next != active.end())
             {
@@ -214,7 +310,7 @@ bool LinearScan::LinearScanPassEpoch(MFuncPtr fun)
     successAllocaRegs = true;
     initAvailableRegsPool(); // 初始化可用寄存器池
     // 计算def-use chain
-    genDefUseChains(fun);
+    dealWithVregsAndRealRegs(fun);
     // 计算活跃间隔
     computeIntervals(fun);
     // 自动更新  active表

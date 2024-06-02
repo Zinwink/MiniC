@@ -32,7 +32,7 @@ struct cmpUsePosLt
     }
 };
 
-/// @brief 活跃间隔
+/// @brief 活跃间隔***************************************************************************************************
 struct Interval
 {
     int start;                                  // 起始编号处
@@ -59,6 +59,17 @@ struct Interval
         }
     }
 
+    /// @brief 构造函数 无需记录 def uses(用于物理寄存器 因为在我的策略中不会将预先分配物理寄存器溢出)
+    /// @param s
+    /// @param e
+    /// @param _isPredAlloca
+    Interval(int s, int e, bool _isPredAlloca = true)
+    {
+        start = s;
+        end = e;
+        isPreAlloca = _isPredAlloca;
+    }
+
     /// @brief 智能指针对象构造
     /// @param s
     /// @param e
@@ -68,6 +79,17 @@ struct Interval
     static IntervalPtr get(int s, int e, const MOperaPtr &_def, const std::multiset<MOperaPtr, cmpUsePosLt> &_uses)
     {
         IntervalPtr interv = std::make_shared<Interval>(s, e, _def, _uses);
+        return interv;
+    }
+
+    /// @brief 创建智能指针对象
+    /// @param s
+    /// @param e
+    /// @param _isPredAlloca
+    /// @return
+    static IntervalPtr get(int s, int e, bool _isPredAlloca = true)
+    {
+        IntervalPtr interv = std::make_shared<Interval>(s, e, _isPredAlloca);
         return interv;
     }
 
@@ -89,7 +111,7 @@ struct Interval
     };
 };
 
-/// @brief 线性扫描
+/// @brief 线性扫描**************************************************************************************8
 class LinearScan
 {
 private:

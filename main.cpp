@@ -41,6 +41,8 @@ int main()
     Mmodule->printArm("../tests/test1__13.s");
     Mmodule->clear();
 
+    
+
     // 测试遍历ast得到llvm ir  仅测试简单用例
     // ScopeMg *scope = new ScopeMg();
     // IRGenerate *irgen = new IRGenerate(scope, ast_root);
