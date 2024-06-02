@@ -61,7 +61,8 @@
         "fstream": "cpp",
         "list": "cpp",
         "*.inc": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "unordered_set": "cpp"
     },
     "cody.autocomplete.experimental.ollamaOptions": {
         "url": "http://127.0.0.1:11434",

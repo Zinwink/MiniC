@@ -324,6 +324,10 @@ bool ArmInstGen::Call2ArmInst(InstPtr call)
     if (!(call->getType()->isVoidType()))
     {
         MMovInstPtr move_vreg_r0 = MMovInst::get(curblk, MachineInst::MOV, MachineOperand::get(call, machineModule), MachineOperand::createReg(0));
+        bl->addDef(MachineOperand::createReg(0)); // 由于 r0-r3 不默认保护 认为调用时 都 def 了
+        bl->addDef(MachineOperand::createReg(1));
+        bl->addDef(MachineOperand::createReg(2));
+        bl->addDef(MachineOperand::createReg(3));
         curblk->addInstBack(move_vreg_r0);
     }
 
@@ -738,7 +742,8 @@ bool ArmInstGen::ISrem2ArmInst(InstPtr srem)
     ValPtr right = srem->getOperand(1);
     MOperaPtr leftM = MachineOperand::get(left, machineModule);
     MOperaPtr rightM = MachineOperand::get(right, machineModule);
-    // 调用前先保留 r0,r1 的旧值
+
+    // // 调用前先保留 r0,r1 的旧值 在其他函数中使用 取余时保护
     if (curfun->getFuncName() != "main")
     {
         if (curfun->getFuncArgsNum() >= 2)
@@ -783,6 +788,8 @@ bool ArmInstGen::ISrem2ArmInst(InstPtr srem)
     }
     // 创建 bl 指令 调用 __aeabi_idivmod
     MBranchInstPtr bl = MBranchInst::get(curblk, MachineInst::BL, MachineOperand::get("__aeabi_idivmod"));
+    bl->addDef(MachineOperand::createReg(0)); // 该函数调用会def r0 r1
+    bl->addDef(MachineOperand::createReg(1)); //
     curblk->addInstBack(bl);
     // 将取余结果r1取出(商保存在r0  余数保存在r1)  会产生冗余 但为了简便先这样写
     MMovInstPtr mov_modRes = MMovInst::get(curblk, MachineInst::MOV, MachineOperand::get(srem, machineModule), MachineOperand::createReg(1));

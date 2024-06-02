@@ -39,7 +39,7 @@ struct Interval
     int end;                                    // 终止编号处
     bool spill = false;                         // 是否溢出
     bool isPreAlloca = false;                   // 是否是预先分配的物理寄存器 如函数参数  函数返回值
-    int reg;                                    // 分配的物理寄存器编号
+    int reg = -1;                               // 分配的物理寄存器编号
     MOperaPtr def;                              // def
     std::multiset<MOperaPtr, cmpUsePosLt> uses; // uses
 
@@ -111,11 +111,12 @@ private:
     /// @brief active表 即在目前周期中正在活跃并且已经分配寄存器的间隔
     std::multiset<IntervalPtr, Interval::cmpGtEnd> active;
 
-    /// @brief 计算def-use Chain
+    /// @brief 处理虚拟寄存器 和物理寄存器(对于虚拟寄存器产生def-use(简单，一个虚拟寄存器只会def一次))
+    /// @brief 对于物理寄存器根据活跃变量分析获取对应的活跃区间间隔 供后继使用你
     /// @param fun
-    void genDefUseChains(MFuncPtr fun);
+    void dealWithVregsAndRealRegs(MFuncPtr fun);
 
-    /// @brief 计算活跃间隔
+    /// @brief 计算活跃间隔(只对虚拟寄存器而言)
     /// @param fun
     void computeIntervals(MFuncPtr fun);
 

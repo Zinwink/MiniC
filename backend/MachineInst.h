@@ -86,8 +86,6 @@ protected:
     MinstTy type;                       // 指令类型
     std::vector<MOperaPtr> defs;        // def 目的操作数
     std::vector<MOperaPtr> uses;        // use 源操作数
-    void addDef(MOperaPtr dst) { defs.push_back(dst); }
-    void addUse(MOperaPtr src) { uses.push_back(src); }
 
 public:
     virtual void clear(); // 手动清理 打破引用环 使智能指针自动释放
@@ -98,6 +96,21 @@ public:
     inline bool isPush() { return type == PUSH; } // 是否是push 类型
     inline bool isLoad() { return type == LDR; }  // 是否是load指令
     inline bool isStore() { return type == STR; } // 是否是store指令
+
+    /// @brief 添加 def (示例化智能指针对象后才能使用)
+    /// @param dst
+    void addDef(MOperaPtr dst)
+    {
+        defs.push_back(dst);
+        dst->setParent(shared_from_this());
+    }
+    /// @brief 添加use(实例化智能指针对象后才能使用)
+    /// @param src
+    void addUse(MOperaPtr src)
+    {
+        uses.push_back(src);
+        src->setParent(shared_from_this());
+    }
 
     /// @brief 获取 this 智能指针
     /// @tparam MInst

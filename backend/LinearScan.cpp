@@ -13,65 +13,54 @@
 #include "ActiveVariableAnalysis.h"
 #include <iostream>
 
-/// @brief 计算def-use Chain
+/// @brief 处理虚拟寄存器 和物理寄存器(对于虚拟寄存器产生def-use(简单，一个虚拟寄存器只会def一次))
+/// @brief 对于物理寄存器根据活跃变量分析获取对应的活跃区间间隔 供后继使用你
 /// @param fun
-void LinearScan::genDefUseChains(MFuncPtr fun)
+void LinearScan::dealWithVregsAndRealRegs(MFuncPtr fun)
 {
     defUseChains.clear();
     // 先计算这个函数的liveIn  liveOut
     ActiveVariAnalysis LiveAnalysis;
-    LiveAnalysis.computeAllUsesInfun(fun); // 根据 IR相关的设计 以指针地址作为一个value的唯一标识 对于一个MachineOperand(同一虚拟寄存器编号 他只会def一次 之后是使用 因此获取函数fun的 AllUses 进行查找相应的def 即可获取 def-use chain)
-    // 遍历fun 获取 def-use chain 同时对指令进行编号
+    LiveAnalysis.computeLiveVariInfun(fun);
+    /*
+    根据 IR相关的设计 以指针地址作为一个value的唯一标识 对于一个MachineOperand
+    (同一虚拟寄存器编号 他只会def一次 之后是使用 因此获取函数fun的 AllUses 进行查找相应的def 即可获取 def-use chain)
+    遍历fun 获取 def-use chain 同时对指令进行编号
+    */
     auto &allUsesOfFun = LiveAnalysis.AllUsesInfun; // fun 中 AllUsesInFun 列表记录
-
-    /// DEBUG 输出查看
-    // for (auto &elem : allUsesOfFun)
-    // {
-    //     std::cout << "key:" << (elem.first).toStr() << std::endl;
-    //     for (auto &op : elem.second)
-    //     {
-    //         std::cout << "value:" << op->toStr() << std::endl;
-    //     }
-    // }
-
     std::list<MBlockPtr> &blockList = fun->getBlockList();
     int instNo = 0; // 设置编号
     for (auto &blk : blockList)
     {
         std::list<MInstPtr> &instList = blk->getInstList();
+
         for (auto &inst : instList)
         {
             inst->setNo(instNo++);
             auto &defs = inst->getDef();
             for (auto &def : defs)
             {
-                defUseChains[def].insert(allUsesOfFun[*def].begin(), allUsesOfFun[*def].end());
+                // 对于虚拟寄存器直接加入即可 因为只def一次
+                if (def->isVReg())
+                { // vreg 只被def 一次后继可以use 也可以没有  所以可以这样简单写
+                    defUseChains[def].insert(allUsesOfFun[*def].begin(), allUsesOfFun[*def].end());
+                }
+                if (def->isReg())
+                {
+                    // 处理物理寄存器 并获取其活跃间隔 加入到Active已分配表中
+                    
+                }
             }
         }
     }
 }
 
-/// @brief 计算活跃间隔
+/// @brief 计算活跃间隔(仅对 虚拟寄存器而言)
 /// @param fun
 void LinearScan::computeIntervals(MFuncPtr fun)
 {
     intervals.clear();
     // 根据def-Use chain 获取 interval;
-
-    /// DEBUG 输出查看
-    // std::cout << "def use chain------" << std::endl;
-    // for (auto &defUse : defUseChains)
-    // {
-    //     std::cout << "def:" << defUse.first->toStr();
-    //     std::cout << " is vreg: " << defUse.first->isVReg();
-    //     std::cout << "line: " << defUse.first->getParent()->getNo() << std::endl;
-    //     for (auto &use : defUse.second)
-    //     {
-    //         std::cout << "use:" << use->toStr() << std::endl;
-    //         std::cout << " line: " << use->getParent()->getNo() << std::endl;
-    //         std::cout << "def==Use: " << (use == defUse.first) << std::endl;
-    //     }
-    // }
 
     for (auto &defUse : defUseChains)
     {
@@ -88,37 +77,7 @@ void LinearScan::computeIntervals(MFuncPtr fun)
             // 加入到 Intervals中
             intervals.insert(interval);
         }
-        else if (defUse.first->isReg())
-        {
-            int regNo = defUse.first->getRegNo();
-            if (regNo >= 0 && regNo <= 3)
-            {
-                uint32_t start = defUse.first->getParent()->getNo();
-                uint32_t end = start;
-                if (defUse.second.size() > 0)
-                {
-                    end = (*defUse.second.rbegin())->getParent()->getNo();
-                }
-                IntervalPtr interval = Interval::get(start, end, defUse.first, defUse.second);
-                interval->isPreAlloca = true;
-                regs.erase(regNo);       // 删除该寄存器
-                active.insert(interval); // 加入到active表中
-            }
-        }
     }
-
-    /// DEBUG输出查看
-    // std::cout << "intervals:------" << std::endl;
-    // for (auto &interval : intervals)
-    // {
-    //     std::cout << "def: " << interval->def->toStr() << std::endl;
-    //     for (auto &use : interval->uses)
-    //     {
-    //         std::cout << "uses:" << use->toStr() << std::endl;
-    //     }
-    //     std::cout << "start: " << interval->start << std::endl;
-    //     std::cout << "end: " << interval->end << std::endl;
-    // }
 }
 
 /// @brief 获取溢出位置 如果无溢出 返回nullptr
@@ -130,16 +89,16 @@ std::pair<MInstPtr, MInstPtr> LinearScan::computeSpillPos(IntervalPtr inter1InAc
     int end1 = inter1InActive->end;
     int start2 = inter2->start;
     std::pair<MInstPtr, MInstPtr> res;
-    res.first = nullptr;
+    res.first = inter1InActive->def->getParent();
     res.second = nullptr;
     if (end1 > start2)
     {
         // 会有冲突 下面计算获取 inter1InActive中的冲突点 供后继 产生溢出代码时使用
         // 查找 uses中 使用位置 >= start2的操作数对应指令的 编号位置
+        MInstPtr pre = nullptr;
         for (auto &use : inter1InActive->uses)
         {
             int pos = use->getParent()->getNo();
-            res.first = use->getParent(); // str 的位置是溢出use对应指令的前一条指令
             if (pos > start2)
             {
                 res.second = use->getParent();
@@ -180,7 +139,7 @@ void LinearScan::AutoUpdateActive(IntervalPtr curInter)
         // auto last = regs.rbegin(); // 取最后一个寄存器使用
         // curInter->reg = *(regs.rbegin());
         // active.insert(curInter);
-        // regs.erase(std::prev(last.base())); // 从寄存器池中删除
+        // regs.erase(curInter->reg); // 从寄存器池中删除
 
         // 2. 从最小的 开始取
         auto first = regs.begin();

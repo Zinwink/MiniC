@@ -527,9 +527,19 @@ MStackInst::MStackInst(MBlockPtr p, MinstTy instTy, std::vector<MOperaPtr> srcs)
 {
     parent = p;
     type = instTy;
-    for (auto &src : srcs)
+    if (instTy == PUSH)
     {
-        uses.push_back(src);
+        for (auto &src : srcs)
+        {
+            uses.push_back(src);
+        }
+    }
+    else if (instTy == POP)
+    {
+        for (auto &src : srcs)
+        {
+            defs.push_back(src);
+        }
     }
 }
 
@@ -537,12 +547,26 @@ MStackInst::MStackInst(MBlockPtr p, MinstTy instTy, std::vector<MOperaPtr> srcs)
 /// @param regs
 void MStackInst::setRegs(std::vector<MOperaPtr> &regs)
 {
-    uses.clear();
-    for (auto &src : regs)
+
+    if (type == PUSH)
     {
-        src->setParent(getSharedThis<MStackInst>());
-        uses.push_back(std::move(src));
+        uses.clear();
+        for (auto &src : regs)
+        {
+            src->setParent(getSharedThis<MStackInst>());
+            uses.push_back(std::move(src));
+        }
     }
+    else if (type == POP)
+    {
+        defs.clear();
+        for (auto &src : regs)
+        {
+            src->setParent(getSharedThis<MStackInst>());
+            defs.push_back(std::move(src));
+        }
+    }
+
     regs.clear();
     regs.shrink_to_fit();
 }
@@ -570,15 +594,31 @@ std::string MStackInst::toStr()
 
     str += "   ";
     str += "{";
-    for (size_t i = 0; i < uses.size(); i++)
+    if (type == PUSH)
     {
-        str += uses[i]->toStr();
-        if (i != (uses.size() - 1))
+        for (size_t i = 0; i < uses.size(); i++)
         {
-            // 不是最后一个
-            str += ", ";
+            str += uses[i]->toStr();
+            if (i != (uses.size() - 1))
+            {
+                // 不是最后一个
+                str += ", ";
+            }
         }
     }
+    else if (type == POP)
+    {
+        for (size_t i = 0; i < defs.size(); i++)
+        {
+            str += defs[i]->toStr();
+            if (i != (defs.size() - 1))
+            {
+                // 不是最后一个
+                str += ", ";
+            }
+        }
+    }
+
     str += "}";
     return str;
 }
