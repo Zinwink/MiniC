@@ -24,14 +24,15 @@ void LinearScan::genDefUseChains(MFuncPtr fun)
     // 遍历fun 获取 def-use chain 同时对指令进行编号
     auto &allUsesOfFun = LiveAnalysis.AllUsesInfun; // fun 中 AllUsesInFun 列表记录
 
-    for (auto &elem : allUsesOfFun)
-    {
-        std::cout << "key:" << (elem.first).toStr() << std::endl;
-        for (auto &op : elem.second)
-        {
-            std::cout << "value:" << op->toStr() << std::endl;
-        }
-    }
+    /// DEBUG 输出查看
+    // for (auto &elem : allUsesOfFun)
+    // {
+    //     std::cout << "key:" << (elem.first).toStr() << std::endl;
+    //     for (auto &op : elem.second)
+    //     {
+    //         std::cout << "value:" << op->toStr() << std::endl;
+    //     }
+    // }
 
     std::list<MBlockPtr> &blockList = fun->getBlockList();
     int instNo = 0; // 设置编号
@@ -57,19 +58,20 @@ void LinearScan::computeIntervals(MFuncPtr fun)
     intervals.clear();
     // 根据def-Use chain 获取 interval;
 
-    std::cout << "def use chain------" << std::endl;
-    for (auto &defUse : defUseChains)
-    {
-        std::cout << "def:" << defUse.first->toStr();
-        std::cout << " is vreg: " << defUse.first->isVReg();
-        std::cout << "line: " << defUse.first->getParent()->getNo() << std::endl;
-        for (auto &use : defUse.second)
-        {
-            std::cout << "use:" << use->toStr() << std::endl;
-            std::cout << " line: " << use->getParent()->getNo() << std::endl;
-            std::cout << "def==Use: " << (use == defUse.first) << std::endl;
-        }
-    }
+    /// DEBUG 输出查看
+    // std::cout << "def use chain------" << std::endl;
+    // for (auto &defUse : defUseChains)
+    // {
+    //     std::cout << "def:" << defUse.first->toStr();
+    //     std::cout << " is vreg: " << defUse.first->isVReg();
+    //     std::cout << "line: " << defUse.first->getParent()->getNo() << std::endl;
+    //     for (auto &use : defUse.second)
+    //     {
+    //         std::cout << "use:" << use->toStr() << std::endl;
+    //         std::cout << " line: " << use->getParent()->getNo() << std::endl;
+    //         std::cout << "def==Use: " << (use == defUse.first) << std::endl;
+    //     }
+    // }
 
     for (auto &defUse : defUseChains)
     {
@@ -77,25 +79,46 @@ void LinearScan::computeIntervals(MFuncPtr fun)
         {
             // 获取 InterVal的 start end
             uint32_t start = defUse.first->getParent()->getNo();
-            uint32_t end = 0;
-            end = (*defUse.second.rbegin())->getParent()->getNo();
+            uint32_t end = start;
+            if (defUse.second.size() > 0)
+            {
+                end = (*defUse.second.rbegin())->getParent()->getNo();
+            }
             IntervalPtr interval = Interval::get(start, end, defUse.first, defUse.second);
             // 加入到 Intervals中
             intervals.insert(interval);
         }
+        else if (defUse.first->isReg())
+        {
+            int regNo = defUse.first->getRegNo();
+            if (regNo >= 0 && regNo <= 3)
+            {
+                uint32_t start = defUse.first->getParent()->getNo();
+                uint32_t end = start;
+                if (defUse.second.size() > 0)
+                {
+                    end = (*defUse.second.rbegin())->getParent()->getNo();
+                }
+                IntervalPtr interval = Interval::get(start, end, defUse.first, defUse.second);
+                interval->isPreAlloca = true;
+                regs.erase(regNo);       // 删除该寄存器
+                active.insert(interval); // 加入到active表中
+            }
+        }
     }
 
-    std::cout << "intervals:------" << std::endl;
-    for (auto &interval : intervals)
-    {
-        std::cout << "def: " << interval->def->toStr() << std::endl;
-        for (auto &use : interval->uses)
-        {
-            std::cout << "uses:" << use->toStr() << std::endl;
-        }
-        std::cout << "start: " << interval->start << std::endl;
-        std::cout << "end: " << interval->end << std::endl;
-    }
+    /// DEBUG输出查看
+    // std::cout << "intervals:------" << std::endl;
+    // for (auto &interval : intervals)
+    // {
+    //     std::cout << "def: " << interval->def->toStr() << std::endl;
+    //     for (auto &use : interval->uses)
+    //     {
+    //         std::cout << "uses:" << use->toStr() << std::endl;
+    //     }
+    //     std::cout << "start: " << interval->start << std::endl;
+    //     std::cout << "end: " << interval->end << std::endl;
+    // }
 }
 
 /// @brief 获取溢出位置 如果无溢出 返回nullptr
@@ -154,15 +177,34 @@ void LinearScan::AutoUpdateActive(IntervalPtr curInter)
     if (regs.size() > 0)
     {
         // 还有寄存器 分配寄存器 将 curInter插入Active中
-        auto last = regs.rbegin(); // 取最后一个寄存器使用
-        curInter->reg = *(regs.rbegin());
+        // auto last = regs.rbegin(); // 取最后一个寄存器使用
+        // curInter->reg = *(regs.rbegin());
+        // active.insert(curInter);
+        // regs.erase(std::prev(last.base())); // 从寄存器池中删除
+
+        // 2. 从最小的 开始取
+        auto first = regs.begin();
+        curInter->reg = *(first);
         active.insert(curInter);
-        regs.erase(std::prev(last.base())); // 从寄存器池中删除
+        regs.erase(curInter->reg);
     }
     else
     {
         // 没有寄存器可用 则有冲突 选择 end最后 生命周期最长的interval删除溢出
         auto first = active.begin();
+        if ((*first)->isPreAlloca)
+        {
+            // 预分配的不能溢出
+            auto next = std::next(first);
+            while (next != active.end())
+            {
+                if ((*next)->isPreAlloca)
+                {
+                    next = std::next(next);
+                }
+            }
+            first = next;
+        }
         IntervalPtr spillInterval = (*first);
         spillInterval->spill = true;
         int regNo = spillInterval->reg;
@@ -251,7 +293,10 @@ void LinearScan::allocateReg()
         {
             MapIntervalToReg(inter);
             // 添加 savedRegs
-            fun->addSaveReg(inter->reg);
+            if (inter->reg > 3)
+            {
+                fun->addSaveReg(inter->reg);
+            }
         }
     }
 }

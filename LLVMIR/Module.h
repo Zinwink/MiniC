@@ -13,6 +13,7 @@
 #include "GlobalVariable.h"
 #include "Function.h"
 #include <deque>
+#include <unordered_set>
 
 class Module;
 class Counter;
@@ -28,7 +29,7 @@ private:
     std::deque<FuncPtr> funcList;
 
     /// @brief 本文件中使用的外部函数 不在本文件中定义
-    std::deque<FuncPtr> funcDeclareExtern;
+    std::unordered_set<FuncPtr> funcDeclareExtern;
 
     Counter *cnt = nullptr;
 
@@ -55,7 +56,14 @@ public:
 
     /// @brief 添加非本文件定义的函数
     /// @param fun
-    void addExternFunction(FuncPtr fun) { funcDeclareExtern.push_back(fun); }
+    void addExternFunction(FuncPtr fun)
+    {
+        auto iter = std::find(funcDeclareExtern.begin(), funcDeclareExtern.end(), fun);
+        if (iter == funcDeclareExtern.end())
+        {
+            funcDeclareExtern.emplace(fun);
+        }
+    }
 
     /// @brief 将IR指令打印至文件中
     /// @param filePath
@@ -100,24 +108,3 @@ public:
         countMap.clear();
     }
 };
-
-// std.c 标准库内置函数池
-// std::vector<FuncPtr> getStdFuncList()
-// {
-//     // int getint()
-//     FunctionType *getintTy = FunctionType::get(Type::getIntNType(32));
-//     FuncPtr getint = Function::get(getintTy, "getint");
-
-//     // int getch()
-//     FunctionType *getchTy = FunctionType::get(Type::getIntNType(32));
-//     FuncPtr getch = Function::get(getchTy, "getch");
-
-//     // int getarray(int a[])
-//     std::vector<Type *> argTys;
-//     argTys.push_back(PointerType::get(Type::getIntNType(32)));
-//     FunctionType *getarrayTy = FunctionType::get(Type::getIntNType(32), argTys);
-//     FuncPtr getarray = Function::get(getarrayTy, "getarray");
-
-//     // void putint(int k)
-//     // std::vector
-// }

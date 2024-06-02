@@ -15,12 +15,14 @@
 #include "GlobalVariable.h"
 #include <deque>
 
-
 class GlobalSymTab : public BaseSymTab
 {
 public:
     /// @brief 构造函数
-    GlobalSymTab() { type = TabAttr::GLOBAL_TAB; }
+    GlobalSymTab()
+    {
+        type = TabAttr::GLOBAL_TAB;
+    }
 
     /// @brief 析构函数
     ~GlobalSymTab();
@@ -35,9 +37,7 @@ public:
     /// @return nullptr表示插入失败，说明已经存在
     ValPtr newDeclVar(ValPtr var) override;
 
-
     /// @brief 创建全局符号表
-    /// @return 
+    /// @return
     static BaseSymTabPtr get();
-
 };

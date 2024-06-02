@@ -271,9 +271,19 @@ bool IRGen::ir_func_declare(ast_node *node, LabelParams blocks)
     }
     else
     {
-        // 查找到  重复声明 报错
-        std::cout << ">>>>Error!: not supported function redeclared! function:" << funcname << " line: " << lineno << std::endl;
-        return false;
+        FuncPtr fun = std::static_pointer_cast<Function>(vfun);
+        if (fun->isBuildIn())
+        {
+            // 是内建函数
+            // 添加到 Extern表中 默认是外部
+            module->addExternFunction(fun);  
+        }
+        else
+        {
+            // 查找到  重复声明 报错
+            std::cout << ">>>>Error!: not supported function redeclared! function:" << funcname << " line: " << lineno << std::endl;
+            return false;
+        }
     }
     return true;
 }
@@ -342,7 +352,7 @@ bool IRGen::ir_func_formal_params(ast_node *node, LabelParams blocks)
             }
             AllocaInstPtr alloca = AllocaInst::get(argName, Type::copy(arg->getType())); // 创建 Alloca
             StoreInstPtr store = StoreInst::get(arg, alloca);
-            alloca->setAllocaArg(arg); //设置对应的形参
+            alloca->setAllocaArg(arg);       // 设置对应的形参
             fun_f->insertAllocaInst(alloca); // 加入AllocaInst
             alloca->setBBlockParent(fun_f->getEntryBlock());
             fun_f->getEntryBlock()->AddInstBack(store); // 加入store指令
@@ -634,6 +644,12 @@ bool IRGen::ir_funcall(ast_node *node, LabelParams blocks)
         // 未找到 报错  退出
         std::cout << ">>>Error: no such function:" << funcname << " line: " << lineno << std::endl;
         return false;
+    }
+    else
+    {
+        // 找到了 如果是std中的函数加入到 ExternFunction表中
+        FuncPtr funCast = std::static_pointer_cast<Function>(fun);
+        module->addExternFunction(funCast);
     }
     ast_node *realParams = node->sons[0]; // 实参列表
     std::vector<ValPtr> realArgs;         // 记录实参值
@@ -1572,5 +1588,3 @@ bool IRGen::run()
     ast_node *node = ir_visit_astnode(ast_root, {});
     return node != nullptr;
 }
-
-

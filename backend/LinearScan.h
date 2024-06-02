@@ -38,6 +38,7 @@ struct Interval
     int start;                                  // 起始编号处
     int end;                                    // 终止编号处
     bool spill = false;                         // 是否溢出
+    bool isPreAlloca = false;                   // 是否是预先分配的物理寄存器 如函数参数  函数返回值
     int reg;                                    // 分配的物理寄存器编号
     MOperaPtr def;                              // def
     std::multiset<MOperaPtr, cmpUsePosLt> uses; // uses
@@ -142,7 +143,7 @@ private:
     {
         regs.clear();
         // r0-r3 由于存在函数调用 以及函数返回值 目前先不分配 后继 有时间进行分析时考虑
-        for (int i = 4; i < 11; i++)
+        for (int i = 0; i < 11; i++)
         {
             regs.insert(i);
         }

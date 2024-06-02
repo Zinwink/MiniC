@@ -29,7 +29,8 @@ private:
     std::vector<ArgPtr> args;            // 形参列表
     std::list<InstPtr> allocaLists;      // AllocaInst链表
     std::list<BasicBlockPtr> BlocksList; // 基本块列表
-    int32_t maxCallFuncArgsNum = 0;     // 函数体中调用函数的最大参数数目
+    int32_t maxCallFuncArgsNum = 0;      // 函数体中调用函数的最大参数数目
+    bool _isBuildIn = false;             // 是否是std.h 库函数
 
 public:
     /// @brief 构造函数
@@ -73,6 +74,13 @@ public:
         if (argsNum > maxCallFuncArgsNum)
             maxCallFuncArgsNum = argsNum;
     }
+
+    /// @brief 是否是 std.c中的库函数
+    /// @return
+    inline bool isBuildIn() { return _isBuildIn; }
+
+    /// @brief 设置为 std.h函数标记
+    inline void setBuildInTag() { _isBuildIn = true; }
 
     /// @brief 获取Value名
     /// @return
