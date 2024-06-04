@@ -514,7 +514,8 @@ getelemInstPtr getelementptrInst::create(ValPtr arrayBaseAdress, std::vector<Val
             mulAdd = load;
         }
         std::vector<int> dimsOrd = arrty->getDimValues(); // 获取维度数据
-        for (size_t i = 1; i < dimsOrd.size(); i++)
+
+        for (size_t i = 1; i < dims.size(); i++)
         { //  非函数形参拷贝 可获得声明数组的完整大小 因此从第二位开始
             ConstantIntPtr cont = ConstantInt::get(32);
             cont->setValue(dimsOrd[i]);
