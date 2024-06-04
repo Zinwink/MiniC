@@ -15,13 +15,15 @@
 #include "MachineFunc.h"
 #include "MachineModule.h"
 #include "MachineOperand.h"
+#include <unordered_set>
 
 class LinearScan;
 struct Interval;
+
 using LinearScanPtr = std::shared_ptr<LinearScan>;
 using IntervalPtr = std::shared_ptr<Interval>;
 
-// 为了后继方便 这里定义一个 set的比较算子 主要使set根据Moperator的使用指令编号位置为MOperaPtr自动排序
+// 定义比较操作数使用位置的函数
 struct cmpUsePosLt
 {
     bool operator()(const MOperaPtr &op1, const MOperaPtr &op2) const
@@ -32,73 +34,52 @@ struct cmpUsePosLt
     }
 };
 
-/// @brief 活跃间隔***************************************************************************************************
+/// @brief *******************************  活跃间隔 ***********************************************
 struct Interval
 {
-    int start;                                  // 起始编号处
-    int end;                                    // 终止编号处
-    bool spill = false;                         // 是否溢出
-    bool isPreAlloca = false;                   // 是否是预先分配的物理寄存器 如函数参数  函数返回值
-    int reg = -1;                               // 分配的物理寄存器编号
-    MOperaPtr def;                              // def
-    std::multiset<MOperaPtr, cmpUsePosLt> uses; // uses
+    int start = -1;              // 起始编号处
+    int end = -1;                // 终止编号处
+    bool isPreAlloca = false;    // 是否是预先分配的物理寄存器 如函数参数  函数返回值
+    bool isUncertainDef = false; // def 是否是不确定状态
+    bool isArgDef = false;       // 是否是 函数初始状态下 函数形参r0-r3的初始调用值(标记主要用于修改 start位置以及溢出插入语句的位置)
+    int reg = -1;                // 分配的物理寄存器编号
+    MOperaPtr def = nullptr;     // 虚拟寄存器由于临时产生 只会def一次；物理寄存器会def多次
+                                 // 如果def 是不确定状态 则该def是无用的，只是作为标记使用
 
-    /// @brief 构造
-    /// @param s
-    /// @param e
-    /// @param _def
-    /// @param _uses
-    Interval(int s, int e, const MOperaPtr &_def, const std::multiset<MOperaPtr, cmpUsePosLt> &_uses)
-    {
-        start = s;
-        end = e;
-        def = _def;
-        for (auto &use : _uses)
-        {
-            uses.insert(use);
-        }
-    }
-
-    /// @brief 构造函数 无需记录 def uses(用于物理寄存器 因为在我的策略中不会将预先分配物理寄存器溢出)
-    /// @param s
-    /// @param e
-    /// @param _isPredAlloca
-    Interval(int s, int e, bool _isPredAlloca = true)
-    {
-        start = s;
-        end = e;
-        isPreAlloca = _isPredAlloca;
-    }
-
-    /// @brief 智能指针对象构造
-    /// @param s
-    /// @param e
-    /// @param _def
-    /// @param _uses
-    /// @return
-    static IntervalPtr get(int s, int e, const MOperaPtr &_def, const std::multiset<MOperaPtr, cmpUsePosLt> &_uses)
-    {
-        IntervalPtr interv = std::make_shared<Interval>(s, e, _def, _uses);
-        return interv;
-    }
+    std::multiset<MOperaPtr, cmpUsePosLt> uses; // def 对应的 uses
 
     /// @brief 创建智能指针对象
-    /// @param s
-    /// @param e
-    /// @param _isPredAlloca
+    /// @param _def
+    /// @param uses
+    /// @param _isPreAlloca
+    /// @param _isUncertainDef
+    /// @param _isArgDef 是否是 函数初始状态下前四形参寄存器初始值
     /// @return
-    static IntervalPtr get(int s, int e, bool _isPredAlloca = true)
-    {
-        IntervalPtr interv = std::make_shared<Interval>(s, e, _isPredAlloca);
-        return interv;
-    }
+    static IntervalPtr get(const MOperaPtr &_def, const std::unordered_set<MOperaPtr> &uses,
+                           bool _isPreAlloca = false, bool _isUncertainDef = false, bool _isArgDef = false);
 
-    // 定义 set需要使用的比较对象方法
+    //***********************************  比较函数  *********************************************
     struct cmpLtStart
     {
         bool operator()(const IntervalPtr &inter1, const IntervalPtr &inter2) const
         {
-            return inter1->start < inter2->start;
+            int start1 = inter1->start;
+            int end1 = inter1->end;
+            int start2 = inter2->start;
+            int end2 = inter2->end;
+            if (start1 < start2)
+            {
+                return true;
+            }
+            else if (start1 == start2)
+            {
+                // 相同起始点 比较间隔长短 间隔短的先分配
+                return (end1 - start1) < (end2 - start2);
+            }
+            else
+            {
+                return false;
+            }
         }
     };
 
@@ -106,7 +87,23 @@ struct Interval
     {
         bool operator()(const IntervalPtr &inter1, const IntervalPtr &inter2) const
         {
-            return inter1->end > inter2->end;
+            int start1 = inter1->start;
+            int end1 = inter1->end;
+            int start2 = inter2->start;
+            int end2 = inter2->end;
+            if (end1 > end2)
+            {
+                return true;
+            }
+            else if (end1 == end2)
+            {
+                // 结尾一样比较 间隔长短 间隔长的溢出
+                return (end1 - start1) > (end2 - start2);
+            }
+            else
+            {
+                return false;
+            }
         }
     };
 };
@@ -121,32 +118,42 @@ private:
     /// @brief 存放整型通用寄存器
     std::set<int> regs;
 
-    /// @brief def-use Chain
-    std::unordered_map<MOperaPtr, std::multiset<MOperaPtr, cmpUsePosLt>> defUseChains;
+    /// @brief def-use chain; 对于虚拟寄存器已经确定；对于物理寄存器 没有def 或者有多个def的不定状态将创建一个def标记
+    std::unordered_map<MOperaPtr, std::unordered_set<MOperaPtr>> defUseChains;
+
+    /// @brief 用于标记哪些def 操作数 仅仅是个标记 是不确定的状态(存在于汇合节点 类似phi指令的作用)
+    std::unordered_set<MOperaPtr> isUncertainDefSets;
+
+    /// @brief 形参初始值记录表
+    std::unordered_set<MOperaPtr> isArgInitDefSets;
 
     /// @brief 标记是否所有间隔都已经分配寄存器
     bool successAllocaRegs = true;
 
-    /// @brief 间隔
-    std::multiset<IntervalPtr, Interval::cmpLtStart> intervals;
+    /// @brief 活跃间隔(包括分配的物理寄存器r0-r3的活跃间隔以及虚拟寄存器的活跃间隔)
+    std::multiset<IntervalPtr, Interval::cmpLtStart> intervals; // 最终的活跃间隔结果
 
     /// @brief active表 即在目前周期中正在活跃并且已经分配寄存器的间隔
     std::multiset<IntervalPtr, Interval::cmpGtEnd> active;
 
-    /// @brief 处理虚拟寄存器 和物理寄存器(对于虚拟寄存器产生def-use(简单，一个虚拟寄存器只会def一次))
-    /// @brief 对于物理寄存器根据活跃变量分析获取对应的活跃区间间隔 供后继使用你
+    /// @brief 计算 fun的虚拟寄存器 物理寄存器的 def-use chain
     /// @param fun
-    void dealWithVregsAndRealRegs(MFuncPtr fun);
+    void computeDefUseChain(MFuncPtr fun);
 
     /// @brief 计算活跃间隔(只对虚拟寄存器而言)
     /// @param fun
     void computeIntervals(MFuncPtr fun);
 
     /// @brief 获取溢出位置 如果无溢出 返回nullptr
-    /// @param inter1InActive
+    /// @param inter1Tospill 准备溢出的间隔
     /// @param inter2
     /// @return 返回 str ldr 指令的插入位置
-    std::pair<MInstPtr, MInstPtr> computeSpillPos(IntervalPtr inter1InActive, IntervalPtr inter2);
+    std::pair<MOperaPtr, MOperaPtr> computeSpillPos(IntervalPtr inter1Tospill, IntervalPtr inter2);
+
+    /// @brief 从 Active表中查找冲突的活跃间隔
+    /// @param curInter 当前需要分配的活跃间隔
+    /// @return
+    IntervalPtr FindConflictInter(IntervalPtr curInter);
 
     /// @brief 自动处理冲突(和active表中已经分配寄存器的活跃间隔比较)  如果有的话 更新active表
     /// @param curInter 当前扫描的活跃间隔
@@ -155,7 +162,7 @@ private:
     /// @brief 插入溢出时的代码 def后使用 str, 在firstUsePos前插入ldr
     /// @param inter 活跃间隔
     /// @param pos pos的第一 第二个元素对应  插入 str  ldr指令的位置
-    void genSpillCode(IntervalPtr interSpilled, std::pair<MInstPtr, MInstPtr> &pos);
+    void genSpillCode(IntervalPtr interSpilled, std::pair<MOperaPtr, MOperaPtr> &pos);
 
     /// @brief 将活跃间隔中的def use 虚拟寄存器操作数 映射为对应的物理寄存器
     /// @param inter
@@ -166,7 +173,7 @@ private:
     {
         regs.clear();
         // r0-r3 由于存在函数调用 以及函数返回值 目前先不分配 后继 有时间进行分析时考虑
-        for (int i = 0; i < 11; i++)
+        for (int i = 0; i < 4; i++)
         {
             regs.insert(i);
         }

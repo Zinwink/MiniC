@@ -276,7 +276,7 @@ bool IRGen::ir_func_declare(ast_node *node, LabelParams blocks)
         {
             // 是内建函数
             // 添加到 Extern表中 默认是外部
-            module->addExternFunction(fun);  
+            module->addExternFunction(fun);
         }
         else
         {
@@ -649,7 +649,10 @@ bool IRGen::ir_funcall(ast_node *node, LabelParams blocks)
     {
         // 找到了 如果是std中的函数加入到 ExternFunction表中
         FuncPtr funCast = std::static_pointer_cast<Function>(fun);
-        module->addExternFunction(funCast);
+        if (funCast->isBuildIn())
+        {
+            module->addExternFunction(funCast);
+        }
     }
     ast_node *realParams = node->sons[0]; // 实参列表
     std::vector<ValPtr> realArgs;         // 记录实参值

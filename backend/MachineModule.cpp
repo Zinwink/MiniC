@@ -68,6 +68,14 @@ uint32_t MachineModule::getRegNo()
     return res;
 }
 
+/// @brief 判断是否有编号记录
+/// @param val
+/// @return
+bool MachineModule::hasNumRecord(ValPtr val)
+{
+    return counter->hasRecord(val);
+}
+
 /// @brief 重置计数器
 void MachineModule::CnterReset()
 {
@@ -127,6 +135,23 @@ uint32_t MCount::getNo(ValPtr val)
     }
     assert(res != -1 && "the counter not support the usage!");
     return res;
+}
+
+/// @brief 判断val是否已经有记录 给函数的后4 Argument使用,防止反复Load
+/// @param val
+/// @return
+bool MCount::hasRecord(ValPtr val)
+{
+    auto iter = record.find(val);
+    if (iter != record.end())
+    {
+        // 查找到
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 /// @brief 产生全局变量声明

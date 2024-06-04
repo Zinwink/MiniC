@@ -125,7 +125,7 @@ bool operator==(const MachineOperand &left, const MachineOperand &right)
     // 寄存器类型编号相同
     if (left.type == MachineOperand::REG || left.type == MachineOperand::VREG)
     {
-        return left.reg_no == right.reg_no;
+        return (left.reg_no == right.reg_no) && (left.isArgDef == right.isArgDef);
     }
     return false;
 }
@@ -164,9 +164,10 @@ MOperaPtr MachineOperand::get(OprandType ty, int _val)
 /// @brief 创建物理寄存器类型
 /// @param regNo 物理寄存器编号
 /// @return
-MOperaPtr MachineOperand::createReg(uint32_t regNo)
+MOperaPtr MachineOperand::createReg(uint32_t regNo, bool _isArgDef)
 {
     MOperaPtr op = get(REG, regNo);
+    op->isArgDef = _isArgDef;
     return op;
 }
 
@@ -227,21 +228,31 @@ MOperaPtr MachineOperand::get(ValPtr val, MModulePtr Mmodule)
         {
             // 0-3 号形参  采用r0-r3寄存器
             mop = get(REG, arg->getArgNo());
+            mop->isArgDef = true; // 设置是 函数初始状态下形参寄存器(区分直接的r0-r3,防止进行数据流分析时混淆)
         }
         else
         {
             // >=4  大于等于4采用栈内存的形式
+            bool hasRecord = Mmodule->hasNumRecord(val); // 先看是否有标记
             MOperaPtr argVreg = get(VREG, Mmodule->getNo(val));
-            MOperaPtr ldrDst = copy(argVreg);
-            MOperaPtr ldrSrc1 = get(REG, 11);
-            MOperaPtr offset = get(IMM, 4 * (arg->getArgNo() - 4) + 8); // 相对于fp
-            MLoadInstPtr ldr = MLoadInst::get(Mmodule->getCurBlock(), MachineInst::LDR, ldrDst, ldrSrc1, offset);
-            Mmodule->getCurBlock()->addInstBack(ldr); // 加入到当前块中
+            if (hasRecord)
+            {
+                // 不是第一次使用
+                mop = argVreg;
+            }
+            else
+            {
+                // 是第一次使用 创建 ldr 进行加载define 该虚拟寄存器
+                MOperaPtr ldrDst = copy(argVreg);
+                MOperaPtr ldrSrc1 = get(REG, 11);
+                MOperaPtr offset = get(IMM, 4 * (arg->getArgNo() - 4) + 8); // 相对于fp
+                MLoadInstPtr ldr = MLoadInst::get(Mmodule->getCurBlock(), MachineInst::LDR, ldrDst, ldrSrc1, offset);
+                Mmodule->getCurBlock()->addInstBack(ldr); // 加入到当前块中
 
-            // 后继可能有 saveRegs 需要对该后4函数形参进行修正
-            Mmodule->getCurFun()->addAdjustInst(ldr);
-
-            mop = argVreg;
+                // 后继可能有 saveRegs 需要对该后4函数形参进行修正
+                Mmodule->getCurFun()->addAdjustInst(ldr);
+                mop = argVreg;
+            }
         }
     }
     assert(mop != nullptr && "not support this usage!");

@@ -41,6 +41,7 @@ private:
     OprandType type;           // 操作数类型
     int val;                   // 存储立即数的值
     int reg_no = -1;           // 寄存器编号
+    bool isArgDef = false;     // 一个标记 用于区分 使用的r0-r3和存储参数的r0-r3
     std::string label;         // 地址标签
 public:
     /// @brief 析构函数
@@ -65,6 +66,10 @@ public:
     /// @brief 是否是物理寄存器
     /// @return
     bool isReg() { return type == REG; }
+
+    /// @brief 是否是 函数初始就已经定义好的形参寄存器(给个标志 方便优化传播而不影响数据流分析)
+    /// @return
+    bool _isArgDef() { return isArgDef; }
 
     /// @brief 是否是虚寄存器
     /// @return
@@ -148,8 +153,9 @@ public:
 
     /// @brief 创建物理寄存器类型
     /// @param regNo 物理寄存器编号
+    /// @param _isArgDel 是否是函数形参的寄存器(主要用于区分r0-r3,传播后面时不影响分析)
     /// @return
-    static MOperaPtr createReg(uint32_t regNo);
+    static MOperaPtr createReg(uint32_t regNo, bool _isArgDef = false);
 
     /// @brief 将立即数加载到寄存器，符合寄存器规范的使用mov指令，不符合的使用ldr伪指令
     /// @param imm

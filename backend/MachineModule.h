@@ -102,6 +102,11 @@ public:
     /// @return
     uint32_t getNo(ValPtr val);
 
+    /// @brief 判断是否有编号记录
+    /// @param val
+    /// @return
+    bool hasNumRecord(ValPtr val);
+
     /// @brief 不插入记录 生成并获取相应的编号
     /// @return
     uint32_t getRegNo();
@@ -159,6 +164,11 @@ public:
     /// @brief 不插入value记录 直接获取编号
     /// @return
     uint32_t getRegNo() { return RegNo++; }
+
+    /// @brief 判断val是否已经有记录 给函数的后4 Argument使用,防止反复Load
+    /// @param val 主要用于IR优化后 load消减时(类似于Mem2Reg)
+    /// @return
+    bool hasRecord(ValPtr val);
 
     /// @brief 记录重置
     inline void reset()

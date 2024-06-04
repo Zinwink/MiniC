@@ -361,7 +361,18 @@ bool ArmInstGen::ICmp2ArmInst(InstPtr icmp)
     ValPtr left = icmp->getOperand(0);
     ValPtr right = icmp->getOperand(1);
     MOperaPtr leftM = MachineOperand::get(left, machineModule);
+
+    /// 如果是立即数 则加载到 寄存器
+    if (leftM->isImm())
+    {
+        leftM = MachineOperand::imm2VReg(leftM, machineModule);
+    }
     MOperaPtr rightM = MachineOperand::get(right, machineModule);
+    if (rightM->isImm())
+    {
+        rightM = MachineOperand::AutoDealWithImm(rightM, machineModule);
+    }
+
     MCmpInstPtr cmp = MCmpInst::get(curblk, MachineInst::CMP, std::move(leftM), std::move(rightM));
     curblk->addInstBack(cmp);
 
