@@ -677,14 +677,16 @@ bool IRGen::ir_funcall(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_assign(ast_node *node, LabelParams blocks)
 {
+    // 先进行右边 后进行左边
+    ast_node *right = ir_visit_astnode(node->sons[1], blocks);
+    if (right == nullptr)
+        return false;
     ast_node *left = ir_visit_astnode(node->sons[0], blocks);
     if (left == nullptr)
     {
         return false;
     }
-    ast_node *right = ir_visit_astnode(node->sons[1], blocks);
-    if (right == nullptr)
-        return false;
+
     if (scoper->curTab()->isGlobalTab())
     { // 全局中的变量初始化
         assert(left->value->isGlobalVariable() && "it's not global value");
