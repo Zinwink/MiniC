@@ -50,6 +50,9 @@ enum class Opcode
 
     ICMP, // 标识ICMP指令
 
+    // Zext 指令
+    Zext,
+
     Unknown // 未知
 };
 
@@ -138,6 +141,10 @@ public:
     /// @return
     bool isICmpInst();
 
+    /// @brief 是否是Zext 指令
+    /// @return 
+    bool isZextInst();
+
     /// @brief 是否是ret Inst
     /// @return
     bool isRetInst();
@@ -212,3 +219,9 @@ string ICmpInstStr(InstPtr icmp, Counter *cnt);
 /// @param cnt
 /// @return
 string GetelementInstStr(InstPtr getelem, Counter *cnt);
+
+/// @brief 获取ZextInst的字符表示
+/// @param zext
+/// @param cnt
+/// @return
+string ZextInstStr(InstPtr zext, Counter *cnt);

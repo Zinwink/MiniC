@@ -77,6 +77,9 @@ string Instruction::getOpcodeName()
     case Opcode::NotEqInteger:
         name = string("icmp ne");
         break;
+    case Opcode::Zext:
+        name = string("zext");
+        break;
 
     default:
         name = string("UnknownOpcodeName");
@@ -133,6 +136,13 @@ bool Instruction::isICmpInst()
 {
     // 目前 是 13-18是
     return (int)op >= 13 && (int)op <= 18;
+}
+
+/// @brief 是否是Zext 指令
+/// @return
+bool Instruction::isZextInst()
+{
+    return op == Opcode::Zext;
 }
 
 /// @brief 是否是ret Inst
@@ -194,6 +204,9 @@ string Instruction::toIRstr(InstPtr inst, Counter *cnt)
         break;
     case Opcode::GetelementPtr:
         str = GetelementInstStr(inst, cnt);
+        break;
+    case Opcode::Zext:
+        str = ZextInstStr(inst, cnt);
         break;
 
     default:
@@ -354,5 +367,17 @@ string GetelementInstStr(InstPtr getelem, Counter *cnt)
     }
 
     str = getllvmID(getelem, cnt) + string(" = ") + getelem->getOpcodeName() + string(" ") + arrTy->getElemntTy()->TypeStr() + string(", ") + arrayBase->getType()->TypeStr() + string(" ") + getllvmID(arrayBase, cnt) + string(", ") + gapstr + offset->getType()->TypeStr() + string(" ") + getllvmID(offset, cnt);
+    return str;
+}
+
+/// @brief 获取ZextInst的字符表示
+/// @param zext
+/// @param cnt
+/// @return
+string ZextInstStr(InstPtr zext, Counter *cnt)
+{
+    string str;
+    ValPtr src = zext->getOperand(0);
+    str = getllvmID(zext, cnt) + string(" = ") + zext->getOpcodeName() + string(" ") + src->getType()->TypeStr() + string(" ") + getllvmID(src, cnt) + string(" to ") + zext->getType()->TypeStr();
     return str;
 }

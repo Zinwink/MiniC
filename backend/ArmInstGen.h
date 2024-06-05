@@ -117,6 +117,11 @@ private:
     /// @return
     bool ISrem2ArmInst(InstPtr srem);
 
+    /// @brief 将 Zext翻译为对应的arm32指令
+    /// @param zext
+    /// @return
+    bool Zext2ArmInst(InstPtr zext);
+
 public:
     /// @brief 构造函数
     /// @param _IRModule
@@ -139,6 +144,7 @@ public:
         IR2ArmInst_handers[Opcode::SubInteger] = &ArmInstGen::ISub2ArmInst;
         IR2ArmInst_handers[Opcode::DivInteger] = &ArmInstGen::IDiv2ArmInst;
         IR2ArmInst_handers[Opcode::ModInteger] = &ArmInstGen::ISrem2ArmInst;
+        IR2ArmInst_handers[Opcode::Zext] = &ArmInstGen::Zext2ArmInst;
     }
 
     /// @brief 智能指针对象

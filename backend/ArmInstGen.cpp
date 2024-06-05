@@ -757,21 +757,7 @@ bool ArmInstGen::ISrem2ArmInst(InstPtr srem)
     ValPtr right = srem->getOperand(1);
     MOperaPtr leftM = MachineOperand::get(left, machineModule);
     MOperaPtr rightM = MachineOperand::get(right, machineModule);
-
-    // // 调用前先保留 r0,r1 的旧值 在其他函数中使用 取余时保护
-    if (curfun->getFuncName() != "main")
-    {
-        if (curfun->getFuncArgsNum() >= 2)
-        {
-            MStackInstPtr push = MStackInst::get(curblk, MachineInst::PUSH, {MachineOperand::createReg(0), MachineOperand::createReg(1)});
-            curblk->addInstBack(push);
-        }
-        else if (curfun->getFuncArgsNum() == 1)
-        {
-            MStackInstPtr push = MStackInst::get(curblk, MachineInst::PUSH, {MachineOperand::createReg(0)});
-            curblk->addInstBack(push);
-        }
-    }
+    // 2024-6-5 删除了push -pop 用来保护 r0 r1 的操作  LinearScan寄存器分配会做
 
     if (leftM->isImm())
     {
@@ -809,21 +795,22 @@ bool ArmInstGen::ISrem2ArmInst(InstPtr srem)
     // 将取余结果r1取出(商保存在r0  余数保存在r1)  会产生冗余 但为了简便先这样写
     MMovInstPtr mov_modRes = MMovInst::get(curblk, MachineInst::MOV, MachineOperand::get(srem, machineModule), MachineOperand::createReg(1));
     curblk->addInstBack(mov_modRes);
+    return true;
+}
 
-    // 使用pop 将 r0,r1恢复  （目前翻译地有些不好  后期尽量在IR端好好优化 转化 srem取余指令）
-    if (curfun->getFuncName() != "main")
-    {
-        if (curfun->getFuncArgsNum() >= 2)
-        {
-            MStackInstPtr pop = MStackInst::get(curblk, MachineInst::POP, {MachineOperand::createReg(0), MachineOperand::createReg(1)});
-            curblk->addInstBack(pop);
-        }
-        else if (curfun->getFuncArgsNum() == 1)
-        {
-            MStackInstPtr pop = MStackInst::get(curblk, MachineInst::POP, {MachineOperand::createReg(0)});
-            curblk->addInstBack(pop);
-        }
-    }
+/// @brief 将 Zext翻译为对应的arm32指令
+/// @param zext
+/// @return
+bool ArmInstGen::Zext2ArmInst(InstPtr zext)
+{
+    MBlockPtr &curblk = machineModule->getCurBlock();
+    ValPtr condRes = zext->getOperand(0); // 获取条件 值 是icmp指令
+    assert(condRes->isICmpInst() && "The LLVM IR maybe error or forget dealing with it!");
+    MOperaPtr vreg = MachineOperand::get(zext, machineModule);
+    ICmpInstPtr cmp = std::static_pointer_cast<ICmpInst>(condRes);
+    MachineInst::condSuffix csuffix = IRCond2Machine(cmp);
+    MZextInstPtr MZext = MZextInst::get(curblk, std::move(vreg), csuffix);
+    curblk->addInstBack(MZext);
     return true;
 }
 

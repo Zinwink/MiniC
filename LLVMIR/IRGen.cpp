@@ -229,7 +229,7 @@ bool IRGen::ir_func_define(ast_node *node, LabelParams blocks)
     // 判断最后一个基本块(即当前基本快)
     if (transmitBlocks.size() != 0)
     {
-        assert(transmitBlocks.size() == 1 && ">>>Error!Basic block not aligned with corresponding program during program execution! file: IRGen.cpp");
+        assert(transmitBlocks.size() == 1 && ">>>Error!Basic block not aligned with corresponding program during program execution! file: IRGen.cpp; this may be caused by the .c file having the usage not supported currently!");
         // 基本块流中还存在基本块
         // 函数无返回值  加入跳转至Exit指令
         BranchInstPtr br = BranchInst::get(Exit);
@@ -665,6 +665,21 @@ bool IRGen::ir_funcall(ast_node *node, LabelParams blocks)
     }
     CallInstPtr call = CallInst::create(fun, realArgs, getCurBlock());
     node->value = call; // 记录 value(对于有返回值的函数有作用)
+    if (blocks.size() != 0)
+    {
+        assert(blocks.size() == 2 && !call->getType()->isVoidType());
+        // 函数调用有跳转块  说明父亲节点传入了跳转 需要使用函数返回值作为跳转条件
+        ConstantIntPtr zero = ConstantInt::get(32);
+        zero->setValue(0); // 和0比较
+        ICmpInstPtr notZero = ICmpInst::create(Opcode::NotEqInteger, call, zero, getCurBlock());
+        // 再创建条件跳转语句
+        BranchInstPtr br = BranchInst::get(notZero, blocks[0], blocks[1]);
+        getCurBlock()->AddInstBack(br);
+        br->setBBlockParent(getCurBlock());
+        // 创建跳转语句后 当前块完毕  更新基本块队列以及当前块迭代器
+        transmitBlocks.pop_front();
+        curUsedBlockIter = std::next(curUsedBlockIter);
+    }
 
     // 更新当前函数调用函数的最大参数数目
     scoper->curFun()->updateMaxCallFunArgsNum(realArgs.size());
@@ -876,6 +891,28 @@ bool IRGen::ir_add(ast_node *node, LabelParams blocks)
     ast_node *right = ir_visit_astnode(node->sons[1], blocks);
     if (right == nullptr)
         return false;
+
+    // 编写一个下面可能都用到的 Lamda函数
+    // 当加法值作为条件值 使用时如 if(a+b)
+    auto whenTheResIsCond = [&]()
+    {
+        if (blocks.size() != 0)
+        {
+            assert(blocks.size() == 2 && !node->value->getType()->isVoidType());
+            // 函数调用有跳转块  说明父亲节点传入了跳转 需要使用函数返回值作为跳转条件
+            ConstantIntPtr zero = ConstantInt::get(32);
+            zero->setValue(0); // 和0比较
+            ICmpInstPtr notZero = ICmpInst::create(Opcode::NotEqInteger, node->value, zero, getCurBlock());
+            // 再创建条件跳转语句
+            BranchInstPtr br = BranchInst::get(notZero, blocks[0], blocks[1]);
+            getCurBlock()->AddInstBack(br);
+            br->setBBlockParent(getCurBlock());
+            // 创建跳转语句后 当前块完毕  更新基本块队列以及当前块迭代器
+            transmitBlocks.pop_front();
+            curUsedBlockIter = std::next(curUsedBlockIter);
+        }
+    };
+
     if (left->value->isConstant() && right->value->isConstant())
     {
         // 如果加法的两者均为常数 则直接相加运算 (目前默认只实现整数的加法运算)
@@ -885,6 +922,7 @@ bool IRGen::ir_add(ast_node *node, LabelParams blocks)
         ConstantIntPtr resPtr = ConstantInt::get(32);
         resPtr->setValue(res); // 设置常数值
         node->value = resPtr;
+        whenTheResIsCond();
         return true;
     }
     else if (left->value->isConstant())
@@ -893,6 +931,7 @@ bool IRGen::ir_add(ast_node *node, LabelParams blocks)
         if (left_const->getValue() == 0)
         {
             node->value = right->value;
+            whenTheResIsCond();
             return true;
         }
     }
@@ -902,13 +941,14 @@ bool IRGen::ir_add(ast_node *node, LabelParams blocks)
         if (right_const->getValue() == 0)
         {
             node->value = left->value;
+            whenTheResIsCond();
             return true;
         }
     }
     // 不都是常数
     BinaryOperatorPtr binaryOp = BinaryOperator::create(Opcode::AddInteger, left->value, right->value, getCurBlock());
     node->value = binaryOp;
-
+    whenTheResIsCond();
     return true;
 }
 
@@ -926,6 +966,28 @@ bool IRGen::ir_sub(ast_node *node, LabelParams blocks)
     ast_node *right = ir_visit_astnode(node->sons[1], blocks);
     if (right == nullptr)
         return false;
+
+    // 编写一个下面可能都用到的 Lamda函数
+    // 当加法值作为条件值 使用时如 if(a+b)
+    auto whenTheResIsCond = [&]()
+    {
+        if (blocks.size() != 0)
+        {
+            assert(blocks.size() == 2 && !node->value->getType()->isVoidType());
+            // 函数调用有跳转块  说明父亲节点传入了跳转 需要使用函数返回值作为跳转条件
+            ConstantIntPtr zero = ConstantInt::get(32);
+            zero->setValue(0); // 和0比较
+            ICmpInstPtr notZero = ICmpInst::create(Opcode::NotEqInteger, node->value, zero, getCurBlock());
+            // 再创建条件跳转语句
+            BranchInstPtr br = BranchInst::get(notZero, blocks[0], blocks[1]);
+            getCurBlock()->AddInstBack(br);
+            br->setBBlockParent(getCurBlock());
+            // 创建跳转语句后 当前块完毕  更新基本块队列以及当前块迭代器
+            transmitBlocks.pop_front();
+            curUsedBlockIter = std::next(curUsedBlockIter);
+        }
+    };
+
     if (left->value->isConstant() && right->value->isConstant())
     {
         // 如果加法的两者均为常数 则直接相加运算 (目前默认只实现整数的加法运算)
@@ -935,6 +997,7 @@ bool IRGen::ir_sub(ast_node *node, LabelParams blocks)
         ConstantIntPtr resPtr = ConstantInt::get(32);
         resPtr->setValue(res); // 设置常数值
         node->value = std::move(resPtr);
+        whenTheResIsCond();
         return true;
     }
     else if (right->value->isConstant())
@@ -943,12 +1006,14 @@ bool IRGen::ir_sub(ast_node *node, LabelParams blocks)
         if (right_const->getValue() == 0)
         {
             node->value = left->value;
+            whenTheResIsCond();
             return true;
         }
     }
     // 不都是常数
     BinaryOperatorPtr binaryOp = BinaryOperator::create(Opcode::SubInteger, left->value, right->value, getCurBlock());
     node->value = binaryOp;
+    whenTheResIsCond();
 
     return true;
 }
@@ -967,6 +1032,28 @@ bool IRGen::ir_mul(ast_node *node, LabelParams blocks)
     ast_node *right = ir_visit_astnode(node->sons[1], blocks);
     if (right == nullptr)
         return false;
+
+    // 编写一个下面可能都用到的 Lamda函数
+    // 当加法值作为条件值 使用时如 if(a+b)
+    auto whenTheResIsCond = [&]()
+    {
+        if (blocks.size() != 0)
+        {
+            assert(blocks.size() == 2 && !node->value->getType()->isVoidType());
+            // 函数调用有跳转块  说明父亲节点传入了跳转 需要使用函数返回值作为跳转条件
+            ConstantIntPtr zero = ConstantInt::get(32);
+            zero->setValue(0); // 和0比较
+            ICmpInstPtr notZero = ICmpInst::create(Opcode::NotEqInteger, node->value, zero, getCurBlock());
+            // 再创建条件跳转语句
+            BranchInstPtr br = BranchInst::get(notZero, blocks[0], blocks[1]);
+            getCurBlock()->AddInstBack(br);
+            br->setBBlockParent(getCurBlock());
+            // 创建跳转语句后 当前块完毕  更新基本块队列以及当前块迭代器
+            transmitBlocks.pop_front();
+            curUsedBlockIter = std::next(curUsedBlockIter);
+        }
+    };
+
     if (left->value->isConstant() && right->value->isConstant())
     {
         // 如果加法的两者均为常数 则直接相加运算 (目前默认只实现整数的加法运算)
@@ -976,6 +1063,7 @@ bool IRGen::ir_mul(ast_node *node, LabelParams blocks)
         ConstantIntPtr resPtr = ConstantInt::get(32);
         resPtr->setValue(res); // 设置常数值
         node->value = resPtr;
+        whenTheResIsCond();
         return true;
     }
     else if (left->value->isConstant())
@@ -986,11 +1074,13 @@ bool IRGen::ir_mul(ast_node *node, LabelParams blocks)
             ConstantIntPtr resPtr = ConstantInt::get(32);
             resPtr->setValue(0); // 设置常数值
             node->value = resPtr;
+            whenTheResIsCond();
             return true;
         }
         else if (left_const->getValue() == 1)
         {
             node->value = right->value;
+            whenTheResIsCond();
             return true;
         }
     }
@@ -1000,6 +1090,7 @@ bool IRGen::ir_mul(ast_node *node, LabelParams blocks)
         if (right_const->getValue() == 1)
         {
             node->value = left->value;
+            whenTheResIsCond();
             return true;
         }
         else if (right_const->getValue() == 0)
@@ -1007,6 +1098,7 @@ bool IRGen::ir_mul(ast_node *node, LabelParams blocks)
             ConstantIntPtr resPtr = ConstantInt::get(32);
             resPtr->setValue(0); // 设置常数值
             node->value = resPtr;
+            whenTheResIsCond();
             return true;
         }
     }
@@ -1014,6 +1106,7 @@ bool IRGen::ir_mul(ast_node *node, LabelParams blocks)
     // 不都是常数
     BinaryOperatorPtr binaryOp = BinaryOperator::create(Opcode::MulInteger, left->value, right->value, getCurBlock());
     node->value = binaryOp;
+    whenTheResIsCond();
 
     return true;
 }
@@ -1032,6 +1125,27 @@ bool IRGen::ir_div(ast_node *node, LabelParams blocks)
     ast_node *right = ir_visit_astnode(node->sons[1], blocks);
     if (right == nullptr)
         return false;
+
+    // 编写一个下面可能都用到的 Lamda函数
+    // 当加法值作为条件值 使用时如 if(a+b)
+    auto whenTheResIsCond = [&]()
+    {
+        if (blocks.size() != 0)
+        {
+            assert(blocks.size() == 2 && !node->value->getType()->isVoidType());
+            // 函数调用有跳转块  说明父亲节点传入了跳转 需要使用函数返回值作为跳转条件
+            ConstantIntPtr zero = ConstantInt::get(32);
+            zero->setValue(0); // 和0比较
+            ICmpInstPtr notZero = ICmpInst::create(Opcode::NotEqInteger, node->value, zero, getCurBlock());
+            // 再创建条件跳转语句
+            BranchInstPtr br = BranchInst::get(notZero, blocks[0], blocks[1]);
+            getCurBlock()->AddInstBack(br);
+            br->setBBlockParent(getCurBlock());
+            // 创建跳转语句后 当前块完毕  更新基本块队列以及当前块迭代器
+            transmitBlocks.pop_front();
+            curUsedBlockIter = std::next(curUsedBlockIter);
+        }
+    };
     if (left->value->isConstant() && right->value->isConstant())
     {
         // 如果加法的两者均为常数 则直接相加运算 (目前默认只实现整数的加法运算)
@@ -1041,6 +1155,7 @@ bool IRGen::ir_div(ast_node *node, LabelParams blocks)
         ConstantIntPtr resPtr = ConstantInt::get(32);
         resPtr->setValue(res); // 设置常数值
         node->value = resPtr;
+        whenTheResIsCond();
         return true;
     }
     else if (right->value->isConstant())
@@ -1049,6 +1164,7 @@ bool IRGen::ir_div(ast_node *node, LabelParams blocks)
         if (right_const->getValue() == 1)
         {
             node->value = left->value;
+            whenTheResIsCond();
             return true;
         }
     }
@@ -1056,6 +1172,7 @@ bool IRGen::ir_div(ast_node *node, LabelParams blocks)
     // 不都是常数
     BinaryOperatorPtr binaryOp = BinaryOperator::create(Opcode::DivInteger, left->value, right->value, getCurBlock());
     node->value = binaryOp;
+    whenTheResIsCond();
 
     return true;
 }
@@ -1074,6 +1191,28 @@ bool IRGen::ir_mod(ast_node *node, LabelParams blocks)
     ast_node *right = ir_visit_astnode(node->sons[1], blocks);
     if (right == nullptr)
         return false;
+
+    // 编写一个下面可能都用到的 Lamda函数
+    // 当加法值作为条件值 使用时如 if(a+b)
+    auto whenTheResIsCond = [&]()
+    {
+        if (blocks.size() != 0)
+        {
+            assert(blocks.size() == 2 && !node->value->getType()->isVoidType());
+            // 函数调用有跳转块  说明父亲节点传入了跳转 需要使用函数返回值作为跳转条件
+            ConstantIntPtr zero = ConstantInt::get(32);
+            zero->setValue(0); // 和0比较
+            ICmpInstPtr notZero = ICmpInst::create(Opcode::NotEqInteger, node->value, zero, getCurBlock());
+            // 再创建条件跳转语句
+            BranchInstPtr br = BranchInst::get(notZero, blocks[0], blocks[1]);
+            getCurBlock()->AddInstBack(br);
+            br->setBBlockParent(getCurBlock());
+            // 创建跳转语句后 当前块完毕  更新基本块队列以及当前块迭代器
+            transmitBlocks.pop_front();
+            curUsedBlockIter = std::next(curUsedBlockIter);
+        }
+    };
+
     if (left->value->isConstant() && right->value->isConstant())
     {
         // 如果加法的两者均为常数 则直接相加运算 (目前默认只实现整数的加法运算)
@@ -1083,6 +1222,7 @@ bool IRGen::ir_mod(ast_node *node, LabelParams blocks)
         ConstantIntPtr resPtr = ConstantInt::get(32);
         resPtr->setValue(res); // 设置常数值
         node->value = std::move(resPtr);
+        whenTheResIsCond();
         return true;
     }
     else if (left->value->isConstant())
@@ -1093,6 +1233,7 @@ bool IRGen::ir_mod(ast_node *node, LabelParams blocks)
             ConstantIntPtr resPtr = ConstantInt::get(32);
             resPtr->setValue(0); // 设置常数值
             node->value = resPtr;
+            whenTheResIsCond();
             return true;
         }
     }
@@ -1104,6 +1245,7 @@ bool IRGen::ir_mod(ast_node *node, LabelParams blocks)
             ConstantIntPtr resPtr = ConstantInt::get(32);
             resPtr->setValue(0); // 设置常数值
             node->value = resPtr;
+            whenTheResIsCond();
             return true;
         }
     }
@@ -1111,6 +1253,7 @@ bool IRGen::ir_mod(ast_node *node, LabelParams blocks)
     // 不都是常数
     BinaryOperatorPtr binaryOp = BinaryOperator::create(Opcode::ModInteger, left->value, right->value, getCurBlock());
     node->value = binaryOp;
+    whenTheResIsCond();
 
     return true;
 }
@@ -1124,11 +1267,56 @@ bool IRGen::ir_Cond_NOT(ast_node *node, LabelParams blocks)
     // 对于 not 节点目前只支持 在 if else ,while do while条件体中或者||，&& 等条件分支使用 因此 此处的blocks一定会传递两个块
     // 不支持 a=!condition 等用于非 if,while,do while总体条件块下的该操作 目前
     // not 无实际作用 只需交换跳转快的顺序并往下传递即可；
-    assert(blocks.size() == 2 && "not support the usage currently!");
-    // not 肯定只有一个子节点
-    ast_node *result = ir_visit_astnode(node->sons[0], {blocks[1], blocks[0]}); // 交换真假出口
-    if (result == nullptr)
-        return false;
+    if (blocks.size() > 0)
+    {
+        assert(blocks.size() == 2 && "not support the usage currently!");
+        // not 肯定只有一个子节点
+        ast_node *result = ir_visit_astnode(node->sons[0], {blocks[1], blocks[0]}); // 交换真假出口
+        if (result == nullptr)
+            return false;
+    }
+    else
+    {
+        // 父节点没有传入 跳转 说明是一元运算模式
+        // 注意目前 不支持 a=!(a||b)  这样的一元运算
+        // 支持 !a   !-a  !!!-a  这样的一元运算
+        // 会稍微 进行一定优化 如 !a 翻译为 a==0 !!a 翻译为 a!=0   !!!a 翻译为 !a相同 a==0
+        bool isNot = true;
+        ast_node *son = node->sons[0];
+        while (son->node_type == ast_node_type::AST_OP_COND_NOT)
+        {
+            son = son->sons[0];
+            isNot = !isNot;
+        }
+        ast_node *res = ir_visit_astnode(son, {});
+        if (res == nullptr)
+            return false;
+
+        ConstantIntPtr zero = ConstantInt::get(32);
+        zero->setValue(0);
+        if (isNot)
+        {
+            // 翻译为 !a  a==0
+            ICmpInstPtr eqZero = ICmpInst::create(Opcode::EqInTeger, res->value, zero, getCurBlock());
+            // 创建 Zext 指令得到 i32为的一元运算值
+            ZextInstPtr zext = ZextInst::get(eqZero, Type::getIntNType(32));
+            // 将 zext 指令加入到当前基本块
+            getCurBlock()->AddInstBack(zext);
+            zext->setBBlockParent(getCurBlock());
+            node->value = zext;
+        }
+        else
+        {
+            // 翻译为 a  a!=0
+            ICmpInstPtr NotZero = ICmpInst::create(Opcode::NotEqInteger, res->value, zero, getCurBlock());
+            // 创建 Zext 指令得到 i32为的一元运算值
+            ZextInstPtr zext = ZextInst::get(NotZero, Type::getIntNType(32));
+            // 将 zext 指令加入到当前基本块
+            getCurBlock()->AddInstBack(zext);
+            zext->setBBlockParent(getCurBlock());
+            node->value = zext;
+        }
+    }
 
     return true;
 }

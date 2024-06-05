@@ -25,6 +25,7 @@ class CallInst;
 class ICmpInst;
 class BranchInst;
 class getelementptrInst;
+class ZextInst;
 
 using AllocaInstPtr = std::shared_ptr<AllocaInst>;
 using StoreInstPtr = std::shared_ptr<StoreInst>;
@@ -35,6 +36,7 @@ using CallInstPtr = std::shared_ptr<CallInst>;
 using ICmpInstPtr = std::shared_ptr<ICmpInst>;
 using BranchInstPtr = std::shared_ptr<BranchInst>;
 using getelemInstPtr = std::shared_ptr<getelementptrInst>;
+using ZextInstPtr = std::shared_ptr<ZextInst>;
 
 /// @brief AllocaInst (将充当变量)(AllocaInst本身的Type是指针类型)
 class AllocaInst : public Instruction
@@ -527,7 +529,20 @@ public:
     static getelemInstPtr create(ValPtr arrayBaseAdress, std::vector<ValPtr> dims, BasicBlockPtr atBack);
 };
 
-/// @brief 用于将 i1扩展为 i32指令
+/// @brief 用于将 i1扩展为 i32指令 目前只有这一个功能
 class ZextInst : public Instruction
 {
+public:
+    /// @brief 析构函数
+    ~ZextInst() = default;
+
+    /// @brief 构造函数
+    /// @param i1
+    ZextInst(ValPtr i1, Type *i32);
+
+    /// @brief 获取智能指针对象
+    /// @param i1 
+    /// @param i32 
+    /// @return 
+    static ZextInstPtr get(ValPtr i1, Type *i32);
 };

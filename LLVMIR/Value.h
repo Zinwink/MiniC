@@ -169,6 +169,10 @@ public:
     /// @return
     bool isCallInst();
 
+    /// @brief 是不是 zextinst
+    /// @return
+    bool isZextInst();
+
     /// @brief 是否是函数形参
     /// @return
     inline bool isArgument()

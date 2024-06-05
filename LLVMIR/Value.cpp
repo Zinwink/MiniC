@@ -53,6 +53,10 @@ bool Value::isTemporary()
         {
             return true;
         }
+        else if (inst->isZextInst())
+        {
+            return true;
+        }
         else if (inst->isLoadInst())
         {
             return true;
@@ -113,6 +117,19 @@ bool Value::isICmpInst()
     {
         Instruction *inst = static_cast<Instruction *>(this);
         res = inst->isICmpInst();
+    }
+    return res;
+}
+
+/// @brief 是不是 zextinst
+/// @return
+bool Value::isZextInst()
+{
+    bool res = false;
+    if (isInstruct())
+    {
+        Instruction *inst = static_cast<Instruction *>(this);
+        res = inst->isZextInst();
     }
     return res;
 }

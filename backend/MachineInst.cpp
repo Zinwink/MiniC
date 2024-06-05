@@ -662,6 +662,47 @@ std::string MBranchInst::toStr()
     return str;
 }
 
+//********************** MZextInst 自定义复合伪指令  *********************************
+
+/// @brief 构造函数
+/// @param p 目的虚拟寄存器
+/// @param dst
+MZextInst::MZextInst(MBlockPtr p, MOperaPtr dst, condSuffix _cond)
+{
+    parent = p;
+    type = MachineInst::CMP2Int;
+    cond = _cond;
+    defs.push_back(dst);
+}
+
+/// @brief 创建智能指针对象
+/// @param p
+/// @param dst
+/// @param _cond 为真的比较条件 如 a!=1  那么_cond 就是 Ne(not equal)
+/// @return
+MZextInstPtr MZextInst::get(MBlockPtr p, MOperaPtr dst, condSuffix _cond)
+{
+    MZextInstPtr zext = std::make_shared<MZextInst>(p, dst, _cond);
+    dst->setParent(zext);
+    return zext;
+}
+
+/// @brief 输出字符串
+/// @return
+std::string MZextInst::toStr()
+{
+    // 第一条 为 存放真值 #1  第二条为存放 假#0
+    string str = "mov";
+    str += condSuffixStr();
+    str += " ";
+    str += defs[0]->toStr();
+    str += ", #1\n";
+    str += "\tmov ";
+    str += defs[0]->toStr();
+    str += ", #0";
+    return str;
+}
+
 /// @brief 根据ICmp IR比较指令获取条件后缀
 /// @param icmp
 /// @return

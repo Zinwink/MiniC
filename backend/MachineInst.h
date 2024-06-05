@@ -24,6 +24,7 @@ class MMovInst;
 class MCmpInst;
 class MStackInst;
 class MBranchInst;
+class MZextInst; // 为了处理方便自定义的伪指令
 using MInstPtr = std::shared_ptr<MachineInst>;
 using MBlockPtr = std::shared_ptr<MachineBlock>;
 using MBinaryInstPtr = std::shared_ptr<MBinaryInst>;
@@ -33,6 +34,7 @@ using MMovInstPtr = std::shared_ptr<MMovInst>;
 using MCmpInstPtr = std::shared_ptr<MCmpInst>;
 using MStackInstPtr = std::shared_ptr<MStackInst>;
 using MBranchInstPtr = std::shared_ptr<MBranchInst>;
+using MZextInstPtr = std::shared_ptr<MZextInst>;
 
 /// @brief 机器指令
 class MachineInst : public std::enable_shared_from_this<MachineInst>
@@ -65,6 +67,9 @@ public:
         B,  // 跳转 可带条件 如 bne
         BX, // bx
         BL, // bl
+
+        ///  @brief 自定义的一些伪指令 主要为了方便处理
+        CMP2Int, // zext指令 将 比较结果 移动到 寄存器伪32位
     };
 
     // 条件后缀
@@ -344,7 +349,33 @@ public:
     std::string toStr() override;
 };
 
+/**
+ * @brief 注意这是自定义的伪指令  是个复合指令 主要目的是取出cmp 比较结果 cmp r0,r2  movne r0,#1 movne r0,#0
+ *   zext 对应 后面的movne r0,#1 movne r0,#0； 用了两条move 将r0 define了两次；为了保持虚拟寄存器只def一次的现状 故将两条指令合并
+ *  只是在翻译伪文本时将其分开
+ *
+ */
+class MZextInst : public MachineInst
+{
+public:
+    /// @brief 构造函数
+    /// @param p 目的虚拟寄存器
+    /// @param dst
+    MZextInst(MBlockPtr p, MOperaPtr dst, condSuffix _cond);
+
+    /// @brief 创建智能指针对象
+    /// @param p
+    /// @param dst
+    /// @return
+    static MZextInstPtr get(MBlockPtr p, MOperaPtr dst, condSuffix _cond);
+
+    /// @brief 输出字符串
+    /// @return
+    std::string toStr() override;
+};
+
 /// @brief 根据ICmp IR比较指令获取条件后缀
 /// @param icmp
 /// @return
-MachineInst::condSuffix IRCond2Machine(ICmpInstPtr icmp);
+MachineInst::condSuffix
+IRCond2Machine(ICmpInstPtr icmp);

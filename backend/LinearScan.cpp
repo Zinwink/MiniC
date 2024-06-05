@@ -348,11 +348,11 @@ void LinearScan::computeDefUseChain(MFuncPtr fun)
         workList.pop_front();           // 弹出首元素
         for (auto &elem : workList)
         {
+            if (uses.size() == 0)
+                break; // 没有元素 交集为空 退出循环
             // 遍历剩余元素 求交集
             MOperaPtr &Defelem = elem.first; // def
             auto &Useselem = elem.second;    // uses
-            if (uses.size() == 0)
-                break; // 没有元素 交集为空 退出循环
             if (*Defreg == *Defelem)
             {
                 // 查看交集
@@ -521,22 +521,22 @@ std::pair<MOperaPtr, MOperaPtr> LinearScan::computeSpillPos(IntervalPtr inter1To
     }
     if (res.first == nullptr)
     {
-        if (inter1Tospill->isArgDef)
-        {
-            std::cout << "this is argDef-----------" << std::endl;
-        }
-        if (inter1Tospill->isUncertainDef)
-        {
-            std::cout << "this is uncertaindef" << std::endl;
-        }
-        if (!inter1Tospill->isPreAlloca)
-        {
-            std::cout << "this is not PreAlloca" << std::endl;
-        }
-        if (inter1Tospill->isPreAlloca)
-        {
-            std::cout << "this is PreAlloca but not argDEf or uncerntain def" << std::endl;
-        }
+        // if (inter1Tospill->isArgDef)
+        // {
+        //     // std::cout << "this is argDef-----------" << std::endl;
+        // }
+        // if (inter1Tospill->isUncertainDef)
+        // {
+        //     std::cout << "this is uncertaindef" << std::endl;
+        // }
+        // if (!inter1Tospill->isPreAlloca)
+        // {
+        //     std::cout << "this is not PreAlloca" << std::endl;
+        // }
+        // if (inter1Tospill->isPreAlloca)
+        // {
+        //     std::cout << "this is PreAlloca but not argDEf or uncerntain def" << std::endl;
+        // }
     }
 
     return res;
@@ -590,7 +590,7 @@ void LinearScan::AutoUpdateActive(IntervalPtr curInter)
     for (auto riter = active.rbegin(); riter != active.rend();)
     {
 
-        std::cout << "弹出区间" << std::endl;
+        // std::cout << "弹出区间" << std::endl;
         // 逆序遍历  因为active按照end的大小 从大到小排列
         if ((*riter)->end < start)
         {
@@ -621,7 +621,7 @@ void LinearScan::AutoUpdateActive(IntervalPtr curInter)
         }
     }
 
-    std::cout << "AutoUpdateActive " << std::endl;
+    // std::cout << "AutoUpdateActive " << std::endl;
 
     // 在处理完上面的基础上 对 curInster尝试寄存器分配
     // 如果 当前 寄存器池中有可用的寄存器则进行分配即可 分配后 将curInter插入active 表中
@@ -642,7 +642,7 @@ void LinearScan::AutoUpdateActive(IntervalPtr curInter)
             curInter->reg = *(first);
             active.insert(curInter);
             regs.erase(curInter->reg);
-            std::cout << "分配寄存器" << std::endl;
+            // std::cout << "分配寄存器" << std::endl;
         }
         else
         {
@@ -669,16 +669,16 @@ void LinearScan::AutoUpdateActive(IntervalPtr curInter)
                 successAllocaRegs = false;                        // 有溢出
                 auto pos = computeSpillPos(spillInter, curInter); // 计算溢出位置信息
                 genSpillCode(spillInter, pos);                    // 产生溢出代码
-                std::cout << "产生溢出" << std::endl;
+                // std::cout << "产生溢出" << std::endl;
             }
         }
     }
     else
     {
         // 没有寄存器可用 则有冲突 选择 end最后 生命周期最长的interval删除溢出
-        std::cout << "查找冲突" << std::endl;
+        // std::cout << "查找冲突" << std::endl;
         IntervalPtr spillInter = FindConflictInter(curInter);
-        std::cout << "找到冲突" << std::endl;
+        // std::cout << "找到冲突" << std::endl;
         assert(spillInter != nullptr);
         int regNo = spillInter->reg;
         curInter->reg = regNo;
@@ -689,7 +689,7 @@ void LinearScan::AutoUpdateActive(IntervalPtr curInter)
 
         auto pos = computeSpillPos(spillInter, curInter); // 计算溢出位置信息
         genSpillCode(spillInter, pos);                    // 产生溢出代码
-        std::cout << "产生溢出" << std::endl;
+        // std::cout << "产生溢出" << std::endl;
 
         // auto first = active.begin();
         // assert(active.size() > 0);
@@ -770,7 +770,7 @@ void LinearScan::genSpillCode(IntervalPtr interSpilled, std::pair<MOperaPtr, MOp
         MStorePtr str = MStore::get(entry, MachineInst::STR, MachineOperand::copy(def), MachineOperand::createReg(11), offsetImm);
         entry->getInstList().push_front(str);
 
-        std::cout << "产生 str指令: " << str->toStr() << std::endl;
+        // std::cout << "产生 str指令: " << str->toStr() << std::endl;
     }
     else
     {
@@ -779,7 +779,7 @@ void LinearScan::genSpillCode(IntervalPtr interSpilled, std::pair<MOperaPtr, MOp
         MStorePtr str = MStore::get(blk1, MachineInst::STR, MachineOperand::copy(def), MachineOperand::createReg(11), offsetImm);
         blk1->insertInstAfter(pos1, str);
 
-        std::cout << "产生 str指令: " << str->toStr() << std::endl;
+        // std::cout << "产生 str指令: " << str->toStr() << std::endl;
     }
 
     // 差入ldr指令
@@ -800,7 +800,7 @@ void LinearScan::genSpillCode(IntervalPtr interSpilled, std::pair<MOperaPtr, MOp
                 (*iter)->setRegNo(vreg->getRegNo());
                 ++iter;
             }
-            std::cout << "产生 load指令: " << ldr->toStr() << std::endl;
+            // std::cout << "产生 load指令: " << ldr->toStr() << std::endl;
         }
         else
         {
@@ -809,7 +809,7 @@ void LinearScan::genSpillCode(IntervalPtr interSpilled, std::pair<MOperaPtr, MOp
             MLoadInstPtr ldr = MLoadInst::get(blk2, MachineInst::LDR, MachineOperand::copy(def), MachineOperand::createReg(11), MachineOperand::copy(offsetImm));
             blk2->insertInstBefore(pos2, ldr);
 
-            std::cout << "产生 load指令: " << ldr->toStr() << std::endl;
+            // std::cout << "产生 load指令: " << ldr->toStr() << std::endl;
         }
     }
 
@@ -866,7 +866,7 @@ void LinearScan::allocateReg()
     std::vector<MFuncPtr> &funList = machineModule->getFuncList();
     for (auto &fun : funList)
     {
-        std::cout << fun->getFuncName() << std::endl;
+        // std::cout << fun->getFuncName() << std::endl;
         bool issucces = false;
 
         // dealWithVregsAndRealRegs(fun);
@@ -874,7 +874,7 @@ void LinearScan::allocateReg()
         while (!issucces)
         {
             issucces = LinearScanPassEpoch(fun);
-            std::cout << "false!" << std::endl;
+            // std::cout << "false!" << std::endl;
         }
         // std::cout << fun->getFuncName() << std::endl;
         // 成功后 为每个interval设置好对应的物理寄存器

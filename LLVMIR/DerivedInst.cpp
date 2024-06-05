@@ -529,3 +529,24 @@ getelemInstPtr getelementptrInst::create(ValPtr arrayBaseAdress, std::vector<Val
         return getelem;
     }
 }
+
+// ***************************************** ZextInst *****************************************************
+/// @brief 构造函数
+/// @param i1
+ZextInst::ZextInst(ValPtr i1, Type *i32)
+{
+    setType(i32);
+    operands.push_back(i1);
+    setOpcode(Opcode::Zext);
+}
+
+/// @brief 获取智能指针对象
+/// @param i1
+/// @param i32
+/// @return
+ZextInstPtr ZextInst::get(ValPtr i1, Type *i32)
+{
+    ZextInstPtr zext = std::make_shared<ZextInst>(i1, i32);
+    zext->updateUserList();
+    return zext;
+}
