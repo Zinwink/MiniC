@@ -270,6 +270,9 @@ public:
         }
     }
 
+    /// @brief 当是二元运算的结果是常数时自动替换传播
+    void AutoTransmitWhenIsConst() override;
+
     /// @brief 创建BInaryOperator指令
     /// @param _op
     /// @param val1
@@ -403,6 +406,9 @@ public:
             return false;
         }
     }
+
+    /// @brief 当比较的结果是常数时自动替换传播
+    void AutoTransmitWhenIsConst() override;
 
     /// @brief 创建ICmp
     /// @param _op
@@ -541,8 +547,8 @@ public:
     ZextInst(ValPtr i1, Type *i32);
 
     /// @brief 获取智能指针对象
-    /// @param i1 
-    /// @param i32 
-    /// @return 
+    /// @param i1
+    /// @param i32
+    /// @return
     static ZextInstPtr get(ValPtr i1, Type *i32);
 };

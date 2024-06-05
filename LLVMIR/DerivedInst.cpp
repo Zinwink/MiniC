@@ -111,6 +111,7 @@ LoadInstPtr LoadInst::get(ValPtr Ptr)
     return load;
 }
 
+// ********************* BinaryInst *******************************
 /// @brief 创建BInaryOperator指令
 /// @param _op
 /// @param val1
@@ -151,6 +152,177 @@ BinaryOperatorPtr BinaryOperator::create(Opcode _op, ValPtr val1, ValPtr val2, B
     atBack->AddInstBack(binaryOp);
     binaryOp->setBBlockParent(atBack);
     return binaryOp;
+}
+
+/// @brief 当是二元运算的结果是常数时自动替换传播
+void BinaryOperator::AutoTransmitWhenIsConst()
+{
+    ValPtr left = getOperand(0);
+    ValPtr right = getOperand(1);
+
+    ValPtr self = std::static_pointer_cast<BinaryOperator>(shared_from_this());
+    // 加法
+    if (op == Opcode::AddInteger)
+    {
+        if (left->isConstant() && right->isConstant())
+        {
+            ConstantIntPtr lfconst = std::static_pointer_cast<ConstantInt>(left);
+            ConstantIntPtr rgconst = std::static_pointer_cast<ConstantInt>(right);
+            // 左右操作数都是常数
+            int lfval = lfconst->getValue();
+            int rgval = rgconst->getValue();
+            int res = lfval + rgval;
+            ConstantIntPtr resVal = ConstantInt::get(32);
+            resVal->setValue(res);
+            // 替换操作
+            replaceAllUsesWith(self, resVal);
+        }
+        else if (left->isConstant())
+        {
+            ConstantIntPtr lfconst = std::static_pointer_cast<ConstantInt>(left);
+            if (lfconst->getValue() == 0)
+            {
+                // 更新为right
+                replaceAllUsesWith(self, right);
+            }
+        }
+        else if (right->isConstant())
+        {
+            ConstantIntPtr rgconst = std::static_pointer_cast<ConstantInt>(right);
+            if (rgconst->getValue() == 0)
+            {
+                // 更新为 left
+                replaceAllUsesWith(self, left);
+            }
+        }
+    }
+    else if (op == Opcode::MulInteger)
+    {
+        if (left->isConstant() && right->isConstant())
+        {
+            ConstantIntPtr lfconst = std::static_pointer_cast<ConstantInt>(left);
+            ConstantIntPtr rgconst = std::static_pointer_cast<ConstantInt>(right);
+            // 左右操作数都是常数
+            int lfval = lfconst->getValue();
+            int rgval = rgconst->getValue();
+            int res = lfval * rgval;
+            ConstantIntPtr resVal = ConstantInt::get(32);
+            resVal->setValue(res);
+            // 替换操作
+            replaceAllUsesWith(self, resVal);
+        }
+        else if (left->isConstant())
+        {
+            ConstantIntPtr lfconst = std::static_pointer_cast<ConstantInt>(left);
+            if (lfconst->getValue() == 0)
+            {
+                ConstantIntPtr resVal = ConstantInt::get(32);
+                resVal->setValue(0);
+                replaceAllUsesWith(self, resVal);
+            }
+            else if (lfconst->getValue() == 1)
+            {
+                replaceAllUsesWith(self, right);
+            }
+        }
+        else if (right->isConstant())
+        {
+            ConstantIntPtr rgconst = std::static_pointer_cast<ConstantInt>(right);
+            if (rgconst->getValue() == 0)
+            {
+                ConstantIntPtr resVal = ConstantInt::get(32);
+                resVal->setValue(0);
+                replaceAllUsesWith(self, resVal);
+            }
+            else if (rgconst->getValue() == 1)
+            {
+                replaceAllUsesWith(self, left);
+            }
+        }
+    }
+    else if (op == Opcode::SubInteger)
+    {
+        if (left->isConstant() && right->isConstant())
+        {
+            ConstantIntPtr lfconst = std::static_pointer_cast<ConstantInt>(left);
+            ConstantIntPtr rgconst = std::static_pointer_cast<ConstantInt>(right);
+            // 左右操作数都是常数
+            int lfval = lfconst->getValue();
+            int rgval = rgconst->getValue();
+            int res = lfval - rgval;
+            ConstantIntPtr resVal = ConstantInt::get(32);
+            resVal->setValue(res);
+            // 替换操作
+            replaceAllUsesWith(self, resVal);
+        }
+        else if (right->isConstant())
+        {
+            ConstantIntPtr rgconst = std::static_pointer_cast<ConstantInt>(right);
+            if (rgconst->getValue() == 0)
+            {
+                replaceAllUsesWith(self, left);
+            }
+        }
+    }
+    else if (op == Opcode::DivInteger)
+    {
+        if (left->isConstant() && right->isConstant())
+        {
+            ConstantIntPtr lfconst = std::static_pointer_cast<ConstantInt>(left);
+            ConstantIntPtr rgconst = std::static_pointer_cast<ConstantInt>(right);
+            // 左右操作数都是常数
+            int lfval = lfconst->getValue();
+            int rgval = rgconst->getValue();
+            int res = lfval / rgval;
+            ConstantIntPtr resVal = ConstantInt::get(32);
+            resVal->setValue(res);
+            // 替换操作
+            replaceAllUsesWith(self, resVal);
+        }
+        else if (right->isConstant())
+        {
+            ConstantIntPtr rgconst = std::static_pointer_cast<ConstantInt>(right);
+            if (rgconst->getValue() == 1)
+            {
+                replaceAllUsesWith(self, left);
+            }
+        }
+    }
+    else if (op == Opcode::ModInteger)
+    {
+        if (left->isConstant() && right->isConstant())
+        {
+            ConstantIntPtr lfconst = std::static_pointer_cast<ConstantInt>(left);
+            ConstantIntPtr rgconst = std::static_pointer_cast<ConstantInt>(right);
+            // 左右操作数都是常数
+            int lfval = lfconst->getValue();
+            int rgval = rgconst->getValue();
+            int res = lfval % rgval;
+            ConstantIntPtr resVal = ConstantInt::get(32);
+            resVal->setValue(res);
+            // 替换操作
+            replaceAllUsesWith(self, resVal);
+        }
+        else if (left->isConstant())
+        {
+            ConstantIntPtr lfconst = std::static_pointer_cast<ConstantInt>(left);
+            if (lfconst->getValue() == 0)
+            {
+                replaceAllUsesWith(self, left);
+            }
+        }
+        else if (right->isConstant())
+        {
+            ConstantIntPtr rgconst = std::static_pointer_cast<ConstantInt>(right);
+            if (rgconst->getValue() == 1)
+            {
+                ConstantIntPtr resVal = ConstantInt::get(32);
+                resVal->setValue(0);
+                // 替换操作
+                replaceAllUsesWith(self, resVal);
+            }
+        }
+    }
 }
 
 //************  RetInst  ***************
@@ -317,6 +489,92 @@ ICmpInstPtr ICmpInst::create(Opcode _op, ValPtr val1, ValPtr val2, BasicBlockPtr
     atBack->AddInstBack(icmp);
     icmp->setBBlockParent(atBack);
     return icmp;
+}
+
+/// @brief 当比较的结果是常数时自动替换传播
+void ICmpInst::AutoTransmitWhenIsConst()
+{
+
+    ValPtr left = getOperand(0);
+    ValPtr right = getOperand(1);
+    ValPtr self = std::static_pointer_cast<BinaryOperator>(shared_from_this());
+    if (left->isConstant() && right->isConstant())
+    {
+        ConstantIntPtr lfconst = std::static_pointer_cast<ConstantInt>(left);
+        ConstantIntPtr rgconst = std::static_pointer_cast<ConstantInt>(right);
+        int lfval = lfconst->getValue();
+        int rgval = rgconst->getValue();
+        ConstantIntPtr trueV = ConstantInt::get(1);
+        ConstantIntPtr falseV = ConstantInt::get(1);
+        trueV->setValue(1);
+        falseV->setValue(0);
+        if (op == Opcode::GtInteger)
+        {
+            if (lfval > rgval)
+            {
+                replaceAllUsesWith(self, trueV);
+            }
+            else
+            {
+                replaceAllUsesWith(self, falseV);
+            }
+        }
+        else if (op == Opcode::GeInTeger)
+        {
+            if (lfval >= rgval)
+            {
+                replaceAllUsesWith(self, trueV);
+            }
+            else
+            {
+                replaceAllUsesWith(self, falseV);
+            }
+        }
+        else if (op == Opcode::LtIntegr)
+        {
+            if (lfval < rgval)
+            {
+                replaceAllUsesWith(self, trueV);
+            }
+            else
+            {
+                replaceAllUsesWith(self, falseV);
+            }
+        }
+        else if (op == Opcode::LeInteger)
+        {
+            if (lfval <= rgval)
+            {
+                replaceAllUsesWith(self, trueV);
+            }
+            else
+            {
+                replaceAllUsesWith(self, falseV);
+            }
+        }
+        else if (op == Opcode::EqInTeger)
+        {
+            if (lfval == rgval)
+            {
+                replaceAllUsesWith(self, trueV);
+            }
+            else
+            {
+                replaceAllUsesWith(self, falseV);
+            }
+        }
+        else if (op == Opcode::NotEqInteger)
+        {
+            if (lfval != rgval)
+            {
+                replaceAllUsesWith(self, trueV);
+            }
+            else
+            {
+                replaceAllUsesWith(self, falseV);
+            }
+        }
+    }
 }
 
 //******************** BranchInst ***********************

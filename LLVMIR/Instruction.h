@@ -142,7 +142,7 @@ public:
     bool isICmpInst();
 
     /// @brief 是否是Zext 指令
-    /// @return 
+    /// @return
     bool isZextInst();
 
     /// @brief 是否是ret Inst
@@ -159,6 +159,13 @@ public:
 
     /// @brief 为指令设置 dead标记  对于 StoreInst 这类无直接User的指令具有作用
     virtual void setDeadSign() {};
+
+    /// @brief 如果指令结果是常数 则自动传播(对于二元运算 比较 跳转等)
+    virtual void AutoTransmitWhenIsConst() {};
+
+    /// @brief 指令是否是常数或者是肯定的 如: br i1 true,block1,block2 这是恒定的 可以处理
+    /// @return
+    virtual bool isConst() { return false; }
 
     /// @brief 获取指令的字符串翻译
     /// @param inst
