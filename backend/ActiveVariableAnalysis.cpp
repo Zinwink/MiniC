@@ -11,9 +11,10 @@
  */
 
 #include "ActiveVariableAnalysis.h"
+#include <iostream>
 #include <deque>
 
-/// @brief 计算 获取 虚拟寄存器的所有使用位置
+/// @brief 计算 获取 虚拟寄存器 物理寄存器的所有使用位置
 void ActiveVariAnalysis::computeAllUsesInfun(MFuncPtr fun)
 {
     AllUsesInfun.clear(); // 清理一下 不同函数结果不同
@@ -37,17 +38,25 @@ void ActiveVariAnalysis::computeAllUsesInfun(MFuncPtr fun)
 /// @param fun
 void ActiveVariAnalysis::computeDefUseInfun(MFuncPtr fun)
 {
-    def.clear();  //清理一下def use
+
+    // 虚拟寄存器 只会def 一次；只需计算 r0-r3的 def use 即可
+
+    def.clear(); // 清理一下def use
     use.clear();
     std::list<MBlockPtr> &blockList = fun->getBlockList();
     for (auto &blk : blockList)
     {
+        // std::cout << "基本块" << std::endl;
         std::list<MInstPtr> &instList = blk->getInstList();
         for (auto &inst : instList)
         {
             // 计算本块的  def 和 use
             std::vector<MOperaPtr> &uses = inst->getUse();
-            std::set<MOperaPtr> usesSet(uses.begin(), uses.end());
+            std::set<MOperaPtr> usesSet;
+            for (auto &use : uses)
+            {
+                usesSet.insert(use);
+            }
             // use 引用前未定值的集合
             std::set_difference(usesSet.begin(), usesSet.end(), def[blk].begin(), def[blk].end(), inserter(use[blk], use[blk].end()));
             // def 定值前未引用的集合

@@ -461,6 +461,9 @@ public:
         return false;
     }
 
+    /// @brief 当 条件跳转的条件确定或者真假出口相同时 自动替换
+    void AutoTransmitWhenIsConst() override;
+
     /// @brief 获取BrachInst goto
     /// @param ifTrue
     /// @return
@@ -545,6 +548,9 @@ public:
     /// @brief 构造函数
     /// @param i1
     ZextInst(ValPtr i1, Type *i32);
+
+    /// @brief 当 要转换的 i1 bool 结果为 true 或false 时自动转换传播
+    void AutoTransmitWhenIsConst() override;
 
     /// @brief 获取智能指针对象
     /// @param i1

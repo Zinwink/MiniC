@@ -601,6 +601,41 @@ BranchInstPtr BranchInst::get(ValPtr cond, ValPtr ifTrue, ValPtr ifFalse)
     return br;
 }
 
+/// @brief 当 条件跳转的条件确定或者真假出口相同时 自动替换
+void BranchInst::AutoTransmitWhenIsConst()
+{
+    // 条件跳转
+    if (op == Opcode::ConditionBr)
+    {
+        ValPtr cond = getOperand(0);
+        ValPtr IFTrue = getOperand(1);
+        ValPtr IFFale = getOperand(2);
+        if (cond->isConstant())
+        {
+            ConstantIntPtr condRes = std::static_pointer_cast<ConstantInt>(cond);
+            int res = condRes->getValue();
+            operands.pop_back(); // 先把操作数删除
+            operands.pop_back();
+            operands.pop_back();
+            cond->deleteUser(shared_from_this());
+            IFFale->deleteUser(shared_from_this());
+            IFTrue->deleteUser(shared_from_this());
+            if (res == 0)
+            {
+                op = Opcode::Goto;
+                operands.push_back(IFFale);
+                IFFale->insertUser(shared_from_this());
+            }
+            else
+            {
+                op = Opcode::Goto;
+                operands.push_back(IFTrue);
+                IFTrue->insertUser(shared_from_this());
+            }
+        }
+    }
+}
+
 //******************** getelementptrInst ************************
 
 /// @brief 获取gainDim对应的Bytes 字节数 如果gainDim 指向的是数组的最后一个维度元素 则为4字节
@@ -807,4 +842,27 @@ ZextInstPtr ZextInst::get(ValPtr i1, Type *i32)
     ZextInstPtr zext = std::make_shared<ZextInst>(i1, i32);
     zext->updateUserList();
     return zext;
+}
+
+/// @brief 当 要转换的 i1 bool 结果为 true 或false 时自动转换传播
+void ZextInst::AutoTransmitWhenIsConst()
+{
+    ValPtr src = getOperand(0);
+    if (src->isConstant())
+    {
+        ConstantIntPtr constv = std::static_pointer_cast<ConstantInt>(src);
+        int res = constv->getValue();
+        if (res == 1)
+        {
+            ConstantIntPtr replaceConst = ConstantInt::get(32);
+            replaceConst->setValue(1);
+            replaceAllUsesWith(shared_from_this(), replaceConst);
+        }
+        else
+        {
+            ConstantIntPtr replaceConst = ConstantInt::get(32);
+            replaceConst->setValue(0);
+            replaceAllUsesWith(shared_from_this(), replaceConst);
+        }
+    }
 }

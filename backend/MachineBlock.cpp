@@ -62,6 +62,13 @@ void MachineBlock::addInstBack(MInstPtr inst)
     MinstList.push_back(inst);
 }
 
+/// @brief 指令加到块前
+/// @param inst
+void MachineBlock::addInstFront(MInstPtr inst)
+{
+    MinstList.push_front(inst);
+}
+
 /// @brief 在before前插入 inst指令 （用于溢出内存时插入load指令）
 /// @param before
 /// @param inst

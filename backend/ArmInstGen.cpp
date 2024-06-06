@@ -299,7 +299,7 @@ bool ArmInstGen::Call2ArmInst(InstPtr call)
         {
             // 创建 mov 指令 会自动加入当前块
             MMovInst::create(curblk, MachineOperand::createReg(i - 1), MparamOp, machineModule);
-            bl->addUse(MachineOperand::createReg(i - 1));
+            // bl->addUse(MachineOperand::createReg(i - 1));
         }
         else
         {
@@ -329,9 +329,9 @@ bool ArmInstGen::Call2ArmInst(InstPtr call)
     {
         MMovInstPtr move_vreg_r0 = MMovInst::get(curblk, MachineInst::MOV, MachineOperand::get(call, machineModule), MachineOperand::createReg(0));
         bl->addDef(MachineOperand::createReg(0)); // 由于 r0-r3 不默认保护 认为调用时 都 def 了
-        // bl->addDef(MachineOperand::createReg(1));
-        // bl->addDef(MachineOperand::createReg(2));
-        // bl->addDef(MachineOperand::createReg(3));
+        bl->addDef(MachineOperand::createReg(1));
+        bl->addDef(MachineOperand::createReg(2));
+        bl->addDef(MachineOperand::createReg(3));
         curblk->addInstBack(move_vreg_r0);
     }
 

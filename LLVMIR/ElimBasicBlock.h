@@ -15,7 +15,7 @@
 
 /// @brief 基本块可达性分析
 /// @param blcok
-void ReachableAnalysis(BasicBlockPtr blcok);
+void ReachableAnalysis(BasicBlockPtr blcok, std::unordered_set<BasicBlockPtr> &record);
 
 /// @brief 合并基本块
 /// @param block 当前基本块

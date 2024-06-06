@@ -8,3 +8,33 @@
  * @copyright Copyright (c) 2024
  *
  */
+
+#include "LiveMemVariAnalysis.h"
+#include "BasicBlockPass.h"
+
+/// @brief 计算 基本块的 def use
+/// @param fun
+void LiveMemVariAnalysis::computeDefUse(FuncPtr fun)
+{
+    def.clear();
+    use.clear();
+    auto &blockList = fun->getBasicBlocks();
+    for (auto &blk : blockList)
+    {
+        // 下面分析 def use
+        auto &instList = blk->getInstLists();
+        for (auto &inst : instList)
+        {
+            if (inst->isStoreInst())
+            {
+                auto memAddr = inst->getOperand(1);
+                def[blk].insert(memAddr);
+            }
+            if (inst->isLoadInst())
+            {
+                auto memAddr = inst->getOperand(0);
+                use[blk].insert(memAddr);
+            }
+        }
+    }
+}

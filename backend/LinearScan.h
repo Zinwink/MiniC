@@ -37,15 +37,12 @@ struct cmpUsePosLt
 /// @brief *******************************  活跃间隔 ***********************************************
 struct Interval
 {
-    int start = -1;              // 起始编号处
-    int end = -1;                // 终止编号处
-    bool isPreAlloca = false;    // 是否是预先分配的物理寄存器 如函数参数  函数返回值
-    bool isUncertainDef = false; // def 是否是不确定状态
-    bool isArgDef = false;       // 是否是 函数初始状态下 函数形参r0-r3的初始调用值(标记主要用于修改 start位置以及溢出插入语句的位置)
-    int reg = -1;                // 分配的物理寄存器编号
-    MOperaPtr def = nullptr;     // 虚拟寄存器由于临时产生 只会def一次；物理寄存器会def多次
-                                 // 如果def 是不确定状态 则该def是无用的，只是作为标记使用
+    int start = -1;           // 起始编号处
+    int end = -1;             // 终止编号处
+    bool isPreAlloca = false; // 是否是预先分配的物理寄存器 如函数参数  函数返回值
+    int reg = -1;             // 分配的物理寄存器编号
 
+    MOperaPtr def;                              // defs
     std::multiset<MOperaPtr, cmpUsePosLt> uses; // def 对应的 uses
 
     /// @brief 创建智能指针对象
@@ -56,7 +53,7 @@ struct Interval
     /// @param _isArgDef 是否是 函数初始状态下前四形参寄存器初始值
     /// @return
     static IntervalPtr get(const MOperaPtr &_def, const std::unordered_set<MOperaPtr> &uses,
-                           bool _isPreAlloca = false, bool _isUncertainDef = false, bool _isArgDef = false);
+                           bool _isPreAlloca = false);
 
     //***********************************  比较函数  *********************************************
     struct cmpLtStart

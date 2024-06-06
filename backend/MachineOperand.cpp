@@ -125,7 +125,7 @@ bool operator==(const MachineOperand &left, const MachineOperand &right)
     // 寄存器类型编号相同
     if (left.type == MachineOperand::REG || left.type == MachineOperand::VREG)
     {
-        return (left.reg_no == right.reg_no) && (left.isArgDef == right.isArgDef);
+        return left.reg_no == right.reg_no;
     }
     return false;
 }
@@ -164,10 +164,9 @@ MOperaPtr MachineOperand::get(OprandType ty, int _val)
 /// @brief 创建物理寄存器类型
 /// @param regNo 物理寄存器编号
 /// @return
-MOperaPtr MachineOperand::createReg(uint32_t regNo, bool _isArgDef)
+MOperaPtr MachineOperand::createReg(uint32_t regNo)
 {
     MOperaPtr op = get(REG, regNo);
-    op->isArgDef = _isArgDef;
     return op;
 }
 
@@ -227,8 +226,25 @@ MOperaPtr MachineOperand::get(ValPtr val, MModulePtr Mmodule)
         if (arg->getArgNo() < 4)
         {
             // 0-3 号形参  采用r0-r3寄存器
-            mop = get(REG, arg->getArgNo());
-            mop->isArgDef = true; // 设置是 函数初始状态下形参寄存器(区分直接的r0-r3,防止进行数据流分析时混淆)
+            // mop = get(REG, arg->getArgNo());
+            // 为了方便处理 前四参数虽然使用r0-r3 但还是将其取出到虚拟寄存器 引入冗余方便分析
+            // 引入的冗余后期删除即可
+            bool hasRecord = Mmodule->hasNumRecord(val); // 看是否有记录
+            MOperaPtr argVreg = get(VREG, Mmodule->getNo(val));
+            if (hasRecord)
+            {
+                // 有记录
+                mop = argVreg;
+            }
+            else
+            {
+                // 无记录 第一次使用 进行define
+                MOperaPtr movDst = copy(argVreg);
+                MMovInstPtr mov = MMovInst::get(Mmodule->getCurBlock(), MachineInst::MOV, movDst,
+                                                MachineOperand::createReg(arg->getArgNo()));
+                Mmodule->getCurBlock()->addInstFront(mov);
+                mop = argVreg;
+            }
         }
         else
         {

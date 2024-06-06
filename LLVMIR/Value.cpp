@@ -108,6 +108,19 @@ bool Value::isGetelemPtrInst()
     return res;
 }
 
+/// @brief 是否是STore
+/// @return
+bool Value::isStoreInst()
+{
+    bool res = false;
+    if (isInstruct())
+    {
+        Instruction *inst = static_cast<Instruction *>(this);
+        res = inst->isStoreInst();
+    }
+    return res;
+}
+
 /// @brief 是否是整数比较指令
 /// @return
 bool Value::isICmpInst()

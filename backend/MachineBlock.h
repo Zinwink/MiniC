@@ -81,6 +81,10 @@ public:
     /// @param inst
     void addInstBack(MInstPtr inst);
 
+    /// @brief 指令加到块前
+    /// @param inst 
+    void addInstFront(MInstPtr inst);
+
     /// @brief 在before前插入 inst指令 （用于溢出内存时插入load指令）
     /// @param before
     /// @param inst

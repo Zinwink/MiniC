@@ -19,11 +19,14 @@
 void ElimUseLessBBlock(FuncPtr fun)
 {
     // 从Entry开始遍历基本块 标记可达基本块
-    ReachableAnalysis(fun->getEntryBlock());
+
+    std::unordered_set<BasicBlockPtr> record;
+    ReachableAnalysis(fun->getEntryBlock(), record);
     std::list<BasicBlockPtr> &blockList = fun->getBasicBlocks();
     for (bblockIter it = blockList.begin(); it != blockList.end();)
     {
-        if (!(*it)->hasSign())
+        auto iter = record.find(*it);
+        if (iter == record.end())
         {
             // 没有标记 死基本块删除
             eraseBasicBlock((*it), it);
@@ -48,17 +51,18 @@ void ElimUseLessBBlock(ModulePtr _modul)
 
 /// @brief 基本块可达性分析
 /// @param blcok
-void ReachableAnalysis(BasicBlockPtr blcok)
+void ReachableAnalysis(BasicBlockPtr blcok, std::unordered_set<BasicBlockPtr> &record)
 {
-    if (blcok->hasSign())
-    {
+    auto iter = record.find(blcok);
+    if (iter != record.end())
+    { // 有访问标记
         return;
     }
-    blcok->setSign();
+    record.insert(blcok); // 加入标记
     std::vector<BasicBlockPtr> jumps = blcok->getJumpList();
     for (auto &j : jumps)
     {
-        ReachableAnalysis(j);
+        ReachableAnalysis(j, record);
     }
 }
 

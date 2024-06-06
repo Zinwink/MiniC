@@ -29,7 +29,7 @@ void BBlockPass::BasicEasyPass(BasicBlockPtr blk)
     std::unordered_map<ValPtr, InstPtr> memLoad;  // 内存取值
     std::unordered_map<ValPtr, InstPtr> memStore; // 内存存值
 
-    for (auto iter = instList.begin(); iter != instList.end();)
+    for (auto iter = instList.begin(); iter != instList.end(); ++iter)
     {
         InstPtr &inst = *iter;
         inst->AutoTransmitWhenIsConst();
@@ -43,7 +43,7 @@ void BBlockPass::BasicEasyPass(BasicBlockPtr blk)
                 // 能找到  则将该Load 的User对应的操作数直接替换成Store的值
                 ValPtr strVal = strIter->second->getOperand(0);
                 inst->replaceAllUsesWith(inst, strVal); // 将使用到load的User 相应操作数直接替换成定值
-                iter = eraseInst(blk, iter);            // 删除该无用Load指令
+                // iter = eraseInst(blk, iter);            // 删除该无用Load指令
             }
             else
             {
@@ -55,16 +55,16 @@ void BBlockPass::BasicEasyPass(BasicBlockPtr blk)
                     ValPtr loadVal = LoadIter->second;
                     inst->replaceAllUsesWith(inst, loadVal); // 复用替换为新的
                     // 该Load 指令已经无用 可以删除
-                    iter = eraseInst(blk, iter);
+                    // iter = eraseInst(blk, iter);
                 }
                 else
                 {
                     // 没有找到 则先插入 到 memLoad中
                     memLoad.emplace(memAddr, inst);
-                    iter++;
+                    // iter++;
                 }
             }
-            continue; // 下一次循环
+            // continue; // 下一次循环
         }
         if (inst->isStoreInst())
         {
@@ -88,36 +88,50 @@ void BBlockPass::BasicEasyPass(BasicBlockPtr blk)
                 // 没找到 直接插入
                 memStore.emplace(memAddr, inst);
             }
-            iter++;
-            continue;
+            // iter++;
+            // continue;
         }
         if (inst->isCallInst())
         {
             // 如果 是call Inst 则将现有的 memLoad memStore中对于全局变量以及数组指针内存的操作清除
-            for (auto &ldr : memLoad)
+            for (auto ldriter = memLoad.begin(); ldriter != memLoad.end();)
             {
+                auto &ldr = *ldriter;
                 if (ldr.first->isGlobalVariable())
                 {
-                    memLoad.erase(ldr.first);
+                    ldriter = memLoad.erase(ldriter);
+                    // continue;
                 }
-                if (ldr.first->isGetelemPtrInst())
+                else if (ldr.first->isGetelemPtrInst())
                 {
-                    memLoad.erase(ldr.first);
+                    ldriter = memLoad.erase(ldriter);
+                    // continue;
+                }
+                else
+                {
+                    ldriter++;
                 }
             }
-            for (auto &str : memStore)
+            for (auto striter = memStore.begin(); striter != memStore.end();)
             {
+                auto &str = *(striter);
                 if (str.first->isGlobalVariable())
                 {
-                    memStore.erase(str.first);
+                    striter = memStore.erase(striter);
+                    // continue;
                 }
-                if (str.first->isGetelemPtrInst())
+                else if (str.first->isGetelemPtrInst())
                 {
-                    memStore.erase(str.first);
+                    striter = memStore.erase(striter);
+                    // continue;
+                }
+                else
+                {
+                    striter++;
                 }
             }
         }
-        iter++;
+        // iter++;
     }
 }
 

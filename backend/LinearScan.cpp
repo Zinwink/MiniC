@@ -19,13 +19,12 @@
 /// @param _def
 /// @param uses
 /// @param _isPreAlloca
-/// @param _isUncertainDef
 /// @return
 IntervalPtr Interval::get(const MOperaPtr &_def, const std::unordered_set<MOperaPtr> &uses,
-                          bool _isPreAlloca, bool _isUncertainDef, bool _isArgDef)
+                          bool _isPreAlloca)
 {
     // _isUncerntainDef 和 _isArgDef 不能同时为真
-    assert(_def != nullptr && !(_isArgDef && _isUncertainDef));
+    assert(_def != nullptr);
     // 创建对象
     IntervalPtr inter = std::make_shared<Interval>();
     inter->def = _def;
@@ -34,14 +33,12 @@ IntervalPtr Interval::get(const MOperaPtr &_def, const std::unordered_set<MOpera
         inter->uses.insert(use);
     }
     inter->isPreAlloca = _isPreAlloca;
-    inter->isUncertainDef = _isUncertainDef;
-    inter->isArgDef = _isArgDef;
-    // 下面根据参数情况计算该interval的的 start end
+    // 下面根据参数情况计算该interval的的 start end(只是进行初始化 后面还需修正)
     if (!_isPreAlloca)
     {
-        // 不是预分配的类型  是虚拟寄存器类型(虚拟寄存器由IR的临时变脸生成 有且只有一次def)
+        // 不是预分配的类型  是虚拟寄存器类型 按照
         inter->start = _def->getParent()->getNo(); // 起始是 def 位置
-        inter->end = inter->start + 1;             // 对于无use的给它一个间隔 1
+        inter->end = inter->start;
         if (inter->uses.size() > 0)
         {
             // uses按照从小到大排序
@@ -51,36 +48,13 @@ IntervalPtr Interval::get(const MOperaPtr &_def, const std::unordered_set<MOpera
     }
     else
     {
-        // 是预分配的物理寄存器r0-r3(但是和其他物理寄存器的活跃间隔可能会有冲突(特别是函数调用时)需要解决)
-        if (_isUncertainDef)
+        // 是预分配的物理寄存器r0-r3
+        inter->start = _def->getParent()->getNo();
+        inter->end = inter->start;
+        if (inter->uses.size() > 0)
         {
-            // def 不确定 即可能有多个def指令语句(出现在分支语句的情况)
-            // 按照 uses 确定start end 即可
-            assert(inter->uses.size() > 0);
-            auto biter = inter->uses.begin();
-            auto eiter = inter->uses.rbegin();
-            inter->start = (*biter)->getParent()->getNo();
-            inter->end = (*eiter)->getParent()->getNo();
-        }
-        else if (_isArgDef)
-        {
-            // def 确定； 是函数的初始时 r0-r3的状态
-            // 有该标记 产生溢出代码时 str指令将放在函数入口块的前面
-            assert(inter->uses.size() > 0);
-            auto eiter = inter->uses.rbegin();
-            inter->start = 0; // start是最起始的指令
-            inter->end = (*eiter)->getParent()->getNo();
-        }
-        else
-        {
-            // def 确定
-            inter->start = _def->getParent()->getNo();
-            inter->end = inter->start + 1;
-            if (inter->uses.size() > 0)
-            {
-                auto riter = inter->uses.rbegin();
-                inter->end = std::max(inter->end, (int)(*riter)->getParent()->getNo());
-            }
+            auto riter = inter->uses.rbegin();
+            inter->end = std::max(inter->end, (int)(*riter)->getParent()->getNo());
         }
     }
     return inter;
@@ -224,17 +198,17 @@ IntervalPtr Interval::get(const MOperaPtr &_def, const std::unordered_set<MOpera
 //     //     active.insert(relRegInterval);
 //     // }
 
-//     std::ofstream file("../tests/log_line.txt", std::ios_base::app);
-//     file << "\n*****************" << fun->getFuncName() << "***********************\n";
-//     for (auto &blk : blockList)
+// std::ofstream file("../tests/log_line.txt", std::ios_base::app);
+// file << "\n*****************" << fun->getFuncName() << "***********************\n";
+// for (auto &blk : blockList)
+// {
+//     for (auto &inst : blk->getInstList())
 //     {
-//         for (auto &inst : blk->getInstList())
-//         {
-//             file << "line: ";
-//             file << std::to_string(inst->getNo()) << " ";
-//             file << inst->toStr() << "\n";
-//         }
+//         file << "line: ";
+//         file << std::to_string(inst->getNo()) << " ";
+//         file << inst->toStr() << "\n";
 //     }
+// }
 // }
 
 /// @brief 计算 fun的虚拟寄存器 物理寄存器的 def-use chain
@@ -248,6 +222,8 @@ void LinearScan::computeDefUseChain(MFuncPtr fun)
     // 先计算这个函数的liveIn  liveOut
     ActiveVariAnalysis LiveAnalysis;
     LiveAnalysis.computeLiveVariInfun(fun);
+    std::cout << "计算完毕def-use chian" << std::endl;
+
     /*
     根据 IR相关的设计 以指针地址作为一个value的唯一标识 对于一个MachineOperand
     (同一虚拟寄存器编号 他只会def一次 之后是使用 因此获取函数fun的 AllUses 进行查找相应的def 即可获取 def-use chain)
@@ -260,10 +236,10 @@ void LinearScan::computeDefUseChain(MFuncPtr fun)
     // 用于存放 有待处理的物理寄存器 r0-r3的def-use chain(初步获取的)
     std::unordered_map<MOperaPtr, std::unordered_set<MOperaPtr>> relRegsDefUse;
     // 创建一个带有 isArgDef 的 r0-r3形参初始值记录
-    std::vector<MOperaPtr> ArgInits = {MachineOperand::createReg(0, true),
-                                       MachineOperand::createReg(1, true),
-                                       MachineOperand::createReg(2, true),
-                                       MachineOperand::createReg(3, true)};
+    std::vector<MOperaPtr> ArgInits = {MachineOperand::createReg(0),
+                                       MachineOperand::createReg(1),
+                                       MachineOperand::createReg(2),
+                                       MachineOperand::createReg(3)};
 
     int instNo = 0; // 设置编号
     int i = 0;      // 每个块末尾的编号
@@ -273,7 +249,7 @@ void LinearScan::computeDefUseChain(MFuncPtr fun)
         std::map<MachineOperand, std::set<MOperaPtr>> liveRealReg;
         for (auto &live : blk->getLiveOut())
         { // 获取 基本块 中 r0-r3 的出口活跃记录
-            if (live->isReg() && !live->_isArgDef())
+            if (live->isReg())
             {
                 // 记录出口活跃的物理寄存器对象 只记录 r0,r1,r2,r3
                 if (live->getRegNo() >= 0)
@@ -335,51 +311,51 @@ void LinearScan::computeDefUseChain(MFuncPtr fun)
 
     // 遍历完 所有的block后对relRegsDefUse进行处理
     // 因为物理寄存器可以def多次 在交汇节点可能出现use 对应多个def的情况
-    std::deque<std::pair<MOperaPtr, std::unordered_set<MOperaPtr>>> workList;
-    for (auto &elem : relRegsDefUse)
-    {
-        workList.push_back(elem); // 加入队列中
-    }
-    while (!workList.empty())
-    {
-        auto pair = workList.front();
-        MOperaPtr &Defreg = pair.first; // 弹出元素的def对应的操作数
-        auto &uses = pair.second;       // 弹出元素的uses
-        workList.pop_front();           // 弹出首元素
-        for (auto &elem : workList)
-        {
-            if (uses.size() == 0)
-                break; // 没有元素 交集为空 退出循环
-            // 遍历剩余元素 求交集
-            MOperaPtr &Defelem = elem.first; // def
-            auto &Useselem = elem.second;    // uses
-            if (*Defreg == *Defelem)
-            {
-                // 查看交集
-                std::unordered_set<MOperaPtr> temp;
-                std::set_intersection(uses.begin(), uses.end(), Useselem.begin(),
-                                      Useselem.end(), std::inserter(temp, temp.end()));
-                if (!temp.empty())
-                {
-                    // 有交集 创建一个新的 def-uses 链加入到队列 以及加入到relRegsDefUse表中
-                    // 有交集 说明一个 use 有多个def 是不定状态 加入到isUncertainDefSets表中
-                    MOperaPtr defCopy = MachineOperand::copy(Defreg);
-                    isUncertainDefSets.insert(defCopy); // 加入到 不定状态记录中
-                    std::pair<MOperaPtr, std::unordered_set<MOperaPtr>> newDefUss = {defCopy, temp};
-                    workList.push_back(newDefUss);   // 加入队列中 下次迭代使用
-                    relRegsDefUse.insert(newDefUss); // 加入到relRegsDefUse
-                    // 使用差集对 relRegsDefUse 对应的元素进行运算更新
-                    for (auto &tp : temp)
-                    { // 减去交集（将交集取出）
-                        relRegsDefUse[Defreg].erase(tp);
-                        relRegsDefUse[Defelem].erase(tp);
-                        Useselem.erase(tp); // 当前队列的头部元素更新(放止和新放入的newDefUss再取交集)
-                        uses.erase(tp);
-                    }
-                }
-            }
-        }
-    }
+    // std::deque<std::pair<MOperaPtr, std::unordered_set<MOperaPtr>>> workList;
+    // for (auto &elem : relRegsDefUse)
+    // {
+    //     workList.push_back(elem); // 加入队列中
+    // }
+    // while (!workList.empty())
+    // {
+    //     auto pair = workList.front();
+    //     MOperaPtr &Defreg = pair.first; // 弹出元素的def对应的操作数
+    //     auto &uses = pair.second;       // 弹出元素的uses
+    //     workList.pop_front();           // 弹出首元素
+    //     for (auto &elem : workList)
+    //     {
+    //         if (uses.size() == 0)
+    //             break; // 没有元素 交集为空 退出循环
+    //         // 遍历剩余元素 求交集
+    //         MOperaPtr &Defelem = elem.first; // def
+    //         auto &Useselem = elem.second;    // uses
+    //         if (*Defreg == *Defelem)
+    //         {
+    //             // 查看交集
+    //             std::unordered_set<MOperaPtr> temp;
+    //             std::set_intersection(uses.begin(), uses.end(), Useselem.begin(),
+    //                                   Useselem.end(), std::inserter(temp, temp.end()));
+    //             if (!temp.empty())
+    //             {
+    //                 // 有交集 创建一个新的 def-uses 链加入到队列 以及加入到relRegsDefUse表中
+    //                 // 有交集 说明一个 use 有多个def 是不定状态 加入到isUncertainDefSets表中
+    //                 MOperaPtr defCopy = MachineOperand::copy(Defreg);
+    //                 isUncertainDefSets.insert(defCopy); // 加入到 不定状态记录中
+    //                 std::pair<MOperaPtr, std::unordered_set<MOperaPtr>> newDefUss = {defCopy, temp};
+    //                 workList.push_back(newDefUss);   // 加入队列中 下次迭代使用
+    //                 relRegsDefUse.insert(newDefUss); // 加入到relRegsDefUse
+    //                 // 使用差集对 relRegsDefUse 对应的元素进行运算更新
+    //                 for (auto &tp : temp)
+    //                 { // 减去交集（将交集取出）
+    //                     relRegsDefUse[Defreg].erase(tp);
+    //                     relRegsDefUse[Defelem].erase(tp);
+    //                     Useselem.erase(tp); // 当前队列的头部元素更新(放止和新放入的newDefUss再取交集)
+    //                     uses.erase(tp);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
     // 对relRegsDefUse处理完毕后 将其加入到 defUsesChains
     for (auto &elem : relRegsDefUse)
     {
@@ -401,17 +377,17 @@ void LinearScan::computeDefUseChain(MFuncPtr fun)
             defUseChains[def].insert(uses.begin(), uses.end());
         }
     }
-    // std::ofstream file("../tests/log_line.txt", std::ios_base::app);
-    // file << "\n*****************" << fun->getFuncName() << "***********************\n";
-    // for (auto &blk : blockList)
-    // {
-    //     for (auto &inst : blk->getInstList())
-    //     {
-    //         file << "line: ";
-    //         file << std::to_string(inst->getNo()) << " ";
-    //         file << inst->toStr() << "\n";
-    //     }
-    // }
+    std::ofstream file("../tests/log_line.txt", std::ios_base::app);
+    file << "\n*****************" << fun->getFuncName() << "***********************\n";
+    for (auto &blk : blockList)
+    {
+        for (auto &inst : blk->getInstList())
+        {
+            file << "line: ";
+            file << std::to_string(inst->getNo()) << " ";
+            file << inst->toStr() << "\n";
+        }
+    }
 }
 
 /// @brief 计算活跃间隔(仅对 虚拟寄存器而言)
@@ -424,6 +400,11 @@ void LinearScan::computeIntervals(MFuncPtr fun)
     {
         auto def = defUse.first;
         auto &uses = defUse.second;
+        // if (uses.size() == 0)
+        // {
+        //     std::cout << "uses数值为0" << std::endl;
+        //     std::cout << "寄存器编号:" << def->toStr() << std::endl;
+        // }
         if (def->isVReg())
         {
             // 虚拟寄存器只def 一次直接创建
@@ -448,29 +429,29 @@ void LinearScan::computeIntervals(MFuncPtr fun)
                 // 找到了 是函数形参r0-r3初始值
                 isArgDef = true;
             }
-            IntervalPtr inter = Interval::get(def, uses, true, isUncertain, isArgDef);
+            IntervalPtr inter = Interval::get(def, uses, true);
 
             intervals.insert(inter);
         }
     }
 
-    // std::ofstream file("../tests/log.txt", std::ios_base::app);
-    // file << "\n*****************" << fun->getFuncName() << "***********************\n";
-    // for (auto &interval : intervals)
-    // {
-    //     file << "def: ";
-    //     file << interval->def->toStr() << "\n";
-    //     file << "uses: ";
-    //     for (auto &use : interval->uses)
-    //     {
-    //         file << use->toStr() << ", ";
-    //     }
-    //     file << "\n";
-    //     file << "start: " << interval->start;
-    //     file << ", end: " << interval->end << "\n";
-    //     file << "is Uncertain: " << interval->isUncertainDef << "\n";
-    //     file << "-----------------\n";
-    // }
+    std::ofstream file("../tests/log.txt", std::ios_base::app);
+    file << "\n*****************" << fun->getFuncName() << "***********************\n";
+    for (auto &interval : intervals)
+    {
+        file << "def: ";
+        file << interval->def->toStr() << "\n";
+        file << "uses: ";
+        for (auto &use : interval->uses)
+        {
+            file << use->toStr() << ", ";
+        }
+        file << "\n";
+        file << "start: " << interval->start;
+        file << ", end: " << interval->end << "\n";
+        // file << "is Uncertain: " << interval->isUncertainDef << "\n";
+        file << "-----------------\n";
+    }
 }
 
 /// @brief 获取溢出位置 如果无溢出 返回nullptr
@@ -490,20 +471,20 @@ std::pair<MOperaPtr, MOperaPtr> LinearScan::computeSpillPos(IntervalPtr inter1To
     }
     else
     {
-        if (inter1Tospill->isUncertainDef)
-        {
-            auto iter = inter1Tospill->uses.begin();
-            res.first = (*iter);
-        }
-        else if (inter1Tospill->isArgDef)
-        {
-            // 无操作
-        }
-        else
-        {
-            // 有确定def 的 PreAlloca 间隔(确定了物理寄存器)
-            res.first = inter1Tospill->def;
-        }
+        // if (inter1Tospill->isUncertainDef)
+        // {
+        //     auto iter = inter1Tospill->uses.begin();
+        //     res.first = (*iter);
+        // }
+        // else if (inter1Tospill->isArgDef)
+        // {
+        //     // 无操作
+        // }
+        // else
+        // {
+        //     // 有确定def 的 PreAlloca 间隔(确定了物理寄存器)
+        //     res.first = inter1Tospill->def;
+        // }
     }
     // ldr 位置
     for (auto iter = inter1Tospill->uses.begin(); iter != inter1Tospill->uses.end();)
@@ -562,7 +543,20 @@ IntervalPtr LinearScan::FindConflictInter(IntervalPtr curInter)
             {
                 // 找到了 冲突间隔
                 res = (*iter);
-                iter = active.erase(iter); // 删除该间隔
+                if (regs.size() > 0 && !res->isPreAlloca)
+                {
+                    // 如果还有寄存器可以使用 并且本间隔不是预分配的间隔
+                    auto curfirstReg = regs.begin();
+                    res->reg = *curfirstReg;
+                    regs.erase(curfirstReg);
+                    res = nullptr;
+                }
+                else
+                {
+                    // 有冲突
+                    iter = active.erase(iter);
+                    regs.insert(regNo); // 返回寄存器可用状态
+                }
                 break;
             }
             else
@@ -576,7 +570,8 @@ IntervalPtr LinearScan::FindConflictInter(IntervalPtr curInter)
         // 是虚拟寄存器间隔 溢出第一个即可
         auto iter = active.begin();
         res = (*iter);
-        iter = active.erase(iter);
+        regs.insert(res->reg);
+        active.erase(iter);
     }
     return res;
 }
@@ -602,18 +597,18 @@ void LinearScan::AutoUpdateActive(IntervalPtr curInter)
         else if ((*riter)->end == start)
         {
             // 边界条件 如果是一个 def 一个 use 那么没有冲突
-            if (!curInter->isUncertainDef)
-            {
-                // UncertainDef的第一条是 use
-                auto iter = std::prev(riter.base()); // 获取正序迭代器
-                // 恢复 该 internal 占用的寄存器
-                regs.insert((*riter)->reg);
-                active.erase(iter);
-            }
-            else
-            {
-                ++riter;
-            }
+            // if (!curInter->isUncertainDef)
+            // {
+            //     // UncertainDef的第一条是 use
+            //     auto iter = std::prev(riter.base()); // 获取正序迭代器
+            //     // 恢复 该 internal 占用的寄存器
+            //     regs.insert((*riter)->reg);
+            //     active.erase(iter);
+            // }
+            // else
+            // {
+            //     ++riter;
+            // }
         }
         else
         {
@@ -660,16 +655,28 @@ void LinearScan::AutoUpdateActive(IntervalPtr curInter)
             {
                 // 不可用 找到 冲突的活跃间隔 将其溢出
                 IntervalPtr spillInter = FindConflictInter(curInter);
-                assert(spillInter != nullptr);
-                int regNo = spillInter->reg;
-                curInter->reg = regNo;
-                spillInter->reg = -1;
-                active.insert(curInter);
-                // 产生溢出代码：
-                successAllocaRegs = false;                        // 有溢出
-                auto pos = computeSpillPos(spillInter, curInter); // 计算溢出位置信息
-                genSpillCode(spillInter, pos);                    // 产生溢出代码
-                // std::cout << "产生溢出" << std::endl;
+                // 如果溢出的间隔也是预分配只能使用该寄存器的间隔 只能将其溢出
+                if (spillInter != nullptr)
+                {
+                    // 分配
+                    curInter->reg = needRegNo;
+                    active.insert(curInter);
+                    regs.erase(needRegNo);
+
+                    spillInter->reg = -1;
+                    // 产生溢出代码：
+                    successAllocaRegs = false;                        // 有溢出
+                    auto pos = computeSpillPos(spillInter, curInter); // 计算溢出位置信息
+                    genSpillCode(spillInter, pos);                    // 产生溢出代码
+                }
+                else
+                {
+                    // 没有冲突
+                    // 分配
+                    curInter->reg = needRegNo;
+                    active.insert(curInter);
+                    regs.erase(needRegNo);
+                }
             }
         }
     }
@@ -682,6 +689,7 @@ void LinearScan::AutoUpdateActive(IntervalPtr curInter)
         assert(spillInter != nullptr);
         int regNo = spillInter->reg;
         curInter->reg = regNo;
+        regs.erase(regNo);
         spillInter->reg = -1;
         active.insert(curInter);
         // 产生溢出代码：
@@ -689,7 +697,7 @@ void LinearScan::AutoUpdateActive(IntervalPtr curInter)
 
         auto pos = computeSpillPos(spillInter, curInter); // 计算溢出位置信息
         genSpillCode(spillInter, pos);                    // 产生溢出代码
-        // std::cout << "产生溢出" << std::endl;
+        std::cout << "产生溢出" << std::endl;
 
         // auto first = active.begin();
         // assert(active.size() > 0);
@@ -762,7 +770,7 @@ void LinearScan::genSpillCode(IntervalPtr interSpilled, std::pair<MOperaPtr, MOp
     offsetImm = MachineOperand::AutoDealWithImm(offsetImm, machineModule, true);
     if (pos1 == nullptr)
     {
-        assert(interSpilled->isArgDef);
+        // assert(interSpilled->isArgDef);
         // 在函数的入口块差入 str
         MBlockPtr &entry = fun->getEntry();
         // 创建 str
@@ -770,7 +778,7 @@ void LinearScan::genSpillCode(IntervalPtr interSpilled, std::pair<MOperaPtr, MOp
         MStorePtr str = MStore::get(entry, MachineInst::STR, MachineOperand::copy(def), MachineOperand::createReg(11), offsetImm);
         entry->getInstList().push_front(str);
 
-        // std::cout << "产生 str指令: " << str->toStr() << std::endl;
+        std::cout << "产生entry str指令: " << str->toStr() << std::endl;
     }
     else
     {
@@ -779,7 +787,7 @@ void LinearScan::genSpillCode(IntervalPtr interSpilled, std::pair<MOperaPtr, MOp
         MStorePtr str = MStore::get(blk1, MachineInst::STR, MachineOperand::copy(def), MachineOperand::createReg(11), offsetImm);
         blk1->insertInstAfter(pos1, str);
 
-        // std::cout << "产生 str指令: " << str->toStr() << std::endl;
+        std::cout << "产生def后的 str指令: line: " << def->getParent()->getNo() << " " << str->toStr() << std::endl;
     }
 
     // 差入ldr指令
@@ -800,7 +808,7 @@ void LinearScan::genSpillCode(IntervalPtr interSpilled, std::pair<MOperaPtr, MOp
                 (*iter)->setRegNo(vreg->getRegNo());
                 ++iter;
             }
-            // std::cout << "产生 load指令: " << ldr->toStr() << std::endl;
+            std::cout << "产生 load指令: line:" << pos2->getNo() << " " << ldr->toStr() << std::endl;
         }
         else
         {
@@ -808,8 +816,7 @@ void LinearScan::genSpillCode(IntervalPtr interSpilled, std::pair<MOperaPtr, MOp
             auto &def = interSpilled->def;
             MLoadInstPtr ldr = MLoadInst::get(blk2, MachineInst::LDR, MachineOperand::copy(def), MachineOperand::createReg(11), MachineOperand::copy(offsetImm));
             blk2->insertInstBefore(pos2, ldr);
-
-            // std::cout << "产生 load指令: " << ldr->toStr() << std::endl;
+            std::cout << "物理寄存器产生 load指令: " << ldr->toStr() << std::endl;
         }
     }
 
@@ -838,12 +845,16 @@ bool LinearScan::LinearScanPassEpoch(MFuncPtr fun)
     initAvailableRegsPool(); // 初始化可用寄存器池
     // 计算def-use chain
     computeDefUseChain(fun);
+    std::cout << "计算完毕def-use chian" << std::endl;
     // 计算活跃间隔
     computeIntervals(fun);
+
     // 自动更新  active表
     for (auto &inter : intervals)
     {
-        // std::cout << inter->def->toStr() << std::endl;
+        std::cout << "def: ";
+        std::cout << inter->def->toStr() << std::endl;
+        std::cout << "uses size: " << inter->uses.size() << std::endl;
         AutoUpdateActive(inter);
     }
     return successAllocaRegs;
@@ -854,6 +865,7 @@ bool LinearScan::LinearScanPassEpoch(MFuncPtr fun)
 void LinearScan::MapIntervalToReg(IntervalPtr inter)
 {
     inter->def->setReg(inter->reg);
+    assert(inter->reg != -1);
     for (auto &use : inter->uses)
     {
         use->setReg(inter->reg);
@@ -866,7 +878,7 @@ void LinearScan::allocateReg()
     std::vector<MFuncPtr> &funList = machineModule->getFuncList();
     for (auto &fun : funList)
     {
-        // std::cout << fun->getFuncName() << std::endl;
+        std::cout << fun->getFuncName() << std::endl;
         bool issucces = false;
 
         // dealWithVregsAndRealRegs(fun);
@@ -874,7 +886,7 @@ void LinearScan::allocateReg()
         while (!issucces)
         {
             issucces = LinearScanPassEpoch(fun);
-            // std::cout << "false!" << std::endl;
+            std::cout << "false!" << std::endl;
         }
         // std::cout << fun->getFuncName() << std::endl;
         // 成功后 为每个interval设置好对应的物理寄存器

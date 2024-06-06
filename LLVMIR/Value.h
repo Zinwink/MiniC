@@ -169,6 +169,10 @@ public:
     /// @return
     bool isCallInst();
 
+    /// @brief 是否是STore
+    /// @return 
+    bool isStoreInst();
+
     /// @brief 是不是 zextinst
     /// @return
     bool isZextInst();
