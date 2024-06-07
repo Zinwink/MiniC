@@ -16,7 +16,7 @@
 #include "BasicBlock.h"
 #include "GlobalVariable.h"
 #include <unordered_map>
-#include <unordered_set>
+#include <set>
 #include "Function.h"
 #include "Module.h"
 
@@ -25,16 +25,16 @@ class LiveMemVariAnalysis
 {
 private:
     /// @brief 记录基本块的 In Out 以及 def use  这些变量都是 计算同一函数使用  切换函数时重置清空
-    std::unordered_map<BasicBlockPtr, std::unordered_set<ValPtr>> def; // 记录str def了哪些 mem
+    std::unordered_map<BasicBlockPtr, std::set<ValPtr>> def; // 记录str def了哪些 mem
 
     /// @brief 活跃变量分析本质就是分析处哪些被新的定值杀死截断的use
-    std::unordered_map<BasicBlockPtr, std::unordered_set<LoadInstPtr>> In, Out, use; // 记录 In Out和Use
+    std::unordered_map<BasicBlockPtr, std::set<LoadInstPtr>> In, Out, use; // 记录 In Out和Use
 
     /// @brief 记录use_defs
-    std::unordered_map<LoadInstPtr, std::unordered_set<StoreInstPtr>> use_def;
+    std::unordered_map<LoadInstPtr, std::set<StoreInstPtr>> use_def;
 
     /// @brief 记录 def_uses
-    std::unordered_map<StoreInstPtr, std::unordered_set<LoadInstPtr>> def_use;
+    std::unordered_map<StoreInstPtr, std::set<LoadInstPtr>> def_use;
 
     /// @brief 计算 函数基本块的 def use
     /// @param fun

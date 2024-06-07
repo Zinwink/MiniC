@@ -68,7 +68,7 @@ void LiveMemVariAnalysis::computeInOut(FuncPtr fun)
     {
         BasicBlockPtr blk = workList.front();
         workList.pop_front();                                   // 弹出该块
-        std::unordered_set<LoadInstPtr> oldIn = In[blk];        // 记录旧值
+        std::set<LoadInstPtr> oldIn = In[blk];                  // 记录旧值
                                                                 // 更新Out  所有后继In 的并集
         std::vector<BasicBlockPtr> succes = blk->getJumpList(); // 后继基本块
         for (auto &succ : succes)
@@ -78,7 +78,7 @@ void LiveMemVariAnalysis::computeInOut(FuncPtr fun)
         // 更新 In(n)=Use(n) U ( Out(n)-def(n))  (def 在这里表示为kill)
         // 根据def 记录找到本块被def 的load(即被截断
         // 对于本基本块 store后面的load在前面计算def use时已经滤除 主要滤除 Out出口活跃的load)
-        std::unordered_set<LoadInstPtr> kill;
+        std::set<LoadInstPtr> kill;
         for (auto &defAddr : def[blk])
         {
             for (auto &outlive : Out[blk])
@@ -116,7 +116,7 @@ void LiveMemVariAnalysis::Pass(FuncPtr fun)
 
     for (auto &blk : blockList)
     {
-        std::unordered_map<ValPtr, std::unordered_set<LoadInstPtr>> addrLoadLive; // 按地址分类的活跃 use(即Load的值)
+        std::unordered_map<ValPtr, std::set<LoadInstPtr>> addrLoadLive; // 按地址分类的活跃 use(即Load的值)
         for (auto &elem : Out[blk])
         {
             ValPtr addr = elem->getOperand(0); // 获取地址
@@ -180,7 +180,7 @@ void LiveMemVariAnalysis::Pass(FuncPtr fun)
                     // 有多个 def 看 def 的值是否相同如果相同 则进行替换
                     // 类似于phi节点;
                     ValPtr firstStrv = (*(use_def[ldr].begin()))->getOperand(0); // str 存入的值
-                    bool isDef = true; // 状态是否确定？ 相当于 phi指令所有分支在该汇合点处传入的值是否相同
+                    bool isDef = true;                                           // 状态是否确定？ 相当于 phi指令所有分支在该汇合点处传入的值是否相同
                     for (auto iter = use_def[ldr].begin(); iter != use_def[ldr].end(); iter++)
                     {
                         ValPtr strv = (*iter)->getOperand(0);
@@ -205,7 +205,6 @@ void LiveMemVariAnalysis::Pass(FuncPtr fun)
         }
     }
     // 下面找出具有相同 defs 的load指令;
-    
 }
 
 /// @brief 对整个单元进行分析优化
