@@ -109,6 +109,9 @@ std::string getNodeName(ast_node *node)
     case ast_node_type::AST_OP_RETURN_STATEMENT:
         name = "return";
         break;
+    case ast_node_type::AST_OP_NULL_STMT:
+        name = "";
+        break;
     case ast_node_type::AST_OP_BREAK:
         name = "break";
         break;

@@ -129,6 +129,8 @@ ast_node *IRGen::ir_visit_astnode(ast_node *node, LabelParams blocks)
 {
     if (node == nullptr)
         return nullptr;
+    if (node->node_type == ast_node_type::AST_OP_NULL_STMT)
+        return node;
     auto iter = ast2ir_handers.find(node->node_type);
     bool result;
     if (iter == ast2ir_handers.end())

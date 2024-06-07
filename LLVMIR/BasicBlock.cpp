@@ -19,6 +19,7 @@
 #include <string>
 #include "User.h"
 #include <vector>
+#include <iostream>
 
 /// @brief 得到基本块指针
 /// @param _parent
@@ -106,6 +107,7 @@ bool BasicBlock::hasImmmedPred()
 std::vector<BasicBlockPtr> BasicBlock::getJumpList()
 {
     std::vector<BasicBlockPtr> res;
+    assert(InstLists.size() > 0);
     InstPtr br = InstLists.back(); // 获取最后一个跳转指令
     if (br->getOpcode() == Opcode::Goto)
     {
@@ -115,6 +117,7 @@ std::vector<BasicBlockPtr> BasicBlock::getJumpList()
     }
     else if (br->getOpcode() == Opcode::Ret)
     {
+        // std::cout << "no! this is exist" << std::endl;
     }
     else
     {

@@ -327,7 +327,7 @@ Statement : "return" Expr ";" {
     $$=$1;
 }
 | ";" {
-    $$=nullptr;
+    $$= new_ast_node(ast_node_type::AST_OP_NULL_STMT,{});
 }
 
 AssignStmt: Lval "=" Expr ";"{
@@ -482,6 +482,7 @@ IfStmt : "if" "(" Condition ")" Statement %prec THEN {
     }
     $$=new_ast_node(ast_node_type::AST_OP_IFSTMT,{$3,$5,$7});
 }
+
 ;
 
 /* 循环 while */

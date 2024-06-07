@@ -172,6 +172,9 @@ enum class ast_node_type : int
     /// @brief do_while循环
     AST_OP_DOWHILESTMT,
 
+    /// @brief  空语句
+    AST_OP_NULL_STMT,
+
     /// @brief break;
     AST_OP_BREAK,
 

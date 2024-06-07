@@ -11,6 +11,7 @@
 
 #include "LiveMemVariAnalysis.h"
 #include "BasicBlockPass.h"
+#include <iostream>
 
 /// @brief 计算 基本块的 def use
 /// @param fun
@@ -74,9 +75,24 @@ void LiveMemVariAnalysis::computeInOut(FuncPtr fun)
         {
             Out[blk].insert(In[succ].begin(), In[succ].end());
         }
-        // 更新 In(n)=Use(n) U ( Out(n)-def(n))  (def 在计算时已经去除)
-        std::set_union(use[blk].begin(), use[blk].end(),
-                       Out[blk].begin(), Out[blk].end(), std::inserter(In[blk], In[blk].end()));
+        // 更新 In(n)=Use(n) U ( Out(n)-def(n))  (def 在这里表示为kill)
+        // 根据def 记录找到本块被def 的load(即被截断
+        // 对于本基本块 store后面的load在前面计算def use时已经滤除 主要滤除 Out出口活跃的load)
+        std::unordered_set<LoadInstPtr> kill;
+        for (auto &defAddr : def[blk])
+        {
+            for (auto &outlive : Out[blk])
+            {
+                ValPtr loadmemAddr = outlive->getOperand(0);
+                if (defAddr == loadmemAddr)
+                {
+                    kill.insert(outlive);
+                }
+            }
+        }
+        In[blk] = use[blk];
+        std::set_difference(Out[blk].begin(), Out[blk].end(),
+                            kill.begin(), kill.end(), std::inserter(In[blk], In[blk].end()));
         if (oldIn != In[blk])
         {
             for (auto &pred : blk->getImmedPreds())
@@ -157,12 +173,39 @@ void LiveMemVariAnalysis::Pass(FuncPtr fun)
                 {
                     // 只有一个定值到达 load 值确定 进行替换
                     ValPtr strVal = str->getOperand(0); // 存入的值
-                    ldr->replaceAllUsesWith(ldr, strVal);
+                    Value::replaceAllUsesWith(ldr, strVal);
+                }
+                else if (use_def[ldr].size() >= 2)
+                {
+                    // 有多个 def 看 def 的值是否相同如果相同 则进行替换
+                    // 类似于phi节点;
+                    ValPtr firstStrv = (*(use_def[ldr].begin()))->getOperand(0); // str 存入的值
+                    bool isDef = true; // 状态是否确定？ 相当于 phi指令所有分支在该汇合点处传入的值是否相同
+                    for (auto iter = use_def[ldr].begin(); iter != use_def[ldr].end(); iter++)
+                    {
+                        ValPtr strv = (*iter)->getOperand(0);
+                        if (firstStrv->isConstant() && strv->isConstant())
+                        {
+                            ConstantIntPtr firsconst = std::static_pointer_cast<ConstantInt>(firstStrv);
+                            ConstantIntPtr strvCon = std::static_pointer_cast<ConstantInt>(strv);
+                            isDef = (firsconst->getValue() == strvCon->getValue()) && isDef;
+                        }
+                        else
+                        {
+                            isDef = (firstStrv == strv) && isDef;
+                        }
+                    }
+                    if (isDef)
+                    {
+                        // 相当于phi节点状态确定
+                        Value::replaceAllUsesWith(ldr, firstStrv);
+                    }
                 }
             }
         }
     }
-    // 下面找出具有相同 defs 的load指令; 
+    // 下面找出具有相同 defs 的load指令;
+    
 }
 
 /// @brief 对整个单元进行分析优化

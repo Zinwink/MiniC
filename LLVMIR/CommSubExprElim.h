@@ -10,3 +10,18 @@
  */
 
 #pragma once
+
+#include "BasicBlock.h"
+
+/// @brief 局部公共子表达式删除(对于并列分支间的公共表达式不处理，因为不可达)
+class LocalSubExprElim
+{
+private:
+    
+
+    /// @brief 判断从 src 基本块是否可以到达 dst基本块
+    /// @param src 
+    /// @param dst 
+    /// @return 
+    bool isReachable(BasicBlockPtr src, BasicBlockPtr dst);
+};

@@ -28,7 +28,7 @@ private:
     std::unordered_map<BasicBlockPtr, std::unordered_set<ValPtr>> def; // 记录str def了哪些 mem
 
     /// @brief 活跃变量分析本质就是分析处哪些被新的定值杀死截断的use
-    std::unordered_map<BasicBlockPtr, std::unordered_set<LoadInstPtr>> In, Out, use; //记录 In Out和Use
+    std::unordered_map<BasicBlockPtr, std::unordered_set<LoadInstPtr>> In, Out, use; // 记录 In Out和Use
 
     /// @brief 记录use_defs
     std::unordered_map<LoadInstPtr, std::unordered_set<StoreInstPtr>> use_def;

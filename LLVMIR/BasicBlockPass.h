@@ -16,7 +16,7 @@
 
 class BBlockPass;
 
-/// @brief 对基本块的局部优化 
+/// @brief 对基本块的局部优化
 class BBlockPass
 {
 private:

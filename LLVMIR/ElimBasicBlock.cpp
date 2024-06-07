@@ -84,9 +84,11 @@ bblockIter &mergeBasicBlocks(BasicBlockPtr block, bblockIter &it)
         ++it;
         return it;
     }
-    if (block->getInstLists().size() == 1 && block->getName() != "exit")
+    if (block->getInstLists().size() == 1 && !block->isExit())
     {
         // 若只有一条指令 则一定是无条件跳转指令
+        assert(next.size() > 0);
+        assert(block != nullptr && next[0] != nullptr);
         Value::replaceAllUsesWith(block, next[0]); // 替换前驱节点的跳转为本基本块的跳转
         // 将本节点删除
         eraseBasicBlock(block, it);

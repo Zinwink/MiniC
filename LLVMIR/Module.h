@@ -39,6 +39,10 @@ public:
     /// @brief 析构函数
     ~Module();
 
+    /// @brief 返回计数器
+    /// @return 
+    inline Counter *getCounter() { return cnt; }
+
     /// @brief 获取全局变量列表
     /// @return
     std::deque<GlobalVariPtr> &getGlobalVars() { return globalVarList; }

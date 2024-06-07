@@ -41,6 +41,14 @@ public:
         InstLists.clear();
     }
 
+    /// @brief 是否是出口基本块
+    /// @return
+    bool isExit()
+    {
+        InstPtr last = InstLists.back();
+        return last->isRetInst();
+    }
+
     /// @brief 是否有标记
     /// @return
     bool hasSign() { return _hasSign; }

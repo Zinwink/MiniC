@@ -29,7 +29,7 @@ void BBlockPass::BasicEasyPass(BasicBlockPtr blk)
     std::unordered_map<ValPtr, InstPtr> memLoad;  // 内存取值
     std::unordered_map<ValPtr, InstPtr> memStore; // 内存存值
 
-    for (auto iter = instList.begin(); iter != instList.end(); ++iter)
+    for (auto iter = instList.begin(); iter != instList.end();)
     {
         InstPtr &inst = *iter;
         inst->AutoTransmitWhenIsConst();
@@ -43,7 +43,7 @@ void BBlockPass::BasicEasyPass(BasicBlockPtr blk)
                 // 能找到  则将该Load 的User对应的操作数直接替换成Store的值
                 ValPtr strVal = strIter->second->getOperand(0);
                 inst->replaceAllUsesWith(inst, strVal); // 将使用到load的User 相应操作数直接替换成定值
-                // iter = eraseInst(blk, iter);            // 删除该无用Load指令
+                iter = eraseInst(blk, iter);            // 删除该无用Load指令
             }
             else
             {
@@ -55,16 +55,16 @@ void BBlockPass::BasicEasyPass(BasicBlockPtr blk)
                     ValPtr loadVal = LoadIter->second;
                     inst->replaceAllUsesWith(inst, loadVal); // 复用替换为新的
                     // 该Load 指令已经无用 可以删除
-                    // iter = eraseInst(blk, iter);
+                    iter = eraseInst(blk, iter);
                 }
                 else
                 {
                     // 没有找到 则先插入 到 memLoad中
                     memLoad.emplace(memAddr, inst);
-                    // iter++;
+                    iter++;
                 }
             }
-            // continue; // 下一次循环
+            continue; // 下一次循环
         }
         if (inst->isStoreInst())
         {
@@ -88,8 +88,8 @@ void BBlockPass::BasicEasyPass(BasicBlockPtr blk)
                 // 没找到 直接插入
                 memStore.emplace(memAddr, inst);
             }
-            // iter++;
-            // continue;
+            iter++;
+            continue;
         }
         if (inst->isCallInst())
         {
@@ -100,12 +100,12 @@ void BBlockPass::BasicEasyPass(BasicBlockPtr blk)
                 if (ldr.first->isGlobalVariable())
                 {
                     ldriter = memLoad.erase(ldriter);
-                    // continue;
+                    continue;
                 }
                 else if (ldr.first->isGetelemPtrInst())
                 {
                     ldriter = memLoad.erase(ldriter);
-                    // continue;
+                    continue;
                 }
                 else
                 {
@@ -118,12 +118,12 @@ void BBlockPass::BasicEasyPass(BasicBlockPtr blk)
                 if (str.first->isGlobalVariable())
                 {
                     striter = memStore.erase(striter);
-                    // continue;
+                    continue;
                 }
                 else if (str.first->isGetelemPtrInst())
                 {
                     striter = memStore.erase(striter);
-                    // continue;
+                    continue;
                 }
                 else
                 {
@@ -131,7 +131,7 @@ void BBlockPass::BasicEasyPass(BasicBlockPtr blk)
                 }
             }
         }
-        // iter++;
+        iter++;
     }
 }
 
