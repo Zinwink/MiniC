@@ -101,6 +101,47 @@ StoreInstPtr StoreInst::create(ValPtr val, ValPtr Ptr, BasicBlockPtr atBack)
     return store;
 }
 
+/// @brief StoreInst 是否是不必要指令
+/// @return
+bool StoreInst::isDeadInst()
+{
+    ValPtr addr = getOperand(1);
+    if (_isDead)
+    { // 有标记 肯定是死的
+        return true;
+    }
+    else if (addr->isAllocaInst())
+    { // 没标记 看存放的内存地址是否还有 load(只是简单判断 实际精准判断还需数据流)
+        bool res = true;
+        for (auto &user : addr->getUseList())
+        {
+            if (user->isLoadInst())
+            {
+                res = false;
+                break;
+            }
+        }
+        return res;
+    }
+    else if (addr->isGlobalVariable())
+    {
+        if (getBBlockParent()->getParentFun()->getName() == "main")
+        { // 在main函数里面  其他函数有副作用
+            bool res = true;
+            for (auto &user : addr->getUseList())
+            {
+                if (user->isLoadInst())
+                {
+                    res = false;
+                    break;
+                }
+            }
+            return res;
+        }
+    }
+    return false;
+}
+
 /// @brief 创建获取LoadInst
 /// @param Ptr
 /// @return
@@ -424,6 +465,8 @@ CallInstPtr CallInst::create(ValPtr fun, std::vector<ValPtr> &relArgs, BasicBloc
                 // 形参也为指针
                 // 当前情形下，形参为指针只能是数组类型 i32*, [4 x i32]* 等
                 // 为了判断方便 假设调用时实参的维度符合条件 则只需取实参的
+                assert(function->getArgsTy(i)->isPointerType());
+                PointerType *paramTy = static_cast<PointerType *>(function->getArgsTy(i));
                 ConstantIntPtr offset = ConstantInt::get(32);
                 offset->setValue(0);
                 PointerType *argtyPtr = static_cast<PointerType *>(argty);
@@ -435,10 +478,33 @@ CallInstPtr CallInst::create(ValPtr fun, std::vector<ValPtr> &relArgs, BasicBloc
                     load->setBBlockParent(atBack);
                     relArgs[i] = load;
                 }
-                getelemInstPtr getele = getelementptrInst::get(relArgs[i], 1, offset);
-                relArgs[i] = getele;
-                atBack->AddInstBack(getele);
-                getele->setBBlockParent(atBack);
+                if (paramTy->getElemntTy()->isIntegerType())
+                {
+                    // 形参类型是 i32*
+                    assert(relArgs[i]->getType()->isPointerType());
+                    PointerType *argtyPtr = static_cast<PointerType *>(relArgs[i]->getType());
+                    if (argtyPtr->getElemntTy()->isArrayType())
+                    {
+                        auto dims = (static_cast<ArrayType *>(argtyPtr->getElemntTy()))->getDims();
+                        getelemInstPtr getele = getelementptrInst::get(relArgs[i], dims, offset);
+                        relArgs[i] = getele;
+                        atBack->AddInstBack(getele);
+                        getele->setBBlockParent(atBack);
+                    }
+                }
+                else if (paramTy->getElemntTy()->isArrayType())
+                {
+                    // 形参是 [3 x i32]* 等
+                    assert(relArgs[i]->getType()->isPointerType());
+                    PointerType *argtyPtr = static_cast<PointerType *>(relArgs[i]->getType());
+                    assert(argtyPtr->getElemntTy()->isArrayType());
+                    int paramDims = (static_cast<ArrayType *>(paramTy->getElemntTy()))->getDims();
+                    int relDIms = (static_cast<ArrayType *>(argtyPtr->getElemntTy()))->getDims();
+                    getelemInstPtr getele = getelementptrInst::get(relArgs[i], relDIms - paramDims, offset);
+                    relArgs[i] = getele;
+                    atBack->AddInstBack(getele);
+                    getele->setBBlockParent(atBack);
+                }
             }
         }
     }
@@ -750,6 +816,9 @@ getelemInstPtr getelementptrInst::create(ValPtr arrayBaseAdress, std::vector<Val
             ArrayType *arrty = static_cast<ArrayType *>(elemTy->getElemntTy());
 
             std::vector<int> dimsOrd = arrty->getDimValues(); // 获取维度数据
+
+            std::cout << "数组维度为:" << dimsOrd.size() << std::endl;
+
             assert((dimsOrd.size() + 1) >= dims.size() && " logic error! large than the array dim! ");
             // 下面使用乘加指令
             ValPtr mulAdd = dims[0];
@@ -767,8 +836,11 @@ getelemInstPtr getelementptrInst::create(ValPtr arrayBaseAdress, std::vector<Val
                 cont->setValue(dimsOrd[i]);
                 BinaryOperatorPtr mul = BinaryOperator::create(Opcode::MulInteger, mulAdd, cont, atBack);
 
-                BinaryOperatorPtr add = BinaryOperator::create(Opcode::AddInteger, mul, dims[i + 1], atBack);
-                mulAdd = add; // 迭代
+                if ((i + 1) < dims.size())
+                {
+                    BinaryOperatorPtr add = BinaryOperator::create(Opcode::AddInteger, mul, dims[i + 1], atBack);
+                    mulAdd = add; // 迭代
+                }
             }
             getelemInstPtr getelem = getelementptrInst::get(load, dims.size() - 1, mulAdd);
             atBack->AddInstBack(getelem);

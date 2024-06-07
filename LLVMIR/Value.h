@@ -170,8 +170,12 @@ public:
     bool isCallInst();
 
     /// @brief 是否是STore
-    /// @return 
+    /// @return
     bool isStoreInst();
+
+    /// @brief 是否是load
+    /// @return 
+    bool isLoadInst();
 
     /// @brief 是不是 zextinst
     /// @return

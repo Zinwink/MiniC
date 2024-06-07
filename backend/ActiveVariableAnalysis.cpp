@@ -100,7 +100,7 @@ void ActiveVariAnalysis::computeLiveVariInfun(MFuncPtr fun)
         // 更新 In(n)=Use(n) U ( Out(n)-def(n))
         blk->getLiveIn() = use[blk];
         std::set_difference(blk->getLiveOut().begin(), blk->getLiveOut().end(),
-                            def[blk].begin(), def[blk].end(), inserter(blk->getLiveIn(), blk->getLiveIn().begin()));
+                            def[blk].begin(), def[blk].end(), inserter(blk->getLiveIn(), blk->getLiveIn().end()));
         if (oldIn != blk->getLiveIn())
         {
             for (auto &pred : blk->getPreds())

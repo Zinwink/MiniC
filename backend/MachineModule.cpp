@@ -121,8 +121,6 @@ uint32_t MCount::getNo(ValPtr val)
         else if (val->isArgument())
         {
             // 函数形参  （传入的应该是 除了前4个的形参 需要从栈中加载到寄存器）
-            ArgPtr arg = std::static_pointer_cast<Argument>(val);
-            assert(arg->getArgNo() >= 4 && "not support this usage,the first four argument's reg is r0-r3");
             res = RegNo;
             record.emplace(val, RegNo);
             RegNo++;

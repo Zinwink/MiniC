@@ -59,6 +59,10 @@ IRGen::IRGen(ast_node *root, ModulePtr _module)
     ast2ir_handers[ast_node_type::AST_OP_DECL_ITEMS] = &IRGen::ir_declItems;
     ast2ir_handers[ast_node_type::AST_OP_VAR_DEF] = &IRGen::ir_declVarDef;
 
+    // AST const 修饰
+    ast2ir_handers[ast_node_type::AST_OP_CONST_DECL_ITEMS] = &IRGen::ir_const_declItems;
+    ast2ir_handers[ast_node_type::AST_OP_CONST_VAR_DEF] = &IRGen::ir_const_declVarDef;
+
     // AST中的赋值Assign节点
     ast2ir_handers[ast_node_type::AST_OP_ASSIGN] = &IRGen::ir_assign;
 
@@ -730,7 +734,24 @@ bool IRGen::ir_declItems(ast_node *node, LabelParams blocks)
 {
     for (auto &son : node->sons)
     {
-        ast_node *result = ir_visit_astnode(son, blocks);
+        ast_node *result = ir_visit_astnode(son, {});
+        if (result == nullptr)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+/// @brief AST  const DeclarationItems
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_const_declItems(ast_node *node, LabelParams blocks)
+{
+    for (auto &son : node->sons)
+    {
+        ast_node *result = ir_visit_astnode(son, {});
         if (result == nullptr)
         {
             return false;
@@ -802,10 +823,53 @@ bool IRGen::ir_declVarDef(ast_node *node, LabelParams blocks)
                 return false;
             StoreInst::create(right->value, alloca, getCurBlock());
         }
+    }
+
+    return true;
+}
+
+/// @brief const 变量声明定义
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_const_declVarDef(ast_node *node, LabelParams blocks)
+{
+    // 简单处理 既然 const 修饰 就当常量 constantint 处理吧
+    ast_node *left = node->sons[0];
+    ast_node *right = node->sons[1];
+    right = ir_visit_astnode(right, {});
+    int linno = left->literal_val.line_no;
+    string name = left->literal_val.digit.id;
+    if (right == nullptr)
+    {
+        return false;
+    }
+    if (!right->value->isConstant())
+    {
+        std::cout << ">>>Error! the const var: " << name
+                  << " must be initilized with constant! line: " << linno << std::endl;
+        return false;
+    }
+    else
+    {
+        // 将创建的 const 变量 加入到 当前作用域表中
+        // 先查找 当前作用域表 防止重复 声明
+        ValPtr res = scoper->curTab()->findDeclVarOfCurTab(name);
+        if (res != nullptr)
+        {
+            std::cout << ">>>Error! the var: " << name << " is redifined! line: " << linno << std::endl;
+            return false;
+        }
         else
         {
-            // 数组的初始化
-            // 暂未实现
+            ConstantIntPtr rgval = std::static_pointer_cast<ConstantInt>(right->value);
+            int rightval = rgval->getValue();
+            ConstantIntPtr leftconst = ConstantInt::get(32);
+            leftconst->setValue(rightval);
+            left->value = std::move(leftconst);
+            left->value->setName(name);
+            // 没找到
+            scoper->curTab()->newDeclVar(left->value);
         }
     }
 
@@ -883,12 +947,12 @@ bool IRGen::ir_Negative(ast_node *node, LabelParams blocks)
 bool IRGen::ir_add(ast_node *node, LabelParams blocks)
 {
     // 遍历Ast  时进行初步的优化
-    ast_node *left = ir_visit_astnode(node->sons[0], blocks);
+    ast_node *left = ir_visit_astnode(node->sons[0], {});
     if (left == nullptr)
     {
         return false;
     }
-    ast_node *right = ir_visit_astnode(node->sons[1], blocks);
+    ast_node *right = ir_visit_astnode(node->sons[1], {});
     if (right == nullptr)
         return false;
 
@@ -912,6 +976,8 @@ bool IRGen::ir_add(ast_node *node, LabelParams blocks)
             curUsedBlockIter = std::next(curUsedBlockIter);
         }
     };
+
+    assert(left->value != nullptr && right->value != nullptr);
 
     if (left->value->isConstant() && right->value->isConstant())
     {
@@ -958,12 +1024,12 @@ bool IRGen::ir_add(ast_node *node, LabelParams blocks)
 bool IRGen::ir_sub(ast_node *node, LabelParams blocks)
 {
     // 遍历Ast  时进行初步的优化
-    ast_node *left = ir_visit_astnode(node->sons[0], blocks);
+    ast_node *left = ir_visit_astnode(node->sons[0], {});
     if (left == nullptr)
     {
         return false;
     }
-    ast_node *right = ir_visit_astnode(node->sons[1], blocks);
+    ast_node *right = ir_visit_astnode(node->sons[1], {});
     if (right == nullptr)
         return false;
 
@@ -1024,12 +1090,12 @@ bool IRGen::ir_sub(ast_node *node, LabelParams blocks)
 bool IRGen::ir_mul(ast_node *node, LabelParams blocks)
 {
     // 遍历Ast  时进行初步的优化
-    ast_node *left = ir_visit_astnode(node->sons[0], blocks);
+    ast_node *left = ir_visit_astnode(node->sons[0], {});
     if (left == nullptr)
     {
         return false;
     }
-    ast_node *right = ir_visit_astnode(node->sons[1], blocks);
+    ast_node *right = ir_visit_astnode(node->sons[1], {});
     if (right == nullptr)
         return false;
 
@@ -1117,12 +1183,12 @@ bool IRGen::ir_mul(ast_node *node, LabelParams blocks)
 bool IRGen::ir_div(ast_node *node, LabelParams blocks)
 {
     // 遍历Ast  时进行初步的优化
-    ast_node *left = ir_visit_astnode(node->sons[0], blocks);
+    ast_node *left = ir_visit_astnode(node->sons[0], {});
     if (left == nullptr)
     {
         return false;
     }
-    ast_node *right = ir_visit_astnode(node->sons[1], blocks);
+    ast_node *right = ir_visit_astnode(node->sons[1], {});
     if (right == nullptr)
         return false;
 
@@ -1183,12 +1249,12 @@ bool IRGen::ir_div(ast_node *node, LabelParams blocks)
 bool IRGen::ir_mod(ast_node *node, LabelParams blocks)
 {
     // 遍历Ast  时进行初步的优化
-    ast_node *left = ir_visit_astnode(node->sons[0], blocks);
+    ast_node *left = ir_visit_astnode(node->sons[0], {});
     if (left == nullptr)
     {
         return false;
     }
-    ast_node *right = ir_visit_astnode(node->sons[1], blocks);
+    ast_node *right = ir_visit_astnode(node->sons[1], {});
     if (right == nullptr)
         return false;
 

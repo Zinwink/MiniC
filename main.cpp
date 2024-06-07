@@ -14,6 +14,8 @@
 #include "ArmInstGen.h"
 #include "LinearScan.h"
 #include "getopt-port.h"
+#include "BasicBlockPass.h"
+#include "LiveMemVariAnalysis.h"
 #include <iostream>
 
 /// @brief 是否显示帮助信息
@@ -226,9 +228,14 @@ int main(int argc, char *argv[])
         IRGenPtr codeGen = IRGen::get(ast_root, module);
         codeGen->run();
         free_ast(ast_root); // IR产生后释放 AST抽象语法树
-        ElimUseLessBBlock(module);
-        ElimUseLessBBlock(module);
-        eraseModuleDeadInst(module); // 删除死指令
+        for (int i = 0; i < 2; i++)
+        {
+            ElimUseLessBBlock(module); // 删除无用块
+            EasyPass(module);          // 简单局部优化
+            LiveMemAnalysisPass(module);  //进一步优化
+            ElimUseLessBBlock(module);   // 删除无用块
+            eraseModuleDeadInst(module); // 删除死指令
+        }
 
         // 输出 线性IR
         if (gShowLineIR)
@@ -241,8 +248,8 @@ int main(int argc, char *argv[])
         MModulePtr Mmodule = MachineModule::get();
         ArmInstGenPtr ArmGen = ArmInstGen::get(module, Mmodule);
         ArmGen->run();
-        LinearScanPtr linearscan = LinearScan::get(Mmodule);
-        linearscan->allocateReg(); // 分配寄存器
+        // LinearScanPtr linearscan = LinearScan::get(Mmodule);
+        // linearscan->allocateReg(); // 分配寄存器
         // 产生汇编
         if (gShowASM)
         {
@@ -263,20 +270,26 @@ int main(int argc, char *argv[])
 
 //     ModulePtr module = Module::get();
 //     IRGenPtr codeGen = IRGen::get(ast_root, module);
+//     std::cout << "打印完毕" << std::endl;
 //     codeGen->run();
-//     ElimUseLessBBlock(module);
-//     ElimUseLessBBlock(module);
-//     eraseModuleDeadInst(module); // 删除死指令
+//     std::cout << "打印完毕" << std::endl;
+//     for (int i = 0; i < 20; i++)
+//     {
+//         ElimUseLessBBlock(module);   // 删除无用块
+//         EasyPass(module);            // 简单局部优化
+//         ElimUseLessBBlock(module);   // 删除无用块
+//         eraseModuleDeadInst(module); // 删除死指令
+//     }
 //     module->printIR("../tests/test2.ll");
+//     std::cout<<"打印完毕"<<std::endl;
+//     // MModulePtr Mmodule = MachineModule::get();
+//     // ArmInstGenPtr ArmGen = ArmInstGen::get(module, Mmodule);
+//     // ArmGen->run();
+//     // LinearScanPtr linearscan = LinearScan::get(Mmodule);
+//     // linearscan->allocateReg(); // 分配寄存器
 
-//     MModulePtr Mmodule = MachineModule::get();
-//     ArmInstGenPtr ArmGen = ArmInstGen::get(module, Mmodule);
-//     ArmGen->run();
-//     LinearScanPtr linearscan = LinearScan::get(Mmodule);
-//     linearscan->allocateReg(); // 分配寄存器
-
-//     Mmodule->printArm("../tests/test2.s");
-//     Mmodule->clear();
+//     // Mmodule->printArm("../tests/test2.s");
+//     // Mmodule->clear();
 
 //     return 0;
 // }

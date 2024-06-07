@@ -176,7 +176,7 @@ public:
 
     /// @brief StoreInst 是否是不必要指令
     /// @return
-    bool isDeadInst() override { return _isDead; }
+    bool isDeadInst() override;
 
     /// @brief 创建指令StoreInst
     /// @param val
@@ -548,6 +548,20 @@ public:
     /// @brief 构造函数
     /// @param i1
     ZextInst(ValPtr i1, Type *i32);
+
+    /// @brief 判断getelementptrInst是否是死指令
+    /// @return
+    bool isDeadInst() override
+    {
+        if (getUseList().size() == 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
     /// @brief 当 要转换的 i1 bool 结果为 true 或false 时自动转换传播
     void AutoTransmitWhenIsConst() override;

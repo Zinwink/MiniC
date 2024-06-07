@@ -121,6 +121,19 @@ bool Value::isStoreInst()
     return res;
 }
 
+/// @brief 是否是load
+/// @return
+bool Value::isLoadInst()
+{
+    bool res = false;
+    if (isInstruct())
+    {
+        Instruction *inst = static_cast<Instruction *>(this);
+        res = inst->isLoadInst();
+    }
+    return res;
+}
+
 /// @brief 是否是整数比较指令
 /// @return
 bool Value::isICmpInst()

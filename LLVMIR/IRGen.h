@@ -69,8 +69,7 @@ private:
 
     /// @brief 根据AST节点的类型查找相应的函数操作并执行
     /// @return nullptr表示运行失败，否则返回node指针
-    ast_node *
-    ir_visit_astnode(ast_node *node, LabelParams blocks);
+    ast_node *ir_visit_astnode(ast_node *node, LabelParams blocks);
 
     /// @brief 对AST compileUnit的翻译函数
     /// @param node 抽象书节点
@@ -143,11 +142,23 @@ private:
     /// @return
     bool ir_declItems(ast_node *node, LabelParams blocks);
 
+    /// @brief AST  const DeclarationItems
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_const_declItems(ast_node *node, LabelParams blocks);
+
     /// @brief declitems 下的 def定义节点
     /// @param node
     /// @param blocks
     /// @return
     bool ir_declVarDef(ast_node *node, LabelParams blocks);
+
+    /// @brief const 变量声明定义
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_const_declVarDef(ast_node *node, LabelParams blocks);
 
     /// @brief AST  ASSIGN赋值节点对应的函数操作
     /// @param node
