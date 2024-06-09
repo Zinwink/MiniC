@@ -117,6 +117,16 @@ private:
     /// @return
     bool ISrem2ArmInst(InstPtr srem);
 
+    /// @brief 逻辑左移
+    /// @param shl
+    /// @return
+    bool Shl2ArmInst(InstPtr shl);
+
+    /// @brief 算数右移
+    /// @param ashr
+    /// @return
+    bool Ashr2ArmInst(InstPtr ashr);
+
     /// @brief 将 Zext翻译为对应的arm32指令
     /// @param zext
     /// @return
@@ -144,6 +154,8 @@ public:
         IR2ArmInst_handers[Opcode::SubInteger] = &ArmInstGen::ISub2ArmInst;
         IR2ArmInst_handers[Opcode::DivInteger] = &ArmInstGen::IDiv2ArmInst;
         IR2ArmInst_handers[Opcode::ModInteger] = &ArmInstGen::ISrem2ArmInst;
+        IR2ArmInst_handers[Opcode::SHl] = &ArmInstGen::Shl2ArmInst;
+        IR2ArmInst_handers[Opcode::ASHR] = &ArmInstGen::Ashr2ArmInst;
         IR2ArmInst_handers[Opcode::Zext] = &ArmInstGen::Zext2ArmInst;
     }
 

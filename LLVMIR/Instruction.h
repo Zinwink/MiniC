@@ -32,12 +32,14 @@ enum class Opcode
     /// @brief getelementptr
     GetelementPtr, // 获取数组偏移指针的指令
 
-    /// @brief BinaryInst 目前 8-12
+    /// @brief BinaryInst 目前 8-14
     AddInteger, // 整数加法
     SubInteger, // 整数减法
     DivInteger, // 整数除法
     MulInteger, // 整数乘法
     ModInteger, // 整数取余
+    SHl,        // 逻辑左移
+    ASHR,       // 算数右移
 
     /// @brief icmp 比较指令
 

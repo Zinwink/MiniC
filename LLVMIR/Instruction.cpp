@@ -58,6 +58,12 @@ string Instruction::getOpcodeName()
     case Opcode::ModInteger:
         name = string("srem");
         break;
+    case Opcode::SHl:
+        name = string("shl");
+        break;
+    case Opcode::ASHR:
+        name = string("ashr");
+        break;
     case Opcode::GtInteger:
         name = string("icmp sgt");
         break;
@@ -120,7 +126,8 @@ bool Instruction::isLoadInst()
 /// @return
 bool Instruction::isBinaryInst()
 {
-    return (int)op >= 8 && (int)op <= 12;
+    return (int)op >= (int)Opcode::AddInteger &&
+           (int)op <= (int)Opcode::ASHR;
 }
 
 /// @brief 是否是 getelementptr 指令
@@ -135,7 +142,8 @@ bool Instruction::isGetelemPtrInst()
 bool Instruction::isICmpInst()
 {
     // 目前 是 13-18是
-    return (int)op >= 13 && (int)op <= 18;
+    return (int)op >= (int)Opcode::GtInteger &&
+           (int)op <= (int)Opcode::NotEqInteger;
 }
 
 /// @brief 是否是Zext 指令

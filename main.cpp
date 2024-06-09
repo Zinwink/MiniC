@@ -230,13 +230,12 @@ int main(int argc, char *argv[])
         free_ast(ast_root); // IR产生后释放 AST抽象语法树
         for (int i = 0; i < 2; i++)
         {
-            ElimUseLessBBlock(module); // 删除无用块
-            EasyPass(module);          // 简单局部优化
-            LiveMemAnalysisPass(module);  //进一步优化
             ElimUseLessBBlock(module);   // 删除无用块
+            EasyPass(module);            // 简单局部优化
+            LiveMemAnalysisPass(module); // 进一步优化
             eraseModuleDeadInst(module); // 删除死指令
+            ElimUseLessBBlock(module);   // 删除无用块
         }
-
         // 输出 线性IR
         if (gShowLineIR)
         {
@@ -248,8 +247,8 @@ int main(int argc, char *argv[])
         MModulePtr Mmodule = MachineModule::get();
         ArmInstGenPtr ArmGen = ArmInstGen::get(module, Mmodule);
         ArmGen->run();
-        // LinearScanPtr linearscan = LinearScan::get(Mmodule);
-        // linearscan->allocateReg(); // 分配寄存器
+        LinearScanPtr linearscan = LinearScan::get(Mmodule);
+        linearscan->allocateReg(); // 分配寄存器
         // 产生汇编
         if (gShowASM)
         {
@@ -267,21 +266,25 @@ int main(int argc, char *argv[])
 // {
 //     GenerateAST *excutor = new GenerateAST("../tests/test2.c");
 //     excutor->run();
+//     std::cout << "打印完毕" << std::endl;
+//     // VisualizeAST(ast_root, gOutputFile);
+//     //             free_ast(ast_root); // 释放资源
 
 //     ModulePtr module = Module::get();
 //     IRGenPtr codeGen = IRGen::get(ast_root, module);
 //     std::cout << "打印完毕" << std::endl;
 //     codeGen->run();
 //     std::cout << "打印完毕" << std::endl;
-//     for (int i = 0; i < 20; i++)
+//     for (int i = 0; i < 2; i++)
 //     {
-//         ElimUseLessBBlock(module);   // 删除无用块
-//         EasyPass(module);            // 简单局部优化
-//         ElimUseLessBBlock(module);   // 删除无用块
+//         ElimUseLessBBlock(module); // 删除无用块
+//         EasyPass(module);          // 简单局部优化
+//         LiveMemAnalysisPass(module);
 //         eraseModuleDeadInst(module); // 删除死指令
+//         ElimUseLessBBlock(module);   // 删除无用块
 //     }
 //     module->printIR("../tests/test2.ll");
-//     std::cout<<"打印完毕"<<std::endl;
+//     std::cout << "打印完毕" << std::endl;
 //     // MModulePtr Mmodule = MachineModule::get();
 //     // ArmInstGenPtr ArmGen = ArmInstGen::get(module, Mmodule);
 //     // ArmGen->run();

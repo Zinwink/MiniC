@@ -8,3 +8,14 @@
  * @copyright Copyright (c) 2024
  *
  */
+
+#include "CommSubExprElim.h"
+
+/// @brief 哈希比较函数
+/// @param left
+/// @param right
+/// @return
+bool equalCmp::operator()(const InstPtr &left, const InstPtr &right) const
+{
+    return true;
+}

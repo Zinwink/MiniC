@@ -42,6 +42,8 @@ private:
     int val;                   // 存储立即数的值
     int reg_no = -1;           // 寄存器编号
     std::string label;         // 地址标签
+    bool isInitReg = false;    // 是否是函数入口r0-r3初值
+
 public:
     /// @brief 析构函数
     ~MachineOperand() { parent.reset(); }
@@ -60,27 +62,34 @@ public:
 
     /// @brief 是否是立即数类型
     /// @return
-    bool isImm() { return type == IMM; }
+    bool isImm() const { return type == IMM; }
 
     /// @brief 是否是物理寄存器
     /// @return
-    bool isReg() { return type == REG; }
+    bool isReg() const { return type == REG; }
 
     /// @brief 是否是虚寄存器
     /// @return
-    bool isVReg() { return type == VREG; }
+    bool isVReg() const { return type == VREG; }
 
     /// @brief 是否是标签地址
     /// @return
-    bool isLabel() { return type == LABEL; }
+    bool isLabel() const { return type == LABEL; }
+
+    /// @brief 是否是函数入口形参初值 r0-r3
+    /// @return
+    bool isInitArg() const { return isInitReg; }
+
+    /// @brief 标记为是initArg
+    void setInitArg() { isInitReg = true; }
 
     /// @brief 获取立即数值
     /// @return
-    int getVal() { return val; }
+    int getVal() const { return val; }
 
     /// @brief 获取寄存器编号
     /// @return
-    int getRegNo() { return reg_no; }
+    int getRegNo() const { return reg_no; }
 
     /// @brief 设置寄存器编号 可以是虚拟寄存器编号
     /// @param regno

@@ -514,6 +514,68 @@ CallInstPtr CallInst::create(ValPtr fun, std::vector<ValPtr> &relArgs, BasicBloc
     return call;
 }
 
+/// @brief 当调用函数结果是常数时自动替换传播 当然 函数调用一般不会删除 因为有副作用
+void CallInst::AutoTransmitWhenIsConst()
+{
+    if (getType()->isIntegerType())
+    {
+        ValPtr funv = getOperand(0);
+        FuncPtr func = std::static_pointer_cast<Function>(funv);
+        // 先获取 该函数最后一个 基本块的最后一条指令
+        auto &blockList = func->getBasicBlocks();
+        if (blockList.size() > 0)
+        { // 仅限本编译单元编写的函数
+            auto &lastBlk = blockList.back();
+            auto &retInst = lastBlk->back();
+            assert(retInst->isRetInst());
+            auto retvalue = retInst->getOperand(0);
+            if (retvalue->isConstant())
+            {
+                ConstantIntPtr intval = std::static_pointer_cast<ConstantInt>(retvalue);
+                replaceAllUsesWith(shared_from_this(), intval);
+            }
+        }
+    }
+}
+
+/// @brief 判断CallInst是否是死指令
+/// @return
+bool CallInst::isDeadInst()
+{
+    // TODO 结合UserList 以及调用函数的副作用进行判断
+    // 特殊地 在main函数中和在其他函数中地规则不一样  如调用的函数会对全局变量影响 但在main函数中不使用全局变量
+    ValPtr funv = getOperand(0);
+    if (funv->getName() == "getint" || funv->getName() == "getch")
+    {
+        if (getUseList().size() == 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    FuncPtr func = std::static_pointer_cast<Function>(funv);
+    auto &blockList = func->getBasicBlocks();
+    if (blockList.size() == 1)
+    {
+        // 只有一个块
+        auto &lastBlk = blockList.back();
+        if (lastBlk->getInstLists().size() == 1)
+        {
+            // 只有一条指令 即 ret void 或者 ret一个常数
+            if (getUseList().size() == 0)
+            {
+                // 返回值没人使用
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 //******************** ICmpInst  **********************
 /// @brief 创建ICmp
 /// @param _op

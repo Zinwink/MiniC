@@ -299,7 +299,7 @@ bool ArmInstGen::Call2ArmInst(InstPtr call)
         {
             // 创建 mov 指令 会自动加入当前块
             MMovInst::create(curblk, MachineOperand::createReg(i - 1), MparamOp, machineModule);
-            // bl->addUse(MachineOperand::createReg(i - 1));
+            bl->addUse(MachineOperand::createReg(i - 1));
         }
         else
         {
@@ -323,15 +323,15 @@ bool ArmInstGen::Call2ArmInst(InstPtr call)
         }
     }
     // 加入 bl 跳转指令
+    bl->addDef(MachineOperand::createReg(0)); // 由于 r0-r3 不默认保护 认为调用时 都 def 了
+    bl->addDef(MachineOperand::createReg(1));
+    bl->addDef(MachineOperand::createReg(2));
+    bl->addDef(MachineOperand::createReg(3));
     curblk->addInstBack(bl);
     // 跳转调用完毕后 使用mov 指令将 r0存放的返回值取出
     if (!(call->getType()->isVoidType()))
     {
         MMovInstPtr move_vreg_r0 = MMovInst::get(curblk, MachineInst::MOV, MachineOperand::get(call, machineModule), MachineOperand::createReg(0));
-        bl->addDef(MachineOperand::createReg(0)); // 由于 r0-r3 不默认保护 认为调用时 都 def 了
-        bl->addDef(MachineOperand::createReg(1));
-        bl->addDef(MachineOperand::createReg(2));
-        bl->addDef(MachineOperand::createReg(3));
         curblk->addInstBack(move_vreg_r0);
     }
 
@@ -791,10 +791,58 @@ bool ArmInstGen::ISrem2ArmInst(InstPtr srem)
     MBranchInstPtr bl = MBranchInst::get(curblk, MachineInst::BL, MachineOperand::get("__aeabi_idivmod"));
     bl->addDef(MachineOperand::createReg(0)); // 该函数调用会def r0 r1
     bl->addDef(MachineOperand::createReg(1)); //
+    bl->addUse(MachineOperand::createReg(0));
+    bl->addUse(MachineOperand::createReg(1));
     curblk->addInstBack(bl);
     // 将取余结果r1取出(商保存在r0  余数保存在r1)  会产生冗余 但为了简便先这样写
     MMovInstPtr mov_modRes = MMovInst::get(curblk, MachineInst::MOV, MachineOperand::get(srem, machineModule), MachineOperand::createReg(1));
     curblk->addInstBack(mov_modRes);
+    return true;
+}
+
+/// @brief 逻辑左移
+/// @param shl
+/// @return
+bool ArmInstGen::Shl2ArmInst(InstPtr shl)
+{
+    MBlockPtr curblk = machineModule->getCurBlock();
+    ValPtr left = shl->getOperand(0);
+    ValPtr right = shl->getOperand(1);
+    MOperaPtr leftM = MachineOperand::get(left, machineModule);
+    MOperaPtr rightM = MachineOperand::get(right, machineModule);
+    if (leftM->isImm())
+    {
+        // 加载到寄存器
+        leftM = MachineOperand::imm2VReg(leftM, machineModule);
+    }
+    // 翻译汇编时不做优化及常数合并 这个在IR里做
+    assert(rightM->isImm() && "the shift must be imm");
+    // 创建 lsl
+    MBinaryInstPtr lsl = MBinaryInst::get(curblk, MachineInst::LSL, MachineOperand::get(shl, machineModule), leftM, rightM);
+    curblk->addInstBack(lsl);
+    return true;
+}
+
+/// @brief 算数右移
+/// @param ashr
+/// @return
+bool ArmInstGen::Ashr2ArmInst(InstPtr ashr)
+{
+    MBlockPtr curblk = machineModule->getCurBlock();
+    ValPtr left = ashr->getOperand(0);
+    ValPtr right = ashr->getOperand(1);
+    MOperaPtr leftM = MachineOperand::get(left, machineModule);
+    MOperaPtr rightM = MachineOperand::get(right, machineModule);
+    if (leftM->isImm())
+    {
+        // 加载到寄存器
+        leftM = MachineOperand::imm2VReg(leftM, machineModule);
+    }
+    // 翻译汇编时不做优化及常数合并 这个在IR里做
+    assert(rightM->isImm() && "the shift must be imm");
+    // 创建 asr
+    MBinaryInstPtr asr = MBinaryInst::get(curblk, MachineInst::ASR, MachineOperand::get(ashr, machineModule), leftM, rightM);
+    curblk->addInstBack(asr);
     return true;
 }
 

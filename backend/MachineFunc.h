@@ -153,7 +153,11 @@ public:
         curVregNo = no;
     }
 
-    inline void addAdjustInst(MInstPtr inst) { InstToAdjust.push_back(inst); }
+    inline void addAdjustInst(MInstPtr inst)
+    {
+        InstToAdjust.push_back(inst);
+        inst->setNeedAdjust();
+    }
 
     /// @brief 构造函数
     /// @param p 属于的module

@@ -353,13 +353,10 @@ public:
 
     /// @brief 判断CallInst是否是死指令
     /// @return
-    bool isDeadInst() override
-    {
-        // TODO 结合UserList 以及调用函数的副作用进行判断
-        // 特殊地 在main函数中和在其他函数中地规则不一样  如调用的函数会对全局变量影响 但在main函数中不使用全局变量
+    bool isDeadInst() override;
 
-        return false;
-    }
+    /// @brief 当调用函数结果是常数时自动替换传播 当然 函数调用一般不会删除 因为有副作用
+    void AutoTransmitWhenIsConst() override;
 
     /// @brief 创建CallInst
     /// @param fun

@@ -42,15 +42,13 @@ struct Interval
     bool isPreAlloca = false; // 是否是预先分配的物理寄存器 如函数参数  函数返回值
     int reg = -1;             // 分配的物理寄存器编号
 
-    MOperaPtr def;                              // defs
+    MOperaPtr def;                              // def
     std::multiset<MOperaPtr, cmpUsePosLt> uses; // def 对应的 uses
 
     /// @brief 创建智能指针对象
     /// @param _def
     /// @param uses
     /// @param _isPreAlloca
-    /// @param _isUncertainDef
-    /// @param _isArgDef 是否是 函数初始状态下前四形参寄存器初始值
     /// @return
     static IntervalPtr get(const MOperaPtr &_def, const std::unordered_set<MOperaPtr> &uses,
                            bool _isPreAlloca = false);
@@ -115,14 +113,11 @@ private:
     /// @brief 存放整型通用寄存器
     std::set<int> regs;
 
+    /// @brief 之前时间线已经确认使用的寄存器(主要用于寄存器切换时的判断)
+    std::unordered_map<int,int> oldTime;
+
     /// @brief def-use chain; 对于虚拟寄存器已经确定；对于物理寄存器 没有def 或者有多个def的不定状态将创建一个def标记
     std::unordered_map<MOperaPtr, std::unordered_set<MOperaPtr>> defUseChains;
-
-    /// @brief 用于标记哪些def 操作数 仅仅是个标记 是不确定的状态(存在于汇合节点 类似phi指令的作用)
-    std::unordered_set<MOperaPtr> isUncertainDefSets;
-
-    /// @brief 形参初始值记录表
-    std::unordered_set<MOperaPtr> isArgInitDefSets;
 
     /// @brief 标记是否所有间隔都已经分配寄存器
     bool successAllocaRegs = true;
@@ -133,6 +128,9 @@ private:
     /// @brief active表 即在目前周期中正在活跃并且已经分配寄存器的间隔
     std::multiset<IntervalPtr, Interval::cmpGtEnd> active;
 
+    /// @brief 用于记录 虚拟寄存器的溢出偏移位置 防止重复申请 占用太多内存
+    std::unordered_map<int, MOperaPtr> vregSpillOffset;
+
     /// @brief 计算 fun的虚拟寄存器 物理寄存器的 def-use chain
     /// @param fun
     void computeDefUseChain(MFuncPtr fun);
@@ -141,25 +139,17 @@ private:
     /// @param fun
     void computeIntervals(MFuncPtr fun);
 
-    /// @brief 获取溢出位置 如果无溢出 返回nullptr
-    /// @param inter1Tospill 准备溢出的间隔
-    /// @param inter2
-    /// @return 返回 str ldr 指令的插入位置
-    std::pair<MOperaPtr, MOperaPtr> computeSpillPos(IntervalPtr inter1Tospill, IntervalPtr inter2);
+    /// @brief 从当前 active表中释放可以结束的间隔
+    /// @param curInter
+    void freeRegsfromActive(IntervalPtr curInter);
 
-    /// @brief 从 Active表中查找冲突的活跃间隔
-    /// @param curInter 当前需要分配的活跃间隔
-    /// @return
-    IntervalPtr FindConflictInter(IntervalPtr curInter);
-
-    /// @brief 自动处理冲突(和active表中已经分配寄存器的活跃间隔比较)  如果有的话 更新active表
+    /// @brief 自动更新active表
     /// @param curInter 当前扫描的活跃间隔
     void AutoUpdateActive(IntervalPtr curInter);
 
     /// @brief 插入溢出时的代码 def后使用 str, 在firstUsePos前插入ldr
     /// @param inter 活跃间隔
-    /// @param pos pos的第一 第二个元素对应  插入 str  ldr指令的位置
-    void genSpillCode(IntervalPtr interSpilled, std::pair<MOperaPtr, MOperaPtr> &pos);
+    void genSpillCode(IntervalPtr interSpilled);
 
     /// @brief 将活跃间隔中的def use 虚拟寄存器操作数 映射为对应的物理寄存器
     /// @param inter
@@ -170,7 +160,7 @@ private:
     {
         regs.clear();
         // r0-r3 由于存在函数调用 以及函数返回值 目前先不分配 后继 有时间进行分析时考虑
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 11; i++)
         {
             regs.insert(i);
         }

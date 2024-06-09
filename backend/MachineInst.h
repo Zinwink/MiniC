@@ -91,6 +91,7 @@ protected:
     MinstTy type;                       // 指令类型
     std::vector<MOperaPtr> defs;        // def 目的操作数
     std::vector<MOperaPtr> uses;        // use 源操作数
+    bool needToAdjust = false;
 
 public:
     virtual void clear(); // 手动清理 打破引用环 使智能指针自动释放
@@ -101,6 +102,9 @@ public:
     inline bool isPush() { return type == PUSH; } // 是否是push 类型
     inline bool isLoad() { return type == LDR; }  // 是否是load指令
     inline bool isStore() { return type == STR; } // 是否是store指令
+    inline bool isBranch() { return (int)type >= (int)MinstTy::B && (int)type <= (int)MinstTy::BL; }
+    inline void setNeedAdjust() { needToAdjust = true; }  // 标记该指令需要矫正
+    inline bool isNeedToAdjust() { return needToAdjust; } // 是否需要矫正
 
     /// @brief 添加 def (示例化智能指针对象后才能使用)
     /// @param dst

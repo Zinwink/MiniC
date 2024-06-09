@@ -140,6 +140,38 @@ void BBlockPass::BasicEasyPass(BasicBlockPtr blk)
 void EasyPass(ModulePtr module)
 {
     auto &funList = module->getFunList();
+    auto &globList = module->getGlobalVars();
+    for (auto &glob : globList)
+    {
+        if (glob->getElemTy()->isIntegerType())
+        {
+            bool isOnlyLoad = true;
+            for (auto &elem : glob->getUseList())
+            {
+                if (elem->isStoreInst())
+                {
+                    isOnlyLoad = false;
+                    break;
+                }
+            }
+            if (isOnlyLoad)
+            {
+                // 说明编译文件根本不会对其重新赋值 仅仅对int 类型
+                // 将所有 load 替换成 该全局变量的初始值
+                ConstantIntPtr intval = ConstantInt::get(32);
+                intval->setValue(0);
+                if (glob->getInitilizer() != nullptr)
+                {
+                    intval = std::static_pointer_cast<ConstantInt>(glob->getInitilizer());
+                }
+                for (auto &elm : glob->getUseList())
+                {
+                    Value::replaceAllUsesWith(elm, intval);
+                }
+            }
+        }
+    }
+
     for (auto &fun : funList)
     {
         auto &blkList = fun->getBasicBlocks();

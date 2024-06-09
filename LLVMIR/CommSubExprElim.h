@@ -12,16 +12,35 @@
 #pragma once
 
 #include "BasicBlock.h"
+#include "CFGUtils.h"
+#include "Value.h"
+#include "DerivedInst.h"
+
+class equalCmp
+{
+
+    /// @brief 哈希比较函数
+    /// @param left
+    /// @param right
+    /// @return
+    bool operator()(const InstPtr &left, const InstPtr &right) const;
+};
 
 /// @brief 局部公共子表达式删除(对于并列分支间的公共表达式不处理，因为不可达)
 class LocalSubExprElim
 {
 private:
-    
-
-    /// @brief 判断从 src 基本块是否可以到达 dst基本块
-    /// @param src 
-    /// @param dst 
-    /// @return 
-    bool isReachable(BasicBlockPtr src, BasicBlockPtr dst);
 };
+
+/// @brief 判断两个二元运算指令的结果是否相同
+/// @param left
+/// @param right
+/// @return
+bool equalBianaryInst(const InstPtr &left, const InstPtr &right);
+
+/// @brief 判断两个数组地址计算指令的结果是否相同
+/// @param left
+/// @param right
+/// @return
+bool equalGetelementInst(const InstPtr &left, const InstPtr &right);
+

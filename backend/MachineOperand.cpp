@@ -239,10 +239,11 @@ MOperaPtr MachineOperand::get(ValPtr val, MModulePtr Mmodule)
             else
             {
                 // 无记录 第一次使用 进行define
+                MBlockPtr entry = Mmodule->getCurFun()->getEntry();
                 MOperaPtr movDst = copy(argVreg);
-                MMovInstPtr mov = MMovInst::get(Mmodule->getCurBlock(), MachineInst::MOV, movDst,
+                MMovInstPtr mov = MMovInst::get(entry, MachineInst::MOV, movDst,
                                                 MachineOperand::createReg(arg->getArgNo()));
-                Mmodule->getCurBlock()->addInstFront(mov);
+                entry->addInstFront(mov);
                 mop = argVreg;
             }
         }

@@ -89,9 +89,16 @@ bblockIter &mergeBasicBlocks(BasicBlockPtr block, bblockIter &it)
         // 若只有一条指令 则一定是无条件跳转指令
         assert(next.size() > 0);
         assert(block != nullptr && next[0] != nullptr);
-        Value::replaceAllUsesWith(block, next[0]); // 替换前驱节点的跳转为本基本块的跳转
-        // 将本节点删除
-        eraseBasicBlock(block, it);
+
+        // 先看前驱节点 是否包含自己 有时next[0]为自己 则不能进行替换
+        if (block != next[0])
+        {
+            Value::replaceAllUsesWith(block, next[0]); // 替换前驱节点的跳转为本基本块的跳转
+                                                       // 将本节点删除
+            eraseBasicBlock(block, it);
+            return it;
+        }
+        it++;
         return it;
     }
     else if (presList.size() == 1)
