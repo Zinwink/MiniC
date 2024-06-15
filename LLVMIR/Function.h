@@ -27,7 +27,7 @@ class Function : public Value
 private:
     string funcName;                     // 函数名
     std::vector<ArgPtr> args;            // 形参列表
-    std::list<InstPtr> allocaLists;      // AllocaInst链表
+    std::list<InstPtr> allocaLists;      // AllocaInst链表(带有初始值)
     std::list<BasicBlockPtr> BlocksList; // 基本块列表
     int32_t maxCallFuncArgsNum = 0;      // 函数体中调用函数的最大参数数目
     bool _isBuildIn = false;             // 是否是std.h 库函数

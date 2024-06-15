@@ -118,7 +118,7 @@ BasicBlockPtr &Function::getExitBlock()
 /// @param alloca
 void Function ::insertAllocaInst(InstPtr alloca)
 {
-    assert(alloca->getOpcode() == Opcode::Alloca && "not allocaInst type!");
+    assert((alloca->isAllocaInst()||alloca->isStoreInst()) && "not allocaInst type!");
     allocaLists.push_back(alloca);
 }
 

@@ -275,16 +275,19 @@ int main(int argc, char *argv[])
 //     std::cout << "打印完毕" << std::endl;
 //     codeGen->run();
 //     std::cout << "打印完毕" << std::endl;
-//     for (int i = 0; i < 2; i++)
-//     {
-//         ElimUseLessBBlock(module); // 删除无用块
-//         EasyPass(module);          // 简单局部优化
-//         LiveMemAnalysisPass(module);
-//         eraseModuleDeadInst(module); // 删除死指令
-//         ElimUseLessBBlock(module);   // 删除无用块
-//     }
 //     module->printIR("../tests/test2.ll");
-//     std::cout << "打印完毕" << std::endl;
+//     // for (int i = 0; i < 2; i++)
+//     // {
+//     //     std::cout << "打印完毕1111" << std::endl;
+//     //     ElimUseLessBBlock(module); // 删除无用块
+//     //     EasyPass(module);          // 简单局部优化
+//     //     LiveMemAnalysisPass(module);
+//     //     eraseModuleDeadInst(module); // 删除死指令
+//     //     ElimUseLessBBlock(module);   // 删除无用块
+//     //     std::cout << "打印完毕1111" << std::endl;
+//     // }
+//     module->printIR("../tests/test2.ll");
+//     // std::cout << "打印完毕" << std::endl;
 //     // MModulePtr Mmodule = MachineModule::get();
 //     // ArmInstGenPtr ArmGen = ArmInstGen::get(module, Mmodule);
 //     // ArmGen->run();

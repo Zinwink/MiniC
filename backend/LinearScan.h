@@ -1,7 +1,7 @@
 /**
  * @file LinearScan.h
  * @author ZhengWenJie-mole (2732356616@qq.com)
- * @brief 使用线性扫描进行寄存器分配 声明：实现参考自2023编译实现赛中南开大学212相关代码 使用 second-chance方法
+ * @brief 使用线性扫描进行寄存器分配 声明：参考https://blog.csdn.net/sexyluna/article/details/132287291 实现流程
  * @version 1.0
  * @date 2024-05-25
  *
@@ -54,53 +54,122 @@ struct Interval
                            bool _isPreAlloca = false);
 
     //***********************************  比较函数  *********************************************
-    struct cmpLtStart
+    static bool cmpLtStart(const IntervalPtr &inter1, const IntervalPtr &inter2)
     {
-        bool operator()(const IntervalPtr &inter1, const IntervalPtr &inter2) const
+        int start1 = inter1->start;
+        int end1 = inter1->end;
+        int start2 = inter2->start;
+        int end2 = inter2->end;
+        if (start1 < start2)
         {
-            int start1 = inter1->start;
-            int end1 = inter1->end;
-            int start2 = inter2->start;
-            int end2 = inter2->end;
-            if (start1 < start2)
-            {
-                return true;
-            }
-            else if (start1 == start2)
-            {
-                // 相同起始点 比较间隔长短 间隔短的先分配
-                return (end1 - start1) < (end2 - start2);
-            }
-            else
-            {
-                return false;
-            }
+            return true;
         }
-    };
+        else if (start1 == start2)
+        {
+            // 相同起始点 比较间隔长短 间隔短的先分配
+            return (end1 - start1) < (end2 - start2);
+        }
+        else
+        {
+            return false;
+        }
+    }
 
-    struct cmpGtEnd
+    static bool cmpGtEnd(const IntervalPtr &inter1, const IntervalPtr &inter2)
     {
-        bool operator()(const IntervalPtr &inter1, const IntervalPtr &inter2) const
+        int start1 = inter1->start;
+        int end1 = inter1->end;
+        int start2 = inter2->start;
+        int end2 = inter2->end;
+        if (end1 > end2)
         {
-            int start1 = inter1->start;
-            int end1 = inter1->end;
-            int start2 = inter2->start;
-            int end2 = inter2->end;
-            if (end1 > end2)
-            {
-                return true;
-            }
-            else if (end1 == end2)
-            {
-                // 结尾一样比较 间隔长短 间隔长的溢出
-                return (end1 - start1) > (end2 - start2);
-            }
-            else
-            {
-                return false;
-            }
+            return true;
         }
-    };
+        else if (end1 == end2)
+        {
+            // 结尾一样比较 间隔长短 间隔长的溢出
+            return (end1 - start1) > (end2 - start2);
+        }
+        else
+        {
+            return false;
+        }
+    }
+};
+
+/// @brief 定义一个寄存器池 方便管理寄存器状态
+class RegsPool
+{
+private:
+    /// @brief 记录使用当前寄存器的间隔
+    std::unordered_map<int, IntervalPtr> regIntersMap;
+
+    /// @brief 可用寄存器集合
+    std::set<int> regsCanUse;
+
+    /// @brief 记录寄存器被使用的最后时间线
+    std::unordered_map<int, int> regsLastUse;
+
+public:
+    /// @brief 析构函数
+    ~RegsPool()
+    {
+        regIntersMap.clear();
+        regsLastUse.clear();
+        regsCanUse.clear();
+    }
+
+    /// @brief 构造函数
+    RegsPool();
+
+    /// @brief 重置寄存器池
+    void resetRegsPool();
+
+    /// @brief 回收已经结束的间隔占用的寄存器
+    void empireOldIntervals(IntervalPtr inter);
+
+    /// @brief 判断某一号寄存器是否可以使用
+    /// @param regNo
+    /// @return
+    bool isAvailable(int regNo);
+
+    /// @brief 获取占用寄存器的间隔
+    /// @param regNo
+    /// @return
+    IntervalPtr &getInterval(int regNo)
+    {
+        return regIntersMap[regNo];
+    }
+
+    /// @brief 溢出指定间隔
+    /// @param inter
+    void spillAtInterval(IntervalPtr inter);
+
+    /// @brief 为间隔分配指定寄存器
+    /// @param inter
+    /// @param regNo
+    void allocaReg(IntervalPtr inter, int regNo);
+
+    /// @brief 获取间隔可以切换的寄存器编号
+    /// @param inter
+    /// @return
+    int getSwitchReg(IntervalPtr inter);
+
+    // std::vector<int> getOccupyRegs(IntervalPtr inter)
+    // {
+    //     for (auto &elem : regIntersMap)
+    //     {
+    //         if(elem)
+    //     }
+    // }
+
+    /// @brief 获取可以使用的寄存器
+    /// @return
+    std::set<int> &getRegsCanUse() { return regsCanUse; }
+
+    /// @brief 返回占用寄存器的间隔
+    /// @return
+    std::vector<IntervalPtr> getActive();
 };
 
 /// @brief 线性扫描**************************************************************************************8
@@ -110,23 +179,13 @@ private:
     /// @brief moudle
     MModulePtr machineModule = nullptr;
 
-    /// @brief 存放整型通用寄存器
-    std::set<int> regs;
-
-    /// @brief 之前时间线已经确认使用的寄存器(主要用于寄存器切换时的判断)
-    std::unordered_map<int,int> oldTime;
+    RegsPool pool = RegsPool();
 
     /// @brief def-use chain; 对于虚拟寄存器已经确定；对于物理寄存器 没有def 或者有多个def的不定状态将创建一个def标记
     std::unordered_map<MOperaPtr, std::unordered_set<MOperaPtr>> defUseChains;
 
-    /// @brief 标记是否所有间隔都已经分配寄存器
-    bool successAllocaRegs = true;
-
     /// @brief 活跃间隔(包括分配的物理寄存器r0-r3的活跃间隔以及虚拟寄存器的活跃间隔)
-    std::multiset<IntervalPtr, Interval::cmpLtStart> intervals; // 最终的活跃间隔结果
-
-    /// @brief active表 即在目前周期中正在活跃并且已经分配寄存器的间隔
-    std::multiset<IntervalPtr, Interval::cmpGtEnd> active;
+    std::vector<IntervalPtr> intervals; // 最终的活跃间隔结果
 
     /// @brief 用于记录 虚拟寄存器的溢出偏移位置 防止重复申请 占用太多内存
     std::unordered_map<int, MOperaPtr> vregSpillOffset;
@@ -139,34 +198,18 @@ private:
     /// @param fun
     void computeIntervals(MFuncPtr fun);
 
-    /// @brief 从当前 active表中释放可以结束的间隔
-    /// @param curInter
-    void freeRegsfromActive(IntervalPtr curInter);
-
-    /// @brief 自动更新active表
-    /// @param curInter 当前扫描的活跃间隔
-    void AutoUpdateActive(IntervalPtr curInter);
-
     /// @brief 插入溢出时的代码 def后使用 str, 在firstUsePos前插入ldr
     /// @param inter 活跃间隔
     void genSpillCode(IntervalPtr interSpilled);
 
+    /// @brief 更新寄存器池
+    /// @param inter
+    /// @return 是否有溢出
+    bool updateRegsPool(IntervalPtr inter);
+
     /// @brief 将活跃间隔中的def use 虚拟寄存器操作数 映射为对应的物理寄存器
     /// @param inter
     void MapIntervalToReg(IntervalPtr inter);
-
-    /// @brief 初始化可用寄存器池
-    void initAvailableRegsPool()
-    {
-        regs.clear();
-        // r0-r3 由于存在函数调用 以及函数返回值 目前先不分配 后继 有时间进行分析时考虑
-        for (int i = 0; i < 11; i++)
-        {
-            regs.insert(i);
-        }
-        //  看https://godbolt.org/ 似乎 lr 也可用于分配
-        // regs.insert(14);
-    }
 
 public:
     /// @brief 析构函数
@@ -174,16 +217,13 @@ public:
     {
         machineModule.reset();
         defUseChains.clear();
-        regs.clear();
         intervals.clear();
-        active.clear();
     }
 
     /// @brief 构造函数
     LinearScan(MModulePtr module)
     {
         machineModule = module;
-        initAvailableRegsPool();
     }
 
     /// @brief 创建智能指针类型

@@ -15,6 +15,7 @@
 #include "CFGUtils.h"
 #include "Value.h"
 #include "DerivedInst.h"
+#include "Constant.h"
 
 class equalCmp
 {
@@ -44,3 +45,8 @@ bool equalBianaryInst(const InstPtr &left, const InstPtr &right);
 /// @return
 bool equalGetelementInst(const InstPtr &left, const InstPtr &right);
 
+/// @brief 判断两个常数相同
+/// @param left 
+/// @param right 
+/// @return 
+bool equalConstInt(const ConstantIntPtr &left, const ConstantIntPtr &right);

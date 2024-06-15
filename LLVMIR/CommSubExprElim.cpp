@@ -19,3 +19,29 @@ bool equalCmp::operator()(const InstPtr &left, const InstPtr &right) const
 {
     return true;
 }
+
+/// @brief 判断两个二元运算指令的结果是否相同
+/// @param left
+/// @param right
+/// @return
+bool equalBianaryInst(const InstPtr &left, const InstPtr &right)
+{
+}
+
+/// @brief 判断两个数组地址计算指令的结果是否相同
+/// @param left
+/// @param right
+/// @return
+bool equalGetelementInst(const InstPtr &left, const InstPtr &right)
+{
+    assert(left->isGetelemPtrInst() && right->isGetelemPtrInst());
+}
+
+/// @brief 判断两个常数相同
+/// @param left
+/// @param right
+/// @return
+bool equalConstInt(const ConstantIntPtr &left, const ConstantIntPtr &right)
+{
+    return (left->getValue() == right->getValue());
+}

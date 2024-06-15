@@ -1460,6 +1460,22 @@ bool IRGen::ir_cmp_less(ast_node *node, LabelParams blocks)
         transmitBlocks.pop_front();
         curUsedBlockIter = std::next(curUsedBlockIter);
     }
+    else
+    {
+        ast_node *left = ir_visit_astnode(node->sons[0], {});
+        if (left == nullptr)
+            return false;
+        ast_node *right = ir_visit_astnode(node->sons[1], {});
+        if (right == nullptr)
+            return false;
+        ICmpInstPtr icmp = ICmpInst::create(Opcode::LtIntegr, left->value, right->value, getCurBlock());
+        // 创建 Zext 指令得到 i32为的一元运算值
+        ZextInstPtr zext = ZextInst::get(icmp, Type::getIntNType(32));
+        // 将 zext 指令加入到当前基本块
+        getCurBlock()->AddInstBack(zext);
+        zext->setBBlockParent(getCurBlock());
+        node->value = zext;
+    }
     return true;
 }
 
@@ -1488,6 +1504,22 @@ bool IRGen::ir_cmp_greater(ast_node *node, LabelParams blocks)
         transmitBlocks.pop_front();
         curUsedBlockIter = std::next(curUsedBlockIter);
     }
+    else
+    {
+        ast_node *left = ir_visit_astnode(node->sons[0], {});
+        if (left == nullptr)
+            return false;
+        ast_node *right = ir_visit_astnode(node->sons[1], {});
+        if (right == nullptr)
+            return false;
+        ICmpInstPtr icmp = ICmpInst::create(Opcode::GtInteger, left->value, right->value, getCurBlock());
+        // 创建 Zext 指令得到 i32为的一元运算值
+        ZextInstPtr zext = ZextInst::get(icmp, Type::getIntNType(32));
+        // 将 zext 指令加入到当前基本块
+        getCurBlock()->AddInstBack(zext);
+        zext->setBBlockParent(getCurBlock());
+        node->value = zext;
+    }
     return true;
 }
 
@@ -1515,6 +1547,22 @@ bool IRGen::ir_cmp_equal(ast_node *node, LabelParams blocks)
         br->setBBlockParent(getCurBlock());
         transmitBlocks.pop_front();
         curUsedBlockIter = std::next(curUsedBlockIter);
+    }
+    else
+    {
+        ast_node *left = ir_visit_astnode(node->sons[0], {});
+        if (left == nullptr)
+            return false;
+        ast_node *right = ir_visit_astnode(node->sons[1], {});
+        if (right == nullptr)
+            return false;
+        ICmpInstPtr icmp = ICmpInst::create(Opcode::EqInTeger, left->value, right->value, getCurBlock());
+        // 创建 Zext 指令得到 i32为的一元运算值
+        ZextInstPtr zext = ZextInst::get(icmp, Type::getIntNType(32));
+        // 将 zext 指令加入到当前基本块
+        getCurBlock()->AddInstBack(zext);
+        zext->setBBlockParent(getCurBlock());
+        node->value = zext;
     }
     return true;
 }
@@ -1546,6 +1594,22 @@ bool IRGen::ir_cmp_notEqual(ast_node *node, LabelParams blocks)
         transmitBlocks.pop_front();
         curUsedBlockIter = std::next(curUsedBlockIter);
     }
+    else
+    {
+        ast_node *left = ir_visit_astnode(node->sons[0], {});
+        if (left == nullptr)
+            return false;
+        ast_node *right = ir_visit_astnode(node->sons[1], {});
+        if (right == nullptr)
+            return false;
+        ICmpInstPtr icmp = ICmpInst::create(Opcode::NotEqInteger, left->value, right->value, getCurBlock());
+        // 创建 Zext 指令得到 i32为的一元运算值
+        ZextInstPtr zext = ZextInst::get(icmp, Type::getIntNType(32));
+        // 将 zext 指令加入到当前基本块
+        getCurBlock()->AddInstBack(zext);
+        zext->setBBlockParent(getCurBlock());
+        node->value = zext;
+    }
     return true;
 }
 
@@ -1576,6 +1640,22 @@ bool IRGen::ir_cmp_lessEqual(ast_node *node, LabelParams blocks)
         transmitBlocks.pop_front();
         curUsedBlockIter = std::next(curUsedBlockIter);
     }
+    else
+    {
+        ast_node *left = ir_visit_astnode(node->sons[0], {});
+        if (left == nullptr)
+            return false;
+        ast_node *right = ir_visit_astnode(node->sons[1], {});
+        if (right == nullptr)
+            return false;
+        ICmpInstPtr icmp = ICmpInst::create(Opcode::LeInteger, left->value, right->value, getCurBlock());
+        // 创建 Zext 指令得到 i32为的一元运算值
+        ZextInstPtr zext = ZextInst::get(icmp, Type::getIntNType(32));
+        // 将 zext 指令加入到当前基本块
+        getCurBlock()->AddInstBack(zext);
+        zext->setBBlockParent(getCurBlock());
+        node->value = zext;
+    }
     return true;
 }
 
@@ -1605,6 +1685,22 @@ bool IRGen::ir_cmp_greaterEqual(ast_node *node, LabelParams blocks)
         br->setBBlockParent(getCurBlock());
         transmitBlocks.pop_front();
         curUsedBlockIter = std::next(curUsedBlockIter);
+    }
+    else
+    {
+        ast_node *left = ir_visit_astnode(node->sons[0], {});
+        if (left == nullptr)
+            return false;
+        ast_node *right = ir_visit_astnode(node->sons[1], {});
+        if (right == nullptr)
+            return false;
+        ICmpInstPtr icmp = ICmpInst::create(Opcode::GeInTeger, left->value, right->value, getCurBlock());
+        // 创建 Zext 指令得到 i32为的一元运算值
+        ZextInstPtr zext = ZextInst::get(icmp, Type::getIntNType(32));
+        // 将 zext 指令加入到当前基本块
+        getCurBlock()->AddInstBack(zext);
+        zext->setBBlockParent(getCurBlock());
+        node->value = zext;
     }
     return true;
 }
@@ -1639,6 +1735,12 @@ bool IRGen::ir_leafNode_var(ast_node *node, LabelParams blocks)
             scoper->curTab()->newDeclVar(alloca);       //  将声明变量加入当前符号表中
             scoper->curFun()->insertAllocaInst(alloca); // 将allocaInst加入到指令基本块中
             alloca->setBBlockParent(scoper->curFun()->getEntryBlock());
+            // 目前只有 int 对于只声明没有定义的变量初始赋值为0
+            // ConstantIntPtr zero = ConstantInt::get(32);
+            // zero->setValue(0);
+            // StoreInstPtr str = StoreInst::get(zero, alloca);
+            // scoper->curFun()->insertAllocaInst(str);
+            // str->setBBlockParent(scoper->curFun()->getEntryBlock());
         }
     }
     else

@@ -791,6 +791,8 @@ bool ArmInstGen::ISrem2ArmInst(InstPtr srem)
     MBranchInstPtr bl = MBranchInst::get(curblk, MachineInst::BL, MachineOperand::get("__aeabi_idivmod"));
     bl->addDef(MachineOperand::createReg(0)); // 该函数调用会def r0 r1
     bl->addDef(MachineOperand::createReg(1)); //
+    bl->addDef(MachineOperand::createReg(2));
+    bl->addDef(MachineOperand::createReg(3));
     bl->addUse(MachineOperand::createReg(0));
     bl->addUse(MachineOperand::createReg(1));
     curblk->addInstBack(bl);

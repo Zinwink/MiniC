@@ -18,10 +18,20 @@
 /// @return
 bool User::replaceUseWith(ValPtr from, ValPtr to)
 {
-    auto it = std::find(operands.begin(), operands.end(), from);
-    assert(it != operands.end() && "can find from!");
-    *it = to;
-    // 将本user 加入到to的UseList中
+
+    for (size_t i = 0; i < operands.size(); i++)
+    {
+        if (operands[i] == from)
+        {
+            operands[i] = to;
+        }
+    }
     to->insertUser(shared_from_this());
+
+    // auto it = std::find(operands.begin(), operands.end(), from);
+    // assert(it != operands.end() && "can find from!");
+    // *it = to;
+    // // 将本user 加入到to的UseList中
+    // to->insertUser(shared_from_this());
     return true;
 }
