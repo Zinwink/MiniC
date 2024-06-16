@@ -102,6 +102,7 @@ public:
     inline bool isPush() { return type == PUSH; } // 是否是push 类型
     inline bool isLoad() { return type == LDR; }  // 是否是load指令
     inline bool isStore() { return type == STR; } // 是否是store指令
+    inline bool isMOV() { return type == MOV; }
     inline bool isBranch() { return (int)type >= (int)MinstTy::B && (int)type <= (int)MinstTy::BL; }
     inline void setNeedAdjust() { needToAdjust = true; }  // 标记该指令需要矫正
     inline bool isNeedToAdjust() { return needToAdjust; } // 是否需要矫正

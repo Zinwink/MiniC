@@ -179,3 +179,8 @@ public:
         LabelAddr = 0;
     }
 };
+
+
+/// @brief 简单删除一些无用指令
+/// @param machine 
+void EasyElimInst(MModulePtr machine);

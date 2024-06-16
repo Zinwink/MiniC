@@ -59,11 +59,25 @@ public:
     /// @param fun
     void computeInOut(FuncPtr fun);
 
-    /// @brief 根据 LiveIn LiveOut 进行传播优化
+    /// @brief 建立 use_def def_use 链接记录
     /// @param fun
-    void Pass(FuncPtr fun);
+    void buildChain(FuncPtr fun);
+
+    /// @brief 拷贝传播阶段1(只对alloca,传播常数以及非常数,其余的内存地址只局部优化)
+    /// @param fun
+    void copyProp1(FuncPtr fun, std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> &Doms);
+
+    /// @brief 拷贝传播阶段2(根据必经节点信息进一步传播更远)
+    /// @param fun 
+    /// @param Doms 
+    void copyProp2(FuncPtr fun, std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> &Doms);
+
+    /// @brief 根据 LiveIn LiveOut 进行传播优化
+    /// @param Doms 必经节点记录
+    /// @param fun
+    void Pass(FuncPtr fun, std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> &Doms);
 };
 
-/// @brief 对整个单元进行分析优化
+/// @brief 对整个单元进行分析优化(将子表达式替换也加了进来)
 /// @param module
 void LiveMemAnalysisPass(ModulePtr module);

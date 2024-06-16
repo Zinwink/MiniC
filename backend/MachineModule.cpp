@@ -239,3 +239,48 @@ void MachineModule::printArm(string filePath)
         file << str << "\n";
     }
 }
+
+/// @brief 简单删除一些无用指令
+/// @param machine
+void EasyElimInst(MModulePtr machine)
+{
+    auto &funList = machine->getFuncList();
+    for (auto &fun : funList)
+    {
+        int stackSize = fun->StatckSize();
+        auto &blkList = fun->getBlockList();
+        for (auto &blk : blkList)
+        {
+            auto &instList = blk->getInstList();
+            for (auto iter = instList.begin(); iter != instList.end();)
+            {
+                auto &inst = *iter;
+                if (inst->isMOV())
+                {
+                    MOperaPtr def = inst->getDef()[0];
+                    MOperaPtr use = inst->getUse()[0];
+                    if (*def == *use)
+                    {
+                        // 删除该指令
+                        iter = instList.erase(iter);
+                    }
+                    else
+                    {
+                        if (def->getRegNo() == 13 && use->getRegNo() == 11 && stackSize == 0)
+                        {
+                            iter = instList.erase(iter);
+                        }
+                        else
+                        {
+                            iter++;
+                        }
+                    }
+                }
+                else
+                {
+                    iter++;
+                }
+            }
+        }
+    }
+}

@@ -13,6 +13,7 @@
 
 #include "Instruction.h"
 #include "DerivedTypes.h"
+#include "Constant.h"
 #include "Type.h"
 #include "Argument.h"
 
@@ -249,8 +250,45 @@ public:
     BinaryOperator(Opcode _op, ValPtr val1, ValPtr val2)
     {
         setOpcode(_op);
-        operands.push_back(val1);
-        operands.push_back(val2);
+        ValPtr op1 = val1;
+        ValPtr op2 = val2;
+        if (_op == Opcode::AddInteger || _op == Opcode::MulInteger)
+        {
+            // 为了后继简单使用哈希函数 如果是 加法 乘法 按照地址顺序交换操作数
+            // 加法 乘法满足交换律 第一个操作数的地址更小
+            if (val1->isConstantInt() && val2->isConstantInt())
+            {
+                // 两个操作数都是常数类型 按照长度 大小排序
+                ConstantIntPtr val1C = std::static_pointer_cast<ConstantInt>(val1);
+                ConstantIntPtr val2C = std::static_pointer_cast<ConstantInt>(val2);
+                if (val1C->getValue() >= val2C->getValue())
+                { // 从小到达排
+                    op1 = val2;
+                    op2 = val1;
+                }
+            }
+            else if (val1->isConstantInt() && !val2->isConstantInt())
+            {
+                // 统一将常数放在后面
+                op1 = val2;
+                op2 = val1;
+            }
+            else if (!val1->isConstantInt() && val2->isConstantInt())
+            {
+                // 无操作
+            }
+            else
+            {
+                // val1， val2 都不是常数
+                if (val1 >= val2)
+                {  //按地址排序
+                    op1 = val2;
+                    op2 = val1;
+                }
+            }
+        }
+        operands.push_back(op1);
+        operands.push_back(op2);
 
         // 目前只设置为int结果类型 后面可以根据  val1,val2类型编写函数获取结果类型进行设置
         setType(Type::getIntNType(32));

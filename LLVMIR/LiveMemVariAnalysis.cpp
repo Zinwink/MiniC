@@ -11,14 +11,14 @@
 
 #include "LiveMemVariAnalysis.h"
 #include "BasicBlockPass.h"
+#include "CommSubExprElim.h"
+#include <map>
 #include <iostream>
 
 /// @brief 计算 基本块的 def use
 /// @param fun
 void LiveMemVariAnalysis::computeDefUse(FuncPtr fun)
 {
-    def.clear();
-    use.clear();
     auto &blockList = fun->getBasicBlocks();
     for (auto &blk : blockList)
     {
@@ -56,8 +56,6 @@ void LiveMemVariAnalysis::computeDefUse(FuncPtr fun)
 /// @param fun
 void LiveMemVariAnalysis::computeInOut(FuncPtr fun)
 {
-    reset();            // 清空旧数据
-    computeDefUse(fun); // 计算函数每个基本块的 def use
     std::list<BasicBlockPtr> &blockList = fun->getBasicBlocks();
     std::deque<BasicBlockPtr> workList; // 操作队列
     for (auto &blk : blockList)
@@ -103,17 +101,16 @@ void LiveMemVariAnalysis::computeInOut(FuncPtr fun)
     }
 }
 
-/// @brief 根据 LiveIn LiveOut 进行传播优化
+/// @brief 建立 use_def def_use 链接记录(根据LiveIn LiveOut)
 /// @param fun
-void LiveMemVariAnalysis::Pass(FuncPtr fun)
+void LiveMemVariAnalysis::buildChain(FuncPtr fun)
 {
-    computeInOut(fun); // 计算本函数的 liveIn liveOut
+    // computeInOut(fun); // 计算本函数的 liveIn liveOut
     std::list<BasicBlockPtr> &blockList = fun->getBasicBlocks();
     // 下面根据 liveIn liveOut 得到对应的 def-uses 以及 use-defs
     // 最后 根据 def-uses 以及 use-defs来 进行 到达-定值分析； 如果一个use有 多个 def 到达 那么不确定不能传播
     // 如果 一个use 只有一个定值到达 可以替换传播
     // 根据 def-uses 进行判断删除 store(仅对局部变量alloca而言 全局变量不分析)
-
     for (auto &blk : blockList)
     {
         std::unordered_map<ValPtr, std::set<LoadInstPtr>> addrLoadLive; // 按地址分类的活跃 use(即Load的值)
@@ -156,6 +153,12 @@ void LiveMemVariAnalysis::Pass(FuncPtr fun)
             }
         }
     }
+}
+
+/// @brief 拷贝传播阶段1(只对alloca,传播常数以及非常数,其余的内存地址只局部优化)
+/// @param fun
+void LiveMemVariAnalysis::copyProp1(FuncPtr fun, std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> &Doms)
+{
     // 得到了use-def 和 def_use 下面进行替换优化 以及删除不必要的 store(进行标记)
     for (auto &elem : def_use)
     {
@@ -163,7 +166,7 @@ void LiveMemVariAnalysis::Pass(FuncPtr fun)
         auto &ldrs = elem.second;
         if (ldrs.empty())
         {
-            str->setDeadSign(); // 标记为死的
+            str->setDeadSign(); // 标记为死的(这里只对alloca的进行操作)
         }
         else
         {
@@ -173,7 +176,15 @@ void LiveMemVariAnalysis::Pass(FuncPtr fun)
                 {
                     // 只有一个定值到达 load 值确定 进行替换
                     ValPtr strVal = str->getOperand(0); // 存入的值
-                    Value::replaceAllUsesWith(ldr, strVal);
+                    // 如果store指令所在的block支配load指令的话进行传播替换
+                    //(主要用于解决变量声明时无定义，只在分支非必经节点处store的bug)
+                    BasicBlockPtr &ldrBlk = ldr->getBBlockParent();
+                    BasicBlockPtr &strBlk = str->getBBlockParent();
+                    assert(ldrBlk != nullptr && strBlk != nullptr);
+                    if (Doms[ldrBlk].find(strBlk) != Doms[ldrBlk].end())
+                    {
+                        Value::replaceAllUsesWith(ldr, strVal);
+                    }
                 }
                 else if (use_def[ldr].size() >= 2)
                 {
@@ -204,7 +215,58 @@ void LiveMemVariAnalysis::Pass(FuncPtr fun)
             }
         }
     }
+}
+
+/// @brief 拷贝传播阶段2(根据必经节点信息进一步传播更远)
+/// @param fun
+/// @param Doms
+void LiveMemVariAnalysis::copyProp2(FuncPtr fun, std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> &Doms)
+{
+    // 获取 defs相同的 load指令 根据支配关系进行复用 减少内存操作
+    std::map<std::set<StoreInstPtr>, std::set<LoadInstPtr>> record;
+    // 遍历use_defs 建立 record
+    for (auto &elm : use_def)
+    {
+        const LoadInstPtr &ldr = elm.first;
+        std::set<StoreInstPtr> &defs = elm.second;
+        record[defs].insert(ldr);
+    }
+    // 根据record记录 按照支配关系进行替换
+    // 注意 在同一个基本块的不进行替换 这个由局部优化完成
+    for (auto &red : record)
+    {
+        std::set<LoadInstPtr> &uses = red.second;
+        // 至少两条load以上 才进行复用
+        for (auto iter1 = uses.begin(); iter1 != uses.end(); iter1++)
+        {
+            BasicBlockPtr &blk1 = (*iter1)->getBBlockParent();
+            for (auto iter2 = std::next(iter1); iter2 != uses.end(); iter2++)
+            {
+                BasicBlockPtr &blk2 = (*iter2)->getBBlockParent();
+                if (blk1 == blk2)
+                    continue; // 同一块由局部优化做
+                if (Doms[blk2].find(blk1) != Doms[blk2].end())
+                {
+                    // blk1 支配blk2 使用iter1对应的load替换iter2对应的load
+                    Value::replaceAllUsesWith(*iter2, *iter1);
+                }
+            }
+        }
+    }
+}
+
+/// @brief 根据 LiveIn LiveOut 进行传播优化
+/// @param fun
+void LiveMemVariAnalysis::Pass(FuncPtr fun, std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> &Doms)
+{
+    reset();            // 清空旧数据
+    computeDefUse(fun); // 计算def use
+    computeInOut(fun);  // 计算liveIn LiveOut
+    // 先建立 use_def def_use 记录chian
+    buildChain(fun);
     // 下面找出具有相同 defs 的load指令;
+    copyProp1(fun, Doms);
+    copyProp2(fun, Doms);
 }
 
 /// @brief 对整个单元进行分析优化
@@ -213,8 +275,11 @@ void LiveMemAnalysisPass(ModulePtr module)
 {
     auto &funList = module->getFunList();
     LiveMemVariAnalysis liveAny;
+    SubExprElim subExpr = SubExprElim();
     for (auto &fun : funList)
     {
-        liveAny.Pass(fun);
+        auto Doms = CFGUtils::computeDoms(fun);
+        liveAny.Pass(fun, Doms);          // 传播拷贝
+        subExpr.ExperElimPass(fun, Doms); // 公共表达式替换
     }
 }

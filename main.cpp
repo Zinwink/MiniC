@@ -16,6 +16,7 @@
 #include "getopt-port.h"
 #include "BasicBlockPass.h"
 #include "LiveMemVariAnalysis.h"
+#include "CommSubExprElim.h"
 #include <iostream>
 
 /// @brief 是否显示帮助信息
@@ -232,7 +233,7 @@ int main(int argc, char *argv[])
         {
             ElimUseLessBBlock(module);   // 删除无用块
             EasyPass(module);            // 简单局部优化
-            LiveMemAnalysisPass(module); // 进一步优化
+            LiveMemAnalysisPass(module); // 进一步优化 传播复用load，消减内存操作，传播复用公共表达式
             eraseModuleDeadInst(module); // 删除死指令
             ElimUseLessBBlock(module);   // 删除无用块
         }
@@ -252,6 +253,7 @@ int main(int argc, char *argv[])
         // 产生汇编
         if (gShowASM)
         {
+            EasyElimInst(Mmodule);
             Mmodule->printArm(gOutputFile);
             Mmodule->clear();
             result = 0;

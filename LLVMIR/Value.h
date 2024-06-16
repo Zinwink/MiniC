@@ -139,6 +139,21 @@ public:
         return getSubclassID() == Value::Constant;
     }
 
+    /// @brief 判断是否是整数常数
+    /// @return 
+    inline bool isConstantInt()
+    {
+        bool res = false;
+        if (isConstant())
+        {
+            if (getType()->isIntegerType())
+            {
+                res = true;
+            }
+        }
+        return res;
+    }
+
     /// @brief 是否是全局变量
     /// @return
     inline bool isGlobalVariable()
@@ -174,7 +189,7 @@ public:
     bool isStoreInst();
 
     /// @brief 是否是load
-    /// @return 
+    /// @return
     bool isLoadInst();
 
     /// @brief 是不是 zextinst

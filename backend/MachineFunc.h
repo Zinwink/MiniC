@@ -139,6 +139,10 @@ public:
         return stackSize;
     }
 
+    /// @brief 返回申请的栈空间
+    /// @return 
+    inline uint64_t StatckSize() { return stackSize; }
+
     /// @brief 获取从溢出内存加载到虚拟寄存器时新的编号
     /// @return
     inline uint32_t genSpillLoadVregNo()
