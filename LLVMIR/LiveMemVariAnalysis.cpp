@@ -266,7 +266,7 @@ void LiveMemVariAnalysis::Pass(FuncPtr fun, std::unordered_map<BasicBlockPtr, st
     buildChain(fun);
     // 下面找出具有相同 defs 的load指令;
     copyProp1(fun, Doms);
-    copyProp2(fun, Doms);
+    // copyProp2(fun, Doms);
 }
 
 /// @brief 对整个单元进行分析优化

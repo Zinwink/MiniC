@@ -384,6 +384,12 @@ VarDef: DIGIT_ID {
 }
 | DIGIT_ID ArrayIndexs "=" VarInitVal {
     //  暂时未实现
+    //AST_ARRAY_DEF,
+    ast_node* arr=new_ast_node(*$1,ast_node_type::AST_OP_ARRAY,{$2});
+    ast_node* arrayDef=new_ast_node(ast_node_type::AST_ARRAY_DEF,{arr,$4});
+    $$=arrayDef;
+    delete $1;
+    $1=nullptr;
 }
 ;
 
@@ -392,17 +398,20 @@ VarInitVal: Expr{
 }
 | "{" "}" {
     // 数组初赋值  暂时未实现
+    //AST_ARRAY_INITLIST
+    $$=new_ast_node(ast_node_type::AST_ARRAY_INITLIST,{});
 }
 | "{" VarInitValList "}"{
     // 数组初赋值 暂时未实现
+     $$=$2;
 }
 ;
 
 VarInitValList: VarInitVal{
-
+    $$=new_ast_node(ast_node_type::AST_ARRAY_INITLIST,{$1});
 }
 | VarInitValList "," VarInitVal{
-
+    $$=insert_ast_node($1,$3);
 }
 ;
 
@@ -434,7 +443,11 @@ ConstDef: DIGIT_ID "=" ConstInitVal {
 
 }
 | DIGIT_ID ArrayIndexs "=" ConstInitVal{
-
+    ast_node* arr=new_ast_node(*$1,ast_node_type:: AST_OP_CONST_ARRAY,{$2});
+    ast_node* arrayDef=new_ast_node(ast_node_type::AST_CONST_ARRAY_DEF,{arr,$4});
+    $$=arrayDef;
+    delete $1;
+    $1=nullptr;
 }
 ;
 
@@ -442,18 +455,18 @@ ConstInitVal: ConstExp{
     $$=$1;
 }
 | "{" "}" {
-
+    $$=new_ast_node(ast_node_type::AST_CONST_ARRAY_INITLIST,{});
 }
 | "{" ConstInitvalList "}"{
-
+    $$=$2;
 }
 ;
 
 ConstInitvalList: ConstInitVal{
-
+    $$=new_ast_node(ast_node_type::AST_CONST_ARRAY_INITLIST,{$1});
 }
 | ConstInitvalList "," ConstInitVal{
-
+    $$=insert_ast_node($1,$3);
 }
 ;
 

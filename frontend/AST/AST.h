@@ -54,8 +54,14 @@ enum class ast_node_type : int
     /// @brief 数组初赋值 定义节点
     AST_ARRAY_DEF,
 
+    /// @brief 数组的初赋值列表
+    AST_ARRAY_INITLIST,
+
     /// @brief const修饰的数组初赋值节点
     AST_CONST_ARRAY_DEF,
+
+    /// @brief const数组的初赋值
+    AST_CONST_ARRAY_INITLIST,
 
     /// @brief 单个函数形参运算符节点 属性包含名字与类型
     AST_LEAF_FUNC_FORMAL_PARAM,

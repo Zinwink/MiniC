@@ -13,6 +13,7 @@
 #include <unordered_set>
 #include "BasicBlock.h"
 #include "Function.h"
+#include <gvc.h>
 #include <set>
 
 class CFGUtils
@@ -23,3 +24,18 @@ public:
     /// @return
     static std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> computeDoms(FuncPtr fun);
 };
+
+//******************************** CFG控制流图的可视化 ******************************
+
+/// @brief 根据基本块得到对应的节点
+/// @param g
+/// @param blk
+/// @param cnt
+/// @return
+Agnode_t *genBasicBlockNode(Agraph_t *g, BasicBlockPtr &blk, Counter *cnt, std::unordered_map<BasicBlockPtr, Agnode_t *> &record);
+
+/// @brief 产生指定函数的控制流图
+/// @param fun
+/// @param filePath 路径
+/// @return
+void genCFG(FuncPtr fun, const std::string &filePath);

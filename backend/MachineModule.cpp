@@ -266,14 +266,15 @@ void EasyElimInst(MModulePtr machine)
                     }
                     else
                     {
-                        if (def->getRegNo() == 13 && use->getRegNo() == 11 && stackSize == 0)
-                        {
-                            iter = instList.erase(iter);
-                        }
-                        else
-                        {
-                            iter++;
-                        }
+                        iter++;
+                        // if (def->getRegNo() == 13 && use->getRegNo() == 11 && stackSize == 0)
+                        // {
+                        //     iter = instList.erase(iter);
+                        // }
+                        // else
+                        // {
+                        //     iter++;
+                        // }
                     }
                 }
                 else

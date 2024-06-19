@@ -40,7 +40,7 @@ public:
     ~Module();
 
     /// @brief 返回计数器
-    /// @return 
+    /// @return
     inline Counter *getCounter() { return cnt; }
 
     /// @brief 获取全局变量列表
@@ -50,6 +50,23 @@ public:
     /// @brief 获取函数列表
     /// @return
     std::deque<FuncPtr> &getFunList() { return funcList; }
+
+    /// @brief 根据函数名获取函数
+    /// @param name
+    /// @return
+    inline FuncPtr getFunc(std::string name)
+    {
+        auto iter = std::find_if(funcList.begin(), funcList.end(), [&](const FuncPtr &obj)
+                                 { return obj->getName() == name; });
+        if (iter != funcList.end())
+        {
+            return *iter;
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
 
     /// @brief 添加全局变量
     void addGlobalVar(GlobalVariPtr var) { globalVarList.push_back(var); };

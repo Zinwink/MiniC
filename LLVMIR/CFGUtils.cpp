@@ -10,7 +10,11 @@
  */
 
 #include "CFGUtils.h"
+#include "Module.h"
+#include <graphviz/gvc.h>
+#include <graphviz/cgraph.h>
 #include <queue>
+#include <iostream>
 
 /// @brief 计算基本块的必经节点集
 /// @param fun
@@ -66,4 +70,125 @@ std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> CFGUtils::computeDoms
         }
     }
     return Doms;
+}
+
+/// @brief 根据基本块得到对应的节点
+/// @param g
+/// @param blk
+/// @param cnt
+/// @return
+Agnode_t *genBasicBlockNode(Agraph_t *g, BasicBlockPtr &blk, Counter *cnt, std::unordered_map<BasicBlockPtr, Agnode_t *> &record)
+{
+    // 第三个参数1表示创建一个新节点，0表示如果已经存在相同名称节点，则不创建
+    auto iter = record.find(blk);
+    if (iter == record.end())
+    { // 无记录则创建
+        Agnode_t *node = agnode(g, (char *)nullptr, 1);
+        if (node != nullptr)
+        {
+            string blockName = getllvmID(blk, cnt);
+            blockName.erase(0, 1); // 删除前面的百分号
+            std::string label = "{" + blockName + ":\\l ";
+            for (auto &inst : blk->getInstLists())
+            {
+                label += Instruction::toIRstr(inst, cnt);
+                label += string("\\l ");
+            }
+            label.pop_back();
+            if (blk->getJumpList().size() == 2)
+            {
+                label += "|{<s0>T|<s1>F}";
+            }
+            label += "}";
+            // 设置文本颜色与字体 black Simsun  最后一个参数为默认值 属性不存在则使用它
+            agsafeset(node, (char *)"fontcolor", (char *)"black", (char *)"");
+            // 设置节点的名字label
+            agsafeset(node, (char *)"label", (char *)label.c_str(), (char *)"");
+            // 设置叶子节点形状为矩形
+            agsafeset(node, (char *)"shape", (char *)"record", (char *)"");
+            // 设置叶子节点填充颜色 黄色
+            agsafeset(node, (char *)"style", (char *)"filled", (char *)"");
+            agsafeset(node, (char *)"fillcolor", (char *)"#f59c7d70", (char *)"");
+            agsafeset(node, (char *)"color", (char *)"#3d50c3ff", (char *)"");
+            record.emplace(blk, node); // 加入记录中
+        }
+        return node;
+    }
+    else
+    {
+        // 存在记录则直接返回结果
+        return iter->second;
+    }
+}
+
+/// @brief 产生指定函数的控制流图
+/// @param fun
+/// @param filePath 路径
+/// @return
+void genCFG(FuncPtr fun, const std::string &filePath)
+{
+    // 先创建 gv上下文
+    GVC_t *gv = gvContext();
+    
+    // 创建一个图形  参数依次表示 图形名称，有向图，使用默认的内存分配器
+    string funcName = fun->getName();
+    Agraph_t *g = agopen((char *)(funcName.c_str()), Agdirected, nullptr);
+    if (!g)
+    {
+        gvFreeContext(gv);
+        return;
+    }
+    string cfgName = string("CFG for ") + "\'" + fun->getName() + "\' " + "function";
+    agsafeset(g, (char *)"label", (char *)cfgName.c_str(), (char *)"");
+    // 保存图片格式类型
+    std::string fileType;
+    std::string::size_type pos = filePath.find_last_of('.'); // 查找最后一个点的位置
+    if (pos == std::string::npos)
+    {
+        // 未找到  未指定类型
+        fileType = "png";
+    }
+    else
+    {
+        fileType = filePath.substr(pos + 1); // 得到后面的文件类型后缀
+    }
+    // 下面遍历基本块形成控制流图
+    std::unordered_map<BasicBlockPtr, Agnode_t *> record; // 记录已经产生节点的基本块
+    auto &blkList = fun->getBasicBlocks();
+    Counter cnt = Counter();
+    // 先为每个block编号
+    for (auto &blk : blkList)
+    {
+        getllvmID(blk, &cnt);
+    }
+    // 遍历blkList形成控制流图
+    for (auto &blk : blkList)
+    {
+        Agnode_t *blkNode = genBasicBlockNode(g, blk, &cnt, record);
+        auto succes = blk->getJumpList(); // 后继节点
+        if (succes.size() == 1)
+        {
+            // 直接跳转
+            Agnode_t *jump = genBasicBlockNode(g, succes[0], &cnt, record);
+            Agedge_t *edge1 = agedge(g, blkNode, jump, (char *)nullptr, 1);
+        }
+        else if (succes.size() == 2)
+        {
+            Agnode_t *trueNode = genBasicBlockNode(g, succes[0], &cnt, record);
+            Agnode_t *falseNode = genBasicBlockNode(g, succes[1], &cnt, record);
+            Agedge_t *trueEdge = agedge(g, blkNode, trueNode, (char *)nullptr, 1);
+            Agedge_t *falseEdge = agedge(g, blkNode, falseNode, (char *)nullptr, 1);
+            agsafeset(trueEdge, (char *)"tailport", (char *)"s0", (char *)"");
+            agsafeset(falseEdge, (char *)"tailport", (char *)"s1", (char *)"");
+        }
+    }
+    gvLayout(gv, g, "dot");
+    assert(gv != nullptr && g != nullptr && !fileType.empty() && !filePath.empty());
+    // 输出图片
+    gvRenderFilename(gv, g, fileType.c_str(), filePath.c_str());
+    // 关闭图形上下文 清理资源
+    record.clear();
+    gvFreeLayout(gv, g);
+    agclose(g);
+    gvFreeContext(gv);
 }
