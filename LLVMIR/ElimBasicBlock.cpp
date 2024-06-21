@@ -104,9 +104,13 @@ bblockIter &mergeBasicBlocks(BasicBlockPtr block, bblockIter &it)
     else if (presList.size() == 1)
     {
         // 只有一个前驱
-        // 若前驱也只有一个跳转
+        // 若前驱也只有一个跳转 且本基本快不包含phi指令 则合并
+        bool hasPhi = false;
+        auto &instList = block->getInstLists();
+        if ((*(instList.begin()))->isPhiNode())
+            hasPhi = true;
         std::vector<BasicBlockPtr> preJumps = presList[0]->getJumpList();
-        if (preJumps.size() == 1)
+        if (preJumps.size() == 1&&!hasPhi)
         {
             // 前驱只有一个后继
             // 删除前驱的跳转指令 将本基本块合并到前驱中
@@ -142,6 +146,14 @@ void eraseBasicBlock(BasicBlockPtr block, bblockIter &it)
     {
         // 删除指令  包括删除指令操作数的UserList中对应的User
         iter = eraseInst(block, iter);
+    }
+    // 删除基本块前先更新phi节点的项
+    for (auto &user : block->getUseList())
+    {
+        if (user->isPhiNode())
+        {
+            user->removeUse(block);
+        }
     }
     // 下一步删除基本块
     FuncPtr fun = block->getParentFun();

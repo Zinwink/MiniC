@@ -119,7 +119,7 @@ public:
     string getOpcodeName();
 
     /// @brief 是否时PhiNode
-    /// @return 
+    /// @return
     bool isPhiNode();
 
     /// @brief 判断是否是分支指令
@@ -243,7 +243,13 @@ string GetelementInstStr(InstPtr getelem, Counter *cnt);
 string ZextInstStr(InstPtr zext, Counter *cnt);
 
 /// @brief 获取phi节点的字符表示
-/// @param phi 
+/// @param phi
+/// @param cnt
+/// @return
+string PhiNodeStr(InstPtr phi, Counter *cnt);
+
+/// @brief 只用于打印查看  这是自己引入为了方便翻译的伪指令
+/// @param phiMov 
 /// @param cnt 
 /// @return 
-string PhiNodeStr(InstPtr phi, Counter *cnt);
+string PhiElimMoveStr(InstPtr phiMov, Counter *cnt);

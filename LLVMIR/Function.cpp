@@ -91,6 +91,22 @@ void Function::insertBBlock(BasicBlockPtr block, BasicBlockPtr AtFront)
     }
 }
 
+/// @brief 在AtBack块后插入block
+/// @param block  插入的块
+/// @param AtBack
+void Function::insertBBlockAtBack(BasicBlockPtr block, BasicBlockPtr AtBack)
+{
+    auto iter = std::find(BlocksList.begin(), BlocksList.end(), AtBack);
+    if (iter != BlocksList.end())
+    {
+        BlocksList.insert(std::next(iter), block);
+    }
+    else
+    {
+        throw std::invalid_argument("The AtBack param is invalid!");
+    }
+}
+
 /// @brief 在指定迭代器处插入BasciBlock (无检查)
 /// @param block 基本块列表
 /// @param iter 插入位置
@@ -118,7 +134,7 @@ BasicBlockPtr &Function::getExitBlock()
 /// @param alloca
 void Function ::insertAllocaInst(InstPtr alloca)
 {
-    assert((alloca->isAllocaInst()||alloca->isStoreInst()) && "not allocaInst type!");
+    assert((alloca->isAllocaInst() || alloca->isStoreInst()) && "not allocaInst type!");
     allocaLists.push_back(alloca);
 }
 

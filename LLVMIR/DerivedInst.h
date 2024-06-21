@@ -29,6 +29,7 @@ class BranchInst;
 class getelementptrInst;
 class ZextInst;
 class PhiNode;
+class PhiElimMove; // 伪指令  phi消减时使用
 
 using AllocaInstPtr = std::shared_ptr<AllocaInst>;
 using StoreInstPtr = std::shared_ptr<StoreInst>;
@@ -41,6 +42,7 @@ using BranchInstPtr = std::shared_ptr<BranchInst>;
 using getelemInstPtr = std::shared_ptr<getelementptrInst>;
 using ZextInstPtr = std::shared_ptr<ZextInst>;
 using PhiNodePtr = std::shared_ptr<PhiNode>;
+using PhiElimMovePtr = std::shared_ptr<PhiElimMove>;
 
 /// @brief AllocaInst (将充当变量)(AllocaInst本身的Type是指针类型)
 class AllocaInst : public Instruction
@@ -58,6 +60,7 @@ private:
     int64_t offset;
 
     bool hasConstQualifier = false; // 是否是const修饰
+    bool _isDead = false;
 
 public:
     /// @brief 析构函数
@@ -85,18 +88,53 @@ public:
         setOpcode(Opcode::Alloca);
     }
 
+    /// @brief 为指令设置 dead标记  对于 StoreInst 这类无直接User的指令具有作用
+    void setDeadSign() override
+    {
+        _isDead = true;
+        for (auto &user : getUseList())
+        {
+            if (user->isInstruct())
+            {
+                InstPtr inst = std::static_pointer_cast<Instruction>(user);
+                inst->setDeadSign();
+            }
+        }
+    }
+
     /// @brief 判断AllocaInst是否是死指令
     /// @return
     bool isDeadInst() override
     {
+        if (_isDead)
+        {
+            return true;
+        }
         if (getUseList().size() == 0)
         {
             return true;
         }
         else
         {
-            return false;
+            if (!AllocatedType->isArrayType())
+            {
+                // alloca不是 作为数组首地址使用 而是作为内存容器存放 int 或者指针类型(如函数形参)
+                bool res = false;
+                for (auto &user : getUseList())
+                {
+                    if (user->isLoadInst())
+                    {
+                        if (user->isLoadInst())
+                        {
+                            res = true;
+                            break;
+                        }
+                    }
+                }
+                return res;
+            }
         }
+        return false;
     }
 
     /// @brief 设置const修饰
@@ -212,6 +250,9 @@ class LoadInst : public Instruction
 {
     friend class Instruction;
 
+private:
+    bool _isDead = false;
+
 public:
     /// @brief 析构函数
     ~LoadInst()
@@ -230,10 +271,20 @@ public:
         setType(pointerTy->getElemntTy());
     }
 
+    /// @brief 为指令设置 dead标记  对于 StoreInst 这类无直接User的指令具有作用
+    void setDeadSign() override
+    {
+        _isDead = true;
+    }
+
     /// @brief 判断LoadInst是否是死指令
     /// @return
     bool isDeadInst() override
     {
+        if (_isDead)
+        {
+            return true;
+        }
         if (getUseList().size() == 0)
         {
             return true;
@@ -498,9 +549,9 @@ public:
     BranchInst(ValPtr cond, ValPtr ifTrue, ValPtr ifFalse)
     {
         setOpcode(Opcode::ConditionBr);
-        operands.push_back(cond);
-        operands.push_back(ifTrue);
-        operands.push_back(ifFalse);
+        operands.push_back(cond);    // 0
+        operands.push_back(ifTrue);  // 1
+        operands.push_back(ifFalse); // 2
     }
 
     /// @brief 判断BranchInst是否是死指令
@@ -668,6 +719,21 @@ public:
     /// @return
     inline std::list<std::pair<ValPtr, BasicBlockPtr>> &getSrc() { return record; }
 
+    /// @brief 获取指定block的项
+    /// @param blk
+    /// @return
+    inline ValPtr getSrcFromBlk(BasicBlockPtr blk)
+    {
+        for (auto &pair : record)
+        {
+            if (pair.second == blk)
+            {
+                return pair.first;
+            }
+        }
+        return nullptr;
+    }
+
     /// @brief 判断是否是死指令
     /// @return
     bool isDeadInst() override
@@ -701,5 +767,41 @@ public:
     {
         PhiNodePtr phi = std::make_shared<PhiNode>(_addr);
         return phi;
+    }
+};
+
+/// @brief 伪指令用于phi节点删除时使用 move
+class PhiElimMove : public Instruction
+{
+public:
+    /// @brief 析构函数
+    ~PhiElimMove() = default;
+
+    /// @brief 构造函数
+    /// @param phi
+    /// @param src
+    PhiElimMove(ValPtr phi, ValPtr src)
+    {
+        operands.push_back(phi);
+        operands.push_back(src);
+    }
+
+    /// @brief 获取定义的value
+    /// @return
+    ValPtr getDef() { return getOperand(0); }
+
+    /// @brief 获取使用的Value
+    /// @return
+    ValPtr getUse() { return getOperand(1); }
+
+    /// @brief 创建智能指针对象
+    /// @param phi
+    /// @param src
+    /// @return
+    static PhiElimMovePtr get(ValPtr phi, ValPtr src)
+    {
+        PhiElimMovePtr mov = std::make_shared<PhiElimMove>(phi, src);
+        // 就不维护 UserList了 这是伪指令 用于方便后继转换使用
+        return mov;
     }
 };

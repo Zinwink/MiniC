@@ -151,9 +151,11 @@ std::vector<BasicBlockPtr> BasicBlock::getImmedPreds()
     for (auto &user : getUseList())
     {
         // User一定是 BranchInst
-        BranchInstPtr br = std::static_pointer_cast<BranchInst>(user);
-        assert(br->getBBlockParent() != nullptr && ">>>Error! BasicBlock.cpp");
-        res.push_back(br->getBBlockParent());
+        if(user->isBranchInst()){
+            BranchInstPtr br = std::static_pointer_cast<BranchInst>(user);
+            assert(br->getBBlockParent() != nullptr && ">>>Error! BasicBlock.cpp");
+            res.push_back(br->getBBlockParent());
+        }
     }
     return res;
 }

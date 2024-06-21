@@ -414,10 +414,10 @@ string PhiNodeStr(InstPtr phi, Counter *cnt)
     str = getllvmID(phi, cnt) + string(" = ") + phi->getOpcodeName() + string(" ") + phi->getType()->TypeStr() + string(" ");
     string srclist = "";
     auto &flowList = phi_cast->getSrc();
-    for (auto iter=flowList.begin();iter!=flowList.end();iter++)
+    for (auto iter = flowList.begin(); iter != flowList.end(); iter++)
     {
-        auto& pair = *iter;
-        ValPtr& val = pair.first;
+        auto &pair = *iter;
+        ValPtr &val = pair.first;
         string item = string("[ ") + getllvmID(val, cnt) + string(", ") + getllvmID(pair.second, cnt) + string(" ]");
         if (iter != std::prev(flowList.end()))
         {
@@ -426,5 +426,20 @@ string PhiNodeStr(InstPtr phi, Counter *cnt)
         srclist += item;
     }
     str += srclist;
+    return str;
+}
+
+/// @brief 只用于打印查看  这是自己引入为了方便翻译的伪指令
+/// @param phiMov
+/// @param cnt
+/// @return
+string PhiElimMoveStr(InstPtr phiMov, Counter *cnt)
+{
+    string str = "mov ";
+    ValPtr dst = phiMov->getOperand(0);
+    ValPtr src = phiMov->getOperand(1);
+    str += getllvmID(dst, cnt);
+    str += ", ";
+    str += getllvmID(src, cnt);
     return str;
 }

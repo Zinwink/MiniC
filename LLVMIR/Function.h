@@ -120,6 +120,11 @@ public:
     /// @param AtFront
     void insertBBlock(BasicBlockPtr block, BasicBlockPtr AtFront);
 
+    /// @brief 在AtBack块后插入block
+    /// @param block  插入的块
+    /// @param AtBack
+    void insertBBlockAtBack(BasicBlockPtr block, BasicBlockPtr AtBack);
+
     /// @brief 在指定迭代器处插入BasciBlocks  (无检查)
     /// @param blocks  基本块列表
     /// @param iter 插入位置

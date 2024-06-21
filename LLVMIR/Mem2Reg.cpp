@@ -63,7 +63,13 @@ void Mem2Reg::insertPhiNode(FuncPtr fun, std::unordered_map<BasicBlockPtr, std::
                     // M not in alreadylist
                     // 在M 前插入对alloca的Phi节点
                     PhiNodePtr phi = PhiNode::get(alloca);
+
+                    // 对于创建了phi指令的alloca  将其设置为死的 并传递给load store也为死
+                    InstPtr inst = std::static_pointer_cast<Instruction>(alloca);
+                    inst->setDeadSign();
+                    
                     M->AddInstFront(phi);
+                    phi->setBBlockParent(M);
                     alreadyList.insert(M);
                 }
                 if (everOnWorkList.find(M) == everOnWorkList.end())
@@ -169,7 +175,7 @@ void Mem2Reg::rename(BasicBlockPtr blk, std::unordered_map<BasicBlockPtr, std::s
             {
                 ConstantIntPtr zero = ConstantInt::get(32);
                 zero->setValue(0);
-                phi->addSrc(zero,blk);
+                phi->addSrc(zero, blk);
             }
         }
     }

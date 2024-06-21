@@ -1042,6 +1042,7 @@ bool PhiNode::replaceUseWith(ValPtr from, ValPtr to)
 void PhiNode::addSrc(ValPtr val, BasicBlockPtr blk)
 {
     val->insertUser(shared_from_this());
+    blk->insertUser(shared_from_this());
     // blk只做指向作用 不记录User
     record.push_back(std::make_pair(val, blk));
 }

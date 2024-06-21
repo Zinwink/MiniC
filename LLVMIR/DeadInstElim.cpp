@@ -22,17 +22,41 @@ BasicBlock::InstIterator eraseDeadInst(BasicBlockPtr block, BasicBlock::InstIter
     if ((*iter)->isDeadInst())
     {
         // 在删除死指令之前 更新该指令操作数的UserList  将删除的指令对象从操作数的UserList中删除
-        std::vector<ValPtr> &operands = (*iter)->getOperandsList(); // 获取操作数列表引用
-        for (auto &op : operands)
+        if (!(*iter)->isPhiNode())
         {
-            op->deleteUser((*iter)); // 删除User
-            if (op->isInstruct())
+            std::vector<ValPtr> &operands = (*iter)->getOperandsList(); // 获取操作数列表引用
+            for (auto &op : operands)
             {
-                InstPtr instop = std::static_pointer_cast<Instruction>(op);
-                eraseDeadInst(instop); // 判断并删除新产生的死指令
+                op->deleteUser((*iter)); // 删除User
+                if (op->isInstruct())
+                {
+                    InstPtr instop = std::static_pointer_cast<Instruction>(op);
+                    eraseDeadInst(instop); // 判断并删除新产生的死指令
+                }
             }
         }
-
+        else
+        {
+            PhiNodePtr phi = std::static_pointer_cast<PhiNode>((*iter));
+            auto &edges = phi->getSrc();
+            for (auto &pair : edges)
+            {
+                auto &val = pair.first;
+                auto &blk = pair.second;
+                val->deleteUser((*iter));
+                blk->deleteUser((*iter));
+                if (val->isInstruct())
+                {
+                    InstPtr instop = std::static_pointer_cast<Instruction>(val);
+                    eraseDeadInst(instop);
+                }
+            }
+        }
+        // 删除phi指令的源
+        for (auto &user : (*iter)->getUseList())
+        {
+            user->removeUse((*iter));
+        }
         iter = instList.erase(iter);
         return iter;
     }
@@ -54,18 +78,43 @@ void eraseDeadInst(InstPtr inst)
         if (iter != instList.end())
         {
             // 删除User
-            std::vector<ValPtr> &operands = (*iter)->getOperandsList(); // 获取操作数列表引用
-            for (auto &op : operands)
+            if (!(*iter)->isPhiNode())
             {
-                op->deleteUser((*iter)); // 删除User
-                if (op->isInstruct())
+                std::vector<ValPtr> &operands = (*iter)->getOperandsList(); // 获取操作数列表引用
+                for (auto &op : operands)
                 {
-                    InstPtr instop = std::static_pointer_cast<Instruction>(op);
-                    if (instop->isDeadInst())
+                    op->deleteUser((*iter)); // 删除User
+                    if (op->isInstruct())
                     {
-                        eraseDeadInst(instop); // 删除新产生的死指令
+                        InstPtr instop = std::static_pointer_cast<Instruction>(op);
+                        if (instop->isDeadInst())
+                        {
+                            eraseDeadInst(instop); // 删除新产生的死指令
+                        }
                     }
                 }
+            }
+            else
+            {
+                PhiNodePtr phi = std::static_pointer_cast<PhiNode>((*iter));
+                auto &edges = phi->getSrc();
+                for (auto &pair : edges)
+                {
+                    auto &val = pair.first;
+                    auto &blk = pair.second;
+                    val->deleteUser((*iter));
+                    blk->deleteUser((*iter));
+                    if (val->isInstruct())
+                    {
+                        InstPtr instop = std::static_pointer_cast<Instruction>(val);
+                        eraseDeadInst(instop);
+                    }
+                }
+            }
+            // 删除phi指令的源
+            for (auto &user : (*iter)->getUseList())
+            {
+                user->removeUse((*iter));
             }
             instList.erase(iter);
         }
@@ -79,10 +128,31 @@ BasicBlock::InstIterator eraseInst(BasicBlockPtr block, BasicBlock::InstIterator
 {
     std::list<InstPtr> &instList = block->getInstLists();
     std::vector<ValPtr> &operands = (*iter)->getOperandsList(); // 获取操作数列表引用
-    for (auto &op : operands)
+    if (!(*iter)->isPhiNode())
     {
-        op->deleteUser((*iter)); // 删除User
+        for (auto &op : operands)
+        {
+            op->deleteUser((*iter)); // 删除User
+        }
     }
+    else
+    {
+        PhiNodePtr phi = std::static_pointer_cast<PhiNode>((*iter));
+        auto &edges = phi->getSrc();
+        for (auto &pair : edges)
+        {
+            auto &val = pair.first;
+            auto &blk = pair.second;
+            val->deleteUser((*iter));
+            blk->deleteUser((*iter));
+        }
+    }
+    // 删除phi指令的源
+    for (auto &user : (*iter)->getUseList())
+    {
+        user->removeUse((*iter));
+    }
+
     iter = instList.erase(iter);
     return iter;
 }
