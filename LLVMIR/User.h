@@ -121,7 +121,7 @@ public:
     /// @brief 返回操作数
     /// @param i
     /// @return
-    ValPtr getOperand(unsigned i)
+    virtual ValPtr getOperand(unsigned i)
     {
         assert(i < operands.size() && "i is out the range of operands!");
         return operands[i];
@@ -135,5 +135,9 @@ public:
     /// @param from 旧值
     /// @param to 替换值
     /// @return
-    bool replaceUseWith(ValPtr from, ValPtr to);
+    virtual bool replaceUseWith(ValPtr from, ValPtr to);
+
+    /// @brief 删除使用
+    /// @param val
+    virtual void removeUse(ValPtr val) {}
 };

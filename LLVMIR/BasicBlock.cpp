@@ -48,6 +48,12 @@ void BasicBlock::AddInstBack(InstPtr inst)
     InstLists.push_back(inst);
 }
 
+/// @brief 在基本块的顶部插入指令
+/// @param inst 
+void BasicBlock::AddInstFront(InstPtr inst){
+     InstLists.push_front(inst);
+}
+
 /// @brief 在指定迭代器前面插入指令
 /// @param inst
 /// @param pos

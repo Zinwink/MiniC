@@ -268,6 +268,24 @@ private:
     /// @return
     bool ir_leafNode_array(ast_node *node, LabelParams blocks);
 
+    /// @brief 无const修饰的数组初始化
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_array_def(ast_node *node, LabelParams blocks);
+
+    /// @brief const修饰的数组初始化
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_const_array_def(ast_node *node, LabelParams blocks);
+
+    /// @brief 翻译获取数组的初始化列表 const 初始化列表以及非const的列表处理方式相同
+    /// @param node
+    /// @param blocks
+    /// @return
+    bool ir_initValueList(ast_node *node, LabelParams blocks);
+
     /// @brief NULL空节点
     /// @param node
     /// @param blocks

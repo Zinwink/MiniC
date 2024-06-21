@@ -1000,3 +1000,83 @@ void ZextInst::AutoTransmitWhenIsConst()
         }
     }
 }
+
+//***************************  PhiNode  *************************************** */
+
+/// @brief 将操作数替换为指定的Value
+/// @param from 旧值
+/// @param to 替换值
+/// @return
+bool PhiNode::replaceUseWith(ValPtr from, ValPtr to)
+{
+    if (!from->isBasicBlockVal())
+    {
+        for (auto iter = record.begin(); iter != record.end(); iter++)
+        {
+            if ((*iter).first == from)
+            {
+                (*iter).first = to;
+            }
+        }
+        to->insertUser(shared_from_this());
+    }
+    else
+    {
+        assert(to->isBasicBlockVal());
+        for (auto iter = record.begin(); iter != record.end(); iter++)
+        {
+            if ((*iter).second == from)
+            {
+                BasicBlockPtr blk = std::static_pointer_cast<BasicBlock>(to);
+                (*iter).second = blk;
+            }
+        }
+        to->insertUser(shared_from_this());
+    }
+
+    return true;
+}
+
+/// @brief 添加来源 在智能指针对象建立后使用否则会出错
+/// @param val
+void PhiNode::addSrc(ValPtr val, BasicBlockPtr blk)
+{
+    val->insertUser(shared_from_this());
+    // blk只做指向作用 不记录User
+    record.push_back(std::make_pair(val, blk));
+}
+
+/// @brief 删除使用
+/// @param val
+void PhiNode::removeUse(ValPtr val)
+{
+    if (!val->isBasicBlockVal())
+    {
+        for (auto iter = record.begin(); iter != record.end();)
+        {
+            if ((*iter).first == val)
+            {
+                iter = record.erase(iter);
+            }
+            else
+            {
+                iter++;
+            }
+        }
+    }
+    else
+    {
+        for (auto iter = record.begin(); iter != record.end();)
+        {
+            if ((*iter).second == val)
+            {
+                iter = record.erase(iter);
+                break;
+            }
+            else
+            {
+                iter++;
+            }
+        }
+    }
+}

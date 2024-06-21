@@ -55,6 +55,9 @@ enum class Opcode
     // Zext 指令
     Zext,
 
+    // PhiNode
+    PhiNode,
+
     Unknown // 未知
 };
 
@@ -114,6 +117,10 @@ public:
     /// @brief 获取指令操作码对应的名字
     /// @return
     string getOpcodeName();
+
+    /// @brief 是否时PhiNode
+    /// @return 
+    bool isPhiNode();
 
     /// @brief 判断是否是分支指令
     /// @return
@@ -234,3 +241,9 @@ string GetelementInstStr(InstPtr getelem, Counter *cnt);
 /// @param cnt
 /// @return
 string ZextInstStr(InstPtr zext, Counter *cnt);
+
+/// @brief 获取phi节点的字符表示
+/// @param phi 
+/// @param cnt 
+/// @return 
+string PhiNodeStr(InstPtr phi, Counter *cnt);

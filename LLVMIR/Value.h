@@ -33,6 +33,7 @@ public:
         FunctionVal,    // 函数子类
         GlobalVari,     // 全局变量
         Constant,       // 常量基类(Int,  Expr等)
+        InitValueList,  // 数组初始化列表
         Unknown         // 未知
     };
 
@@ -58,6 +59,13 @@ public:
 
     /// @brief User,Value中的属性形成了环，释放时需要先调用释放内部引用计数
     virtual void clear();
+
+    /// @brief 是否是const修饰
+    /// @return
+    virtual bool isConstQualify() { return false; }
+
+    /// @brief 设置const修饰
+    virtual void setConstQualify() {};
 
     /// @brief 默认无参构造
     Value() : ValID(Value::Unknown){};
@@ -132,6 +140,12 @@ public:
         }
     }
 
+    /// @brief 是否是initValueList
+    /// @return
+    inline bool isInitValueList()
+    {
+        return getSubclassID() == Value::InitValueList;
+    }
     /// @brief 判断是否是常数数值类型
     /// @return
     inline bool isConstant()
@@ -140,7 +154,7 @@ public:
     }
 
     /// @brief 判断是否是整数常数
-    /// @return 
+    /// @return
     inline bool isConstantInt()
     {
         bool res = false;
@@ -195,6 +209,14 @@ public:
     /// @brief 是不是 zextinst
     /// @return
     bool isZextInst();
+
+    /// @brief 是否是分支指令
+    /// @return
+    bool isBranchInst();
+
+    /// @brief 判断是否时phi节点
+    /// @return 
+    bool isPhiNode();
 
     /// @brief 是否是函数形参
     /// @return

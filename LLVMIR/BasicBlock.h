@@ -117,6 +117,10 @@ public:
     /// @param inst
     void AddInstBack(InstPtr inst);
 
+    /// @brief 在基本块顶部插入指令 主要用于插入phi节点
+    /// @param inst 
+    void AddInstFront(InstPtr inst);
+
     /// @brief 在指定指令之前
     /// @param inst
     /// @param AtFront

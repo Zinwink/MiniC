@@ -16,6 +16,7 @@
 #include "Function.h"
 #include <iostream>
 #include "DerivedTypes.h"
+#include "InitValueList.h"
 
 /// @brief 析构函数
 IRGen::~IRGen()
@@ -58,10 +59,16 @@ IRGen::IRGen(ast_node *root, ModulePtr _module)
     // AST中的变量声明  declarationItems
     ast2ir_handers[ast_node_type::AST_OP_DECL_ITEMS] = &IRGen::ir_declItems;
     ast2ir_handers[ast_node_type::AST_OP_VAR_DEF] = &IRGen::ir_declVarDef;
+    ast2ir_handers[ast_node_type::AST_ARRAY_DEF] = &IRGen::ir_array_def; // 带有数组初始化的节点
 
     // AST const 修饰
     ast2ir_handers[ast_node_type::AST_OP_CONST_DECL_ITEMS] = &IRGen::ir_const_declItems;
     ast2ir_handers[ast_node_type::AST_OP_CONST_VAR_DEF] = &IRGen::ir_const_declVarDef;
+    ast2ir_handers[ast_node_type::AST_CONST_ARRAY_DEF] = &IRGen::ir_const_array_def; // 带有数组初始化的节点
+
+    // AST 初始化列表 只做容器使用
+    ast2ir_handers[ast_node_type::AST_ARRAY_INITLIST] = &IRGen::ir_initValueList;
+    ast2ir_handers[ast_node_type::AST_CONST_ARRAY_INITLIST] = &IRGen::ir_initValueList;
 
     // AST中的赋值Assign节点
     ast2ir_handers[ast_node_type::AST_OP_ASSIGN] = &IRGen::ir_assign;
@@ -1938,6 +1945,40 @@ bool IRGen::ir_leafNode_array(ast_node *node, LabelParams blocks)
             curUsedBlockIter = std::next(curUsedBlockIter);
         }
     }
+
+    return true;
+}
+
+/// @brief 无const修饰的数组初始化
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_array_def(ast_node *node, LabelParams blocks)
+{
+
+    return true;
+}
+
+/// @brief const修饰的数组初始化
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_const_array_def(ast_node *node, LabelParams blocks)
+{
+    return true;
+}
+
+/// @brief 翻译获取数组的初始化列表 const 初始化列表以及非const的列表处理方式相同
+/// @param node
+/// @param blocks
+/// @return
+bool IRGen::ir_initValueList(ast_node *node, LabelParams blocks)
+{
+    // InitListPtr nodeVal=
+    // for (auto &son : node->sons)
+    // {
+
+    // }
 
     return true;
 }

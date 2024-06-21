@@ -23,6 +23,24 @@ public:
     /// @param fun
     /// @return
     static std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> computeDoms(FuncPtr fun);
+
+    /// @brief 根据支配节点求解支配边界
+    /// @param fun 
+    /// @param Doms 
+    /// @return 
+    static std::unordered_map<BasicBlockPtr,std::set<BasicBlockPtr>> computeDomFronter(FuncPtr fun,std::unordered_map<BasicBlockPtr,std::set<BasicBlockPtr>>& Doms);
+
+    /// @brief 根据支配节点求解 直接支配节点
+    /// @param fun 
+    /// @param Doms 
+    /// @return 
+    static std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> computeIDom(FuncPtr fun, std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> &Doms);
+
+    /// @brief 根据Dom 获取支配树(先获取直接支配节点)
+    /// @param fun 
+    /// @param Doms 
+    /// @return 
+    static std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> computeDFT(FuncPtr fun, std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> &Doms);
 };
 
 //******************************** CFG控制流图的可视化 ******************************

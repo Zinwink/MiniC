@@ -16,6 +16,7 @@
 #include "Constant.h"
 #include "Type.h"
 #include "Argument.h"
+#include <unordered_map>
 
 class AllocaInst;
 class StoreInst;
@@ -27,6 +28,7 @@ class ICmpInst;
 class BranchInst;
 class getelementptrInst;
 class ZextInst;
+class PhiNode;
 
 using AllocaInstPtr = std::shared_ptr<AllocaInst>;
 using StoreInstPtr = std::shared_ptr<StoreInst>;
@@ -38,6 +40,7 @@ using ICmpInstPtr = std::shared_ptr<ICmpInst>;
 using BranchInstPtr = std::shared_ptr<BranchInst>;
 using getelemInstPtr = std::shared_ptr<getelementptrInst>;
 using ZextInstPtr = std::shared_ptr<ZextInst>;
+using PhiNodePtr = std::shared_ptr<PhiNode>;
 
 /// @brief AllocaInst (将充当变量)(AllocaInst本身的Type是指针类型)
 class AllocaInst : public Instruction
@@ -53,6 +56,8 @@ private:
     // 特殊地 如果alloca 是为函数形参声明的空间 前4个空间仍然满足 [fp,#-num]
     // 但是 除前4个形参外的 Alloca 空间实际上 指向的为调用函数时压栈的空间 [fp,#(8+(argNo-4)*4)] argNo从0开始
     int64_t offset;
+
+    bool hasConstQualifier = false; // 是否是const修饰
 
 public:
     /// @brief 析构函数
@@ -92,6 +97,16 @@ public:
         {
             return false;
         }
+    }
+
+    /// @brief 设置const修饰
+    void setConstQualify() override { hasConstQualifier = true; }
+
+    /// @brief 是否由const修饰
+    /// @return
+    bool isConstQualify() override
+    {
+        return hasConstQualifier;
     }
 
     /// @brief 判断是否是为函数形参声明的栈空间
@@ -281,7 +296,7 @@ public:
             {
                 // val1， val2 都不是常数
                 if (val1 >= val2)
-                {  //按地址排序
+                { // 按地址排序
                     op1 = val2;
                     op2 = val1;
                 }
@@ -606,4 +621,85 @@ public:
     /// @param i32
     /// @return
     static ZextInstPtr get(ValPtr i1, Type *i32);
+};
+
+// phi节点
+class PhiNode : public Instruction
+{
+private:
+    ValPtr addr = nullptr; // 对应的alloca地址
+    std::list<std::pair<ValPtr, BasicBlockPtr>> record;
+
+public:
+    /// @brief 析构函数
+    ~PhiNode() { addr.reset(); }
+
+    /// @brief 清空 打破可能的环(好像不存在环 还是写一下)
+    void clear() override
+    {
+        Instruction::clear();
+        addr.reset();
+        record.clear();
+    }
+
+    /// @brief 获取phi节点对应的内存alloca地址
+    /// @return
+    ValPtr &getAddr() { return addr; }
+
+    /// @brief 设置对应的alloca地址
+    /// @param _addr
+    void setAddr(ValPtr _addr) { addr = _addr; }
+
+    /// @brief 默认构造函数
+    PhiNode(ValPtr _addr)
+    {
+        setOpcode(Opcode::PhiNode);
+        setAddr(_addr);
+        Type *_addrTy = _addr->getType();
+        PointerType *pty = static_cast<PointerType *>(_addrTy);
+        setType(Type::copy(pty->getElemntTy()));
+    }
+
+    /// @brief 添加来源 在智能指针对象建立后使用否则会出错
+    /// @param val
+    void addSrc(ValPtr val, BasicBlockPtr blk);
+
+    /// @brief 获取phi节点的记录
+    /// @return
+    inline std::list<std::pair<ValPtr, BasicBlockPtr>> &getSrc() { return record; }
+
+    /// @brief 判断是否是死指令
+    /// @return
+    bool isDeadInst() override
+    {
+        if (getUseList().size() == 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /// 下面需要重写一下replaceUseWith以及removeUse 因为phi节点比较特殊 它的操作数不在operands中
+
+    /// @brief 将操作数替换为指定的Value
+    /// @param from 旧值
+    /// @param to 替换值
+    /// @return
+    virtual bool replaceUseWith(ValPtr from, ValPtr to) override;
+
+    /// @brief 删除使用
+    /// @param val
+    virtual void removeUse(ValPtr val) override;
+
+    /// @brief 创建智能指针对象 (注意要使用setBBlockParent指定所在基本块)
+    /// @param _addr
+    /// @return
+    static PhiNodePtr get(ValPtr _addr)
+    {
+        PhiNodePtr phi = std::make_shared<PhiNode>(_addr);
+        return phi;
+    }
 };

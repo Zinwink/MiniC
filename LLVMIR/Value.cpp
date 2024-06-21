@@ -160,6 +160,32 @@ bool Value::isZextInst()
     return res;
 }
 
+/// @brief 是否是分支指令
+/// @return
+bool Value::isBranchInst()
+{
+    bool res = false;
+    if (isInstruct())
+    {
+        Instruction *inst = static_cast<Instruction *>(this);
+        res = inst->isBranchInst();
+    }
+    return res;
+}
+
+/// @brief 判断是否时phi节点
+/// @return
+bool Value::isPhiNode()
+{
+    bool res = false;
+    if (isInstruct())
+    {
+        Instruction *inst = static_cast<Instruction *>(this);
+        res = inst->isPhiNode();
+    }
+    return res;
+}
+
 /// @brief 判断是 callInst
 /// @return
 bool Value::isCallInst()
@@ -216,8 +242,17 @@ string getllvmID(ValPtr val, Counter *cnt)
     }
     else if (val->getSubclassID() == Value::InstructionVal)
     {
-        int64_t ord = cnt->getCount(val);
-        str = string("%") + std::to_string(ord);
+        InstPtr inst = std::static_pointer_cast<Instruction>(val);
+        if (!inst->isPhiNode())
+        {
+            int64_t ord = cnt->getCount(val);
+            str = string("%t") + std::to_string(ord);
+        }
+        else
+        {
+            int64_t ord = cnt->getCount(val);
+            str = string("%t") + std::to_string(ord);
+        }
     }
     return str;
 }

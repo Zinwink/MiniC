@@ -25,6 +25,7 @@ private:
     Type *globalValType = nullptr;
     ConstantPtr initilizer = nullptr;        // 初始化的值
     std::unordered_set<FuncPtr> whereFunDef; // 用于记录该全局变量在哪里被定值使用
+    bool hasConstQualifier = false;          // 是否是const修饰
 
 public:
     /// @brief
@@ -45,6 +46,16 @@ public:
     /// @brief 获取全局变量中存放值得类型
     /// @return
     Type *getElemTy() { return globalValType; }
+
+    /// @brief 设置const修饰
+    void setConstQualify() override { hasConstQualifier = true; }
+
+    /// @brief 是否由const修饰
+    /// @return
+    bool isConstQualify() override
+    {
+        return hasConstQualifier;
+    }
 
     /// @brief 是否在函数中有定义(IR生成后使用)
     /// @param fun

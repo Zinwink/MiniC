@@ -86,12 +86,22 @@ string Instruction::getOpcodeName()
     case Opcode::Zext:
         name = string("zext");
         break;
+    case Opcode::PhiNode:
+        name = string("phi");
+        break;
 
     default:
         name = string("UnknownOpcodeName");
         break;
     }
     return name;
+}
+
+/// @brief 是否时PhiNode
+/// @return
+bool Instruction::isPhiNode()
+{
+    return op == Opcode::PhiNode;
 }
 
 /// @brief 判断是否是分支指令
@@ -215,6 +225,9 @@ string Instruction::toIRstr(InstPtr inst, Counter *cnt)
         break;
     case Opcode::Zext:
         str = ZextInstStr(inst, cnt);
+        break;
+    case Opcode::PhiNode:
+        str = PhiNodeStr(inst, cnt);
         break;
 
     default:
@@ -387,5 +400,31 @@ string ZextInstStr(InstPtr zext, Counter *cnt)
     string str;
     ValPtr src = zext->getOperand(0);
     str = getllvmID(zext, cnt) + string(" = ") + zext->getOpcodeName() + string(" ") + src->getType()->TypeStr() + string(" ") + getllvmID(src, cnt) + string(" to ") + zext->getType()->TypeStr();
+    return str;
+}
+
+/// @brief 获取phi节点的字符表示
+/// @param phi
+/// @param cnt
+/// @return
+string PhiNodeStr(InstPtr phi, Counter *cnt)
+{
+    PhiNodePtr phi_cast = std::static_pointer_cast<PhiNode>(phi);
+    string str;
+    str = getllvmID(phi, cnt) + string(" = ") + phi->getOpcodeName() + string(" ") + phi->getType()->TypeStr() + string(" ");
+    string srclist = "";
+    auto &flowList = phi_cast->getSrc();
+    for (auto iter=flowList.begin();iter!=flowList.end();iter++)
+    {
+        auto& pair = *iter;
+        ValPtr& val = pair.first;
+        string item = string("[ ") + getllvmID(val, cnt) + string(", ") + getllvmID(pair.second, cnt) + string(" ]");
+        if (iter != std::prev(flowList.end()))
+        {
+            item += ", ";
+        }
+        srclist += item;
+    }
+    str += srclist;
     return str;
 }

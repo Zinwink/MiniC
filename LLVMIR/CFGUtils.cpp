@@ -72,6 +72,95 @@ std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> CFGUtils::computeDoms
     return Doms;
 }
 
+/// @brief 根据支配节点求解支配边界
+/// @param fun
+/// @param Doms
+/// @return
+std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> CFGUtils::computeDomFronter(FuncPtr fun, std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> &Doms)
+{
+    // 在已有支配节点的条件下计算支配边界
+    std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> DomFronter;
+    auto &blockList = fun->getBasicBlocks();
+    // 逆序遍历基本块 根据支配边界的定义求解每个块的支配边界
+    for (auto iter = blockList.rbegin(); iter != blockList.rend(); iter++)
+    {
+        auto &blk = *iter;
+        auto preds = blk->getImmedPreds();
+        for (auto &pred : preds)
+        {
+            for (auto &dom : Doms[pred])
+            {
+                // pred的支配节点
+                // 如果前驱pred的支配节点 不严格支配该节点 则前驱的支配节点的支配边界中包含该节点
+                // 根据定义
+                auto isInDom = Doms[blk].find(dom);
+                bool isSDom = (isInDom != Doms[blk].end()) && (*isInDom != blk); // 严格支配的定义 s dom a && s!=a;
+                if (!isSDom)
+                {
+                    // 不严格支配 则说明 dom 的支配边界包含本节点
+                    DomFronter[dom].insert(blk);
+                }
+            }
+        }
+    }
+    return DomFronter;
+}
+
+/// @brief 根据支配节点求解 直接支配节点
+/// @param fun
+/// @param Doms
+/// @return
+std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> CFGUtils::computeIDom(FuncPtr fun, std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> &Doms)
+{
+    // 根据Doms 计算直接支配节点 也构成了支配树
+    std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> IDoms;
+    auto &blkList = fun->getBasicBlocks();
+    for (auto &blk : blkList)
+    {
+        auto doms = Doms[blk]; // blk的支配点集
+        doms.erase(blk);       // 先删除自身(没使用引用 不会更改参数)
+        for (auto &dom : doms)
+        {
+            std::set<BasicBlockPtr> res = doms;
+            res.erase(dom);
+            // 看dom 是否支配剩余的节点 如果不支配 说明是blk的直接支配节点
+            bool isIDom = true;
+            for (auto &resElem : res)
+            {
+                isIDom = isIDom && (Doms[resElem].find(dom) == Doms[resElem].end());
+            }
+            if (isIDom)
+            {
+                IDoms[blk].insert(dom);
+                break;
+            }
+        }
+    }
+    return IDoms;
+}
+
+/// @brief 根据Dom 获取支配树(先获取直接支配节点)
+/// @param fun
+/// @param Doms
+/// @return
+std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> CFGUtils::computeDFT(FuncPtr fun, std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> &Doms)
+{
+    std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> DFTree;
+    // 获取直接支配节点
+    std::unordered_map<BasicBlockPtr, std::set<BasicBlockPtr>> IDoms = CFGUtils::computeIDom(fun, Doms);
+    // 遍历直接支配节点 得到支配树记录
+    for (auto &elem : IDoms)
+    {
+        auto &blk = elem.first;
+        auto &IdomSet = elem.second;
+        assert(IdomSet.size() == 1);
+        auto &idom = *(IdomSet.begin());
+        DFTree[idom].insert(blk);
+    }
+    return DFTree;
+}
+
+// *******************  数据流图的可视化   ***************************
 /// @brief 根据基本块得到对应的节点
 /// @param g
 /// @param blk
@@ -129,7 +218,7 @@ void genCFG(FuncPtr fun, const std::string &filePath)
 {
     // 先创建 gv上下文
     GVC_t *gv = gvContext();
-    
+
     // 创建一个图形  参数依次表示 图形名称，有向图，使用默认的内存分配器
     string funcName = fun->getName();
     Agraph_t *g = agopen((char *)(funcName.c_str()), Agdirected, nullptr);
