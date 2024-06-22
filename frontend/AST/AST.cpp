@@ -250,7 +250,18 @@ void updateDeclTypes(ast_node *parent)
             Type *ty = Type::copy(parent->attr);
             son->sons[0]->attr = ty;
         }
-        else {
+        else if (sonTy == ast_node_type::AST_ARRAY_DEF)
+        {
+            Type *ty = Type::copy(parent->attr);
+            son->sons[0]->attr = ty;
+        }
+        else if (sonTy == ast_node_type::AST_CONST_ARRAY_DEF)
+        {
+            Type *ty = Type::copy(parent->attr);
+            son->sons[0]->attr = ty;
+        }
+        else
+        {
             Type *ty = Type::copy(parent->attr);
             son->attr = ty;
         }

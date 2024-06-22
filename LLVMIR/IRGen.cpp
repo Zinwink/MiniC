@@ -1955,6 +1955,121 @@ bool IRGen::ir_leafNode_array(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_array_def(ast_node *node, LabelParams blocks)
 {
+    ast_node *array = node->sons[0];
+    ast_node *right = node->sons[1];
+    string arrName = array->literal_val.digit.id; // 数组名
+    int lineno = array->literal_val.line_no;      // 数组所在的行
+    // 先看有没有重复声明
+    ValPtr val = scoper->curTab()->findDeclVarOfCurTab(arrName); // 查找当前作用域
+    if (val != nullptr)
+    {
+        // 查找到该 数组已经声明
+        std::cout << ">>>Error:the array variable " << arrName << " is redifined! line:" << lineno << std::endl;
+        return false;
+    }
+    // 访问一下右边的子节点 得到数组的初始化列表
+    ast_node *rightRes = ir_visit_astnode(right, {});
+    if (rightRes == nullptr)
+        return false;
+    InitListPtr initValues = std::static_pointer_cast<InitValueList>(rightRes->value); // 数组的初始化列表
+    if (scoper->curTab()->isGlobalTab())
+    {
+        // 是全局数组
+        ast_node *arrIndex = array->sons[0];
+        std::vector<int> dims;
+        for (auto &id : arrIndex->sons)
+        {
+            ast_node *res = ir_visit_astnode(id, {});
+            if (res == nullptr)
+                return false;
+            ConstantIntPtr c = std::static_pointer_cast<ConstantInt>(res->value);
+            dims.push_back(c->getValue());
+        }
+        ArrayType *arrty = ArrayType::get(dims, Type::copy(array->attr)); // 获取数组类型
+        GlobalVariPtr g = GlobalVariable::get(arrty, arrName);
+        module->addGlobalVar(g);
+        scoper->curTab()->newDeclVar(g); // 加入符号表中
+        // 全局数组的话 初始值一定是常数 遍历初始化列表 根据规则设置全局变量的initilizer
+        globInitilizerPtr init = globInitilizer::get(Type::copy(arrty));
+        ConstantIntPtr zero = ConstantInt::get(32);
+        zero->setValue(0);
+        globInitilizer::initElem(init, dims, zero); // 初始化值为0
+        std::map<int, ValPtr> splitRes;
+        splitMapInitList(dims, initValues, -1, splitRes);
+        // 下面根据展平的一维结果计算替换得到相应的全局变量初始化结果
+        globInitilizer::replaceValueInPos(init, dims, splitRes);
+        g->setInitilizer(init); // 设置初始化列表
+    }
+    else
+    {
+        // 不是全局作用域
+        ast_node *arrIndex = array->sons[0];
+        std::vector<int> dims;
+        for (auto &id : arrIndex->sons)
+        {
+            ast_node *res = ir_visit_astnode(id, {});
+            if (res == nullptr)
+                return false;
+            ConstantIntPtr c = std::static_pointer_cast<ConstantInt>(res->value);
+            dims.push_back(c->getValue());
+        }
+        ArrayType *arrty = ArrayType::get(dims, Type::copy(array->attr)); // 获取数组类型
+        AllocaInstPtr alloca = AllocaInst::get(arrName, arrty);
+        scoper->curTab()->newDeclVar(alloca);       //  将声明变量加入当前符号表中
+        scoper->curFun()->insertAllocaInst(alloca); // 将allocaInst加入到指令基本块中
+        alloca->setBBlockParent(scoper->curFun()->getEntryBlock());
+
+        string memSetName = string("llvm.memset.p0i8.i64");
+        ValPtr memsetV = scoper->globalTab()->findDeclVar(memSetName);
+        FuncPtr memset = std::static_pointer_cast<Function>(memsetV);
+        std::map<int, ValPtr> splitRes;
+        splitMapInitList(dims, initValues, -1, splitRes);
+        // 先创建bitcast
+        BitCastPtr bitcast = BitCastInst::get(alloca, PointerType::get(Type::getIntNType(8)));
+        bitcast->setBBlockParent(getCurBlock());
+        getCurBlock()->AddInstBack(bitcast);
+
+        std::vector<ValPtr> relArgs;
+        relArgs.push_back(bitcast);
+        ConstantIntPtr zero = ConstantInt::get(8);
+        zero->setValue(0);
+        relArgs.push_back(zero);
+
+        int numBytes = 4;
+        for (auto ind : dims)
+        {
+            numBytes *= ind;
+        }
+        ConstantIntPtr bytes = ConstantInt::get(64);
+        bytes->setValue(numBytes);
+        relArgs.push_back(bytes);
+        ConstantIntPtr falseC = ConstantInt::get(1);
+        falseC->setValue(0);
+        relArgs.push_back(falseC);
+        CallInstPtr callMem = CallInst::create(memset, relArgs, getCurBlock());
+        module->addExternFunction(memset);
+        // 下面遍历 splitRes 记录 使用store指令
+        for (auto &pair : splitRes)
+        {
+            int pos = pair.first;
+            auto &val = pair.second;
+            if (val->isConstantInt())
+            { // 存放0 则跳过
+                ConstantIntPtr valc = std::static_pointer_cast<ConstantInt>(val);
+                if (valc->getValue() == 0)
+                {
+                    continue;
+                }
+            }
+            ConstantIntPtr offset = ConstantInt::get(32);
+            offset->setValue(pos);
+            getelemInstPtr gep = getelementptrInst::get(alloca, dims.size(), offset);
+            gep->setBBlockParent(getCurBlock());
+            getCurBlock()->AddInstBack(gep);
+            // 创建store指令
+            StoreInstPtr str = StoreInst::create(val, gep, getCurBlock());
+        }
+    }
 
     return true;
 }
@@ -1965,6 +2080,122 @@ bool IRGen::ir_array_def(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_const_array_def(ast_node *node, LabelParams blocks)
 {
+    ast_node *array = node->sons[0];
+    ast_node *right = node->sons[1];
+    string arrName = array->literal_val.digit.id; // 数组名
+    int lineno = array->literal_val.line_no;      // 数组所在的行
+    // 先看有没有重复声明
+    ValPtr val = scoper->curTab()->findDeclVarOfCurTab(arrName); // 查找当前作用域
+    if (val != nullptr)
+    {
+        // 查找到该 数组已经声明
+        std::cout << ">>>Error:the array variable " << arrName << " is redifined! line:" << lineno << std::endl;
+        return false;
+    }
+    // 访问一下右边的子节点 得到数组的初始化列表
+    ast_node *rightRes = ir_visit_astnode(right, {});
+    if (rightRes == nullptr)
+        return false;
+    InitListPtr initValues = std::static_pointer_cast<InitValueList>(rightRes->value); // 数组的初始化列表
+    if (scoper->curTab()->isGlobalTab())
+    {
+        // 是全局数组
+        ast_node *arrIndex = array->sons[0];
+        std::vector<int> dims;
+        for (auto &id : arrIndex->sons)
+        {
+            ast_node *res = ir_visit_astnode(id, {});
+            if (res == nullptr)
+                return false;
+            ConstantIntPtr c = std::static_pointer_cast<ConstantInt>(res->value);
+            dims.push_back(c->getValue());
+        }
+        ArrayType *arrty = ArrayType::get(dims, Type::copy(array->attr)); // 获取数组类型
+        GlobalVariPtr g = GlobalVariable::get(arrty, arrName);
+        module->addGlobalVar(g);
+        scoper->curTab()->newDeclVar(g); // 加入符号表中
+        // 全局数组的话 初始值一定是常数 遍历初始化列表 根据规则设置全局变量的initilizer
+        globInitilizerPtr init = globInitilizer::get(Type::copy(arrty));
+        ConstantIntPtr zero = ConstantInt::get(32);
+        zero->setValue(0);
+        globInitilizer::initElem(init, dims, zero); // 初始化值为0
+        std::map<int, ValPtr> splitRes;
+        splitMapInitList(dims, initValues, -1, splitRes);
+        // 下面根据展平的一维结果计算替换得到相应的全局变量初始化结果
+        globInitilizer::replaceValueInPos(init, dims, splitRes);
+        g->setInitilizer(init); // 设置初始化列表
+    }
+    else
+    {
+        // 不是全局作用域
+        ast_node *arrIndex = array->sons[0];
+        std::vector<int> dims;
+        for (auto &id : arrIndex->sons)
+        {
+            ast_node *res = ir_visit_astnode(id, {});
+            if (res == nullptr)
+                return false;
+            ConstantIntPtr c = std::static_pointer_cast<ConstantInt>(res->value);
+            dims.push_back(c->getValue());
+        }
+        ArrayType *arrty = ArrayType::get(dims, Type::copy(array->attr)); // 获取数组类型
+        AllocaInstPtr alloca = AllocaInst::get(arrName, arrty);
+        scoper->curTab()->newDeclVar(alloca);       //  将声明变量加入当前符号表中
+        scoper->curFun()->insertAllocaInst(alloca); // 将allocaInst加入到指令基本块中
+        alloca->setBBlockParent(scoper->curFun()->getEntryBlock());
+
+        string memSetName = string("llvm.memset.p0i8.i64");
+        ValPtr memsetV = scoper->globalTab()->findDeclVar(memSetName);
+        FuncPtr memset = std::static_pointer_cast<Function>(memsetV);
+        std::map<int, ValPtr> splitRes;
+        splitMapInitList(dims, initValues, -1, splitRes);
+        // 先创建bitcast
+        BitCastPtr bitcast = BitCastInst::get(alloca, PointerType::get(Type::getIntNType(8)));
+        bitcast->setBBlockParent(getCurBlock());
+        getCurBlock()->AddInstBack(bitcast);
+
+        std::vector<ValPtr> relArgs;
+        relArgs.push_back(bitcast);
+        ConstantIntPtr zero = ConstantInt::get(8);
+        zero->setValue(0);
+        relArgs.push_back(zero);
+
+        int numBytes = 4;
+        for (auto ind : dims)
+        {
+            numBytes *= ind;
+        }
+        ConstantIntPtr bytes = ConstantInt::get(64);
+        bytes->setValue(numBytes);
+        relArgs.push_back(bytes);
+        ConstantIntPtr falseC = ConstantInt::get(1);
+        falseC->setValue(0);
+        relArgs.push_back(falseC);
+        CallInstPtr callMem = CallInst::create(memset, relArgs, getCurBlock());
+        module->addExternFunction(memset);
+        // 下面遍历 splitRes 记录 使用store指令
+        for (auto &pair : splitRes)
+        {
+            int pos = pair.first;
+            auto &val = pair.second;
+            if (val->isConstantInt())
+            { // 存放0 则跳过
+                ConstantIntPtr valc = std::static_pointer_cast<ConstantInt>(val);
+                if (valc->getValue() == 0)
+                {
+                    continue;
+                }
+            }
+            ConstantIntPtr offset = ConstantInt::get(32);
+            offset->setValue(pos);
+            getelemInstPtr gep = getelementptrInst::get(alloca, dims.size(), offset);
+            gep->setBBlockParent(getCurBlock());
+            getCurBlock()->AddInstBack(gep);
+            // 创建store指令
+            StoreInstPtr str = StoreInst::create(val, gep, getCurBlock());
+        }
+    }
+
     return true;
 }
 
@@ -1974,12 +2205,15 @@ bool IRGen::ir_const_array_def(ast_node *node, LabelParams blocks)
 /// @return
 bool IRGen::ir_initValueList(ast_node *node, LabelParams blocks)
 {
-    // InitListPtr nodeVal=
-    // for (auto &son : node->sons)
-    // {
-
-    // }
-
+    InitListPtr nodeVal = InitValueList::get();
+    for (auto &son : node->sons)
+    {
+        ast_node *res = ir_visit_astnode(son, {});
+        if (res == nullptr)
+            return false;
+        nodeVal->addElem(res->value);
+    }
+    node->value = nodeVal;
     return true;
 }
 

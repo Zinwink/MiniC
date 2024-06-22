@@ -35,7 +35,7 @@ void PhiElim(FuncPtr fun)
                 BasicBlockPtr splitEdge = BasicBlock::get(fun);
                 // 获取前驱pred的跳转指令 进行替换
                 InstPtr &br = pred->back();
-                BasicBlockPtr &trueBlk = br->getOperand(1);
+                BasicBlockPtr trueBlk = std::static_pointer_cast<BasicBlock>(br->getOperand(1));
                 if (trueBlk == blk)
                 {
                     br->getOperandsList()[1] = splitEdge;
@@ -116,7 +116,6 @@ void PhiElim(FuncPtr fun)
         // 主要可能存在swap 这种循环引用的情况  需要引入临时变量解决
         for (auto &inst : instsInsert)
         {
-            
         }
     }
 }

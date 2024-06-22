@@ -15,6 +15,7 @@
 #include <map>
 #include <iostream>
 
+
 /// @brief 计算 基本块的 def use
 /// @param fun
 void LiveMemVariAnalysis::computeDefUse(FuncPtr fun)
@@ -136,7 +137,7 @@ void LiveMemVariAnalysis::buildChain(FuncPtr fun)
             }
             else if (inst->isStoreInst())
             {
-                ValPtr memaddr = inst->getOperand(1);
+                ValPtr memaddr = inst->getOperand(1);  
                 if (memaddr->isAllocaInst())
                 {
                     StoreInstPtr str = std::static_pointer_cast<StoreInst>(inst);
@@ -154,6 +155,7 @@ void LiveMemVariAnalysis::buildChain(FuncPtr fun)
         }
     }
 }
+
 
 /// @brief 拷贝传播阶段1(只对alloca,传播常数以及非常数,其余的内存地址只局部优化)
 /// @param fun

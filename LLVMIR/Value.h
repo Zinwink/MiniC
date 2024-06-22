@@ -32,7 +32,7 @@ public:
         ArgumentVal,    // 函数参数
         FunctionVal,    // 函数子类
         GlobalVari,     // 全局变量
-        Constant,       // 常量基类(Int,  Expr等)
+        ConstantV,       // 常量基类(Int,  Expr等)
         InitValueList,  // 数组初始化列表
         Unknown         // 未知
     };
@@ -150,7 +150,7 @@ public:
     /// @return
     inline bool isConstant()
     {
-        return getSubclassID() == Value::Constant;
+        return getSubclassID() == Value::ConstantV;
     }
 
     /// @brief 判断是否是整数常数
@@ -174,6 +174,10 @@ public:
     {
         return getSubclassID() == Value::GlobalVari;
     }
+
+    /// @brief 判断是否是全局数组的初始化列表
+    /// @return 
+    bool isGlobInitilizerList();
 
     /// @brief 是否是指令类型
     /// @return
@@ -215,7 +219,7 @@ public:
     bool isBranchInst();
 
     /// @brief 判断是否时phi节点
-    /// @return 
+    /// @return
     bool isPhiNode();
 
     /// @brief 是否是函数形参

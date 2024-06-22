@@ -28,6 +28,7 @@ class ICmpInst;
 class BranchInst;
 class getelementptrInst;
 class ZextInst;
+class BitCastInst; // bitcast指令
 class PhiNode;
 class PhiElimMove; // 伪指令  phi消减时使用
 
@@ -43,6 +44,7 @@ using getelemInstPtr = std::shared_ptr<getelementptrInst>;
 using ZextInstPtr = std::shared_ptr<ZextInst>;
 using PhiNodePtr = std::shared_ptr<PhiNode>;
 using PhiElimMovePtr = std::shared_ptr<PhiElimMove>;
+using BitCastPtr = std::shared_ptr<BitCastInst>; // bitcast指令
 
 /// @brief AllocaInst (将充当变量)(AllocaInst本身的Type是指针类型)
 class AllocaInst : public Instruction
@@ -116,23 +118,34 @@ public:
         }
         else
         {
-            if (!AllocatedType->isArrayType())
-            {
-                // alloca不是 作为数组首地址使用 而是作为内存容器存放 int 或者指针类型(如函数形参)
-                bool res = false;
-                for (auto &user : getUseList())
-                {
-                    if (user->isLoadInst())
-                    {
-                        if (user->isLoadInst())
-                        {
-                            res = true;
-                            break;
-                        }
-                    }
-                }
-                return res;
-            }
+            // if (!AllocatedType->isArrayType())
+            // {
+            //     // alloca不是 作为数组首地址使用 而是作为内存容器存放 int 或者指针类型(如函数形参)
+            //     bool res = true;
+            //     for (auto &user : getUseList())
+            //     {
+            //         if (user->isLoadInst())
+            //         {
+            //             if (user->isLoadInst())
+            //             {
+            //                 res = false;
+            //                 break;
+            //             }
+            //         }
+            //     }
+            //     if (res)
+            //     {   //alloca是死的 则 其store也是死的
+            //         for (auto &user : getUseList())
+            //         {
+            //             if (user->isInstruct())
+            //             {
+            //                 InstPtr inst = std::static_pointer_cast<Instruction>(user);
+            //                 inst->setDeadSign();
+            //             }
+            //         }
+            //     }
+            // return res;
+            // }
         }
         return false;
     }
@@ -803,5 +816,34 @@ public:
         PhiElimMovePtr mov = std::make_shared<PhiElimMove>(phi, src);
         // 就不维护 UserList了 这是伪指令 用于方便后继转换使用
         return mov;
+    }
+};
+
+/// @brief bitcast指令
+class BitCastInst : public Instruction
+{
+public:
+    /// @brief 析构
+    ~BitCastInst() = default;
+
+    /// @brief 构造函数
+    /// @param src
+    /// @param dstTy
+    BitCastInst(ValPtr src, Type *dstTy)
+    {
+        setOpcode(Opcode::BitCast);
+        operands.push_back(src);
+        setType(dstTy);
+    }
+
+    /// @brief 创建智能指针对象
+    /// @param src
+    /// @param dstTy
+    /// @return
+    static BitCastPtr get(ValPtr src, Type *dstTy)
+    {
+        BitCastPtr bitcast = std::make_shared<BitCastInst>(src, dstTy);
+        src->insertUser(bitcast);
+        return bitcast;
     }
 };

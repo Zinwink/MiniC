@@ -285,56 +285,114 @@ bool ArmInstGen::Call2ArmInst(InstPtr call)
     MBlockPtr &curblk = machineModule->getCurBlock();
     ValPtr funv = call->getOperand(0); // 获取调用的函数
     // 创建函数名 对应的Label操作数
-    MOperaPtr LabelFun = MachineOperand::get(funv->getName());
-    std::vector<ValPtr> &operands = call->getOperandsList();
-
-    // bl指令
-    MBranchInstPtr bl = MBranchInst::get(curblk, MachineInst::BL, LabelFun);
-
-    for (size_t i = 1; i < operands.size(); i++)
+    if (funv->getName() == "llvm.memset.p0i8.i64")
     {
-        MOperaPtr MparamOp = MachineOperand::get(operands[i], machineModule);
-        // 前4号 形参使用 r0-r3
-        if (i <= 4)
+        MOperaPtr LabelFun = MachineOperand::get("memset");
+        std::vector<ValPtr> &operands = call->getOperandsList();
+        // bl指令
+        MBranchInstPtr bl = MBranchInst::get(curblk, MachineInst::BL, LabelFun);
+        BitCastPtr bit = std::static_pointer_cast<BitCastInst>(operands[1]);
+        ValPtr addr = bit->getOperand(0);                             // 地址操作数
+        ValPtr bytes = operands[3];                                   // 字节数目
+        MOperaPtr arg1 = nullptr;                                     // 存放数组的首地址
+        MOperaPtr arg2 = MachineOperand::get(MachineOperand::IMM, 0); // 第二个参数 为0
+        MOperaPtr arg3 = MachineOperand::get(bytes, machineModule);   // 存放字节数 立即数
+        // 下面根据addr的类型 进行处理 主要因为全局变量数组和函数局部变量数组地址处理方式不一样
+        if (addr->isAllocaInst())
         {
-            // 创建 mov 指令 会自动加入当前块
-            MMovInst::create(curblk, MachineOperand::createReg(i - 1), MparamOp, machineModule);
-            bl->addUse(MachineOperand::createReg(i - 1));
+            AllocaInstPtr alloca = std::static_pointer_cast<AllocaInst>(addr);
+            assert(!alloca->isAllocaArgument() && "IR may have some errors!"); // 一定是函数中的数组声明
+            int allocaOffset = alloca->getOffset();                            // 相对于fp的偏移 负数
+            MOperaPtr offset = MachineOperand::get(MachineOperand::IMM, allocaOffset);
+            offset = MachineOperand::AutoDealWithImm(offset, machineModule); // 自动处理 数值 能作为立即数操作数 则保持不变 否则使用ldr伪指令加载
+            // 使用 fp+offset的加法指令获取
+            MOperaPtr dst = MachineOperand::get(MachineOperand::VREG, machineModule->getRegNo());
+            MBinaryInstPtr add = MBinaryInst::get(curblk, MachineInst::ADD, dst, MachineOperand::createReg(11), offset);
+            curblk->addInstBack(add);
+            arg1 = MachineOperand::copy(dst); // 参数1的数组首地址地址得到
+        }
+        else if (addr->isGlobalVariable())
+        {
+            // 全局变量数组
+            MOperaPtr addrL = MachineOperand::get(addr, machineModule);
+            MOperaPtr glbvAddrReg = MachineOperand::get(MachineOperand::VREG, machineModule->getRegNo()); // 存放全局变量地址的寄存器
+            MLoadInstPtr ldr = MLoadInst::get(curblk, MachineInst::LDR, glbvAddrReg, addrL);
+            curblk->addInstBack(ldr);
+            arg1 = MachineOperand::copy(glbvAddrReg); // 参数1数组首地址地址得到
         }
         else
         {
-            // 后4 形参  使用 str 指令将 形参值保存到栈内存中(偏移需要修正)
-            int offset = 4 * (i - 5); // 形参的初始偏移  sp+#0  sp+#4
-            MOperaPtr offsetImm = nullptr;
-            if (offset != 0)
-            {
-                offsetImm = MachineOperand::get(MachineOperand::IMM, offset);
-                offsetImm = MachineOperand::AutoDealWithImm(offsetImm, machineModule, true); // 自动修正IMM
-            }
+            // 目前来看没有其他情况
+            // assert(arg1 != nullptr && "some erros may occur!");
+        }
+        assert(arg1 != nullptr && "some erros may occur!");
+        // 将 arg1 arg2 arg3 分别移动到 r0,r1,r2
+        MMovInstPtr mov1 = MMovInst::get(curblk, MachineInst::MOV, MachineOperand::createReg(0), arg1);
+        curblk->addInstBack(mov1);
+        MMovInstPtr mov2 = MMovInst::get(curblk, MachineInst::MOV, MachineOperand::createReg(1), arg2);
+        curblk->addInstBack(mov2);
+        MachineOperand::imm2Reg(arg3, 2, machineModule);
+        bl->addUse(MachineOperand::createReg(0));
+        bl->addUse(MachineOperand::createReg(1));
+        bl->addUse(MachineOperand::createReg(2));
+        bl->addDef(MachineOperand::createReg(0)); // 由于 r0-r3 不默认保护 认为调用时 都 def 了
+        bl->addDef(MachineOperand::createReg(1));
+        bl->addDef(MachineOperand::createReg(2));
+        bl->addDef(MachineOperand::createReg(3));
+        curblk->addInstBack(bl);
+    }
+    else
+    {
+        MOperaPtr LabelFun = MachineOperand::get(funv->getName());
+        std::vector<ValPtr> &operands = call->getOperandsList();
 
-            // 创建 STR 指令
-            if (MparamOp->isImm())
+        // bl指令
+        MBranchInstPtr bl = MBranchInst::get(curblk, MachineInst::BL, LabelFun);
+
+        for (size_t i = 1; i < operands.size(); i++)
+        {
+            MOperaPtr MparamOp = MachineOperand::get(operands[i], machineModule);
+            // 前4号 形参使用 r0-r3
+            if (i <= 4)
             {
-                MparamOp = MachineOperand::imm2VReg(MparamOp, machineModule);
+                // 创建 mov 指令 会自动加入当前块
+                MMovInst::create(curblk, MachineOperand::createReg(i - 1), MparamOp, machineModule);
+                bl->addUse(MachineOperand::createReg(i - 1));
             }
-            MStorePtr str = MStore::get(curblk, MachineInst::STR, MparamOp, MachineOperand::createReg(13), offsetImm);
-            // 加入当前块
-            curblk->addInstBack(str);
+            else
+            {
+                // 后4 形参  使用 str 指令将 形参值保存到栈内存中(偏移需要修正)
+                int offset = 4 * (i - 5); // 形参的初始偏移  sp+#0  sp+#4
+                MOperaPtr offsetImm = nullptr;
+                if (offset != 0)
+                {
+                    offsetImm = MachineOperand::get(MachineOperand::IMM, offset);
+                    offsetImm = MachineOperand::AutoDealWithImm(offsetImm, machineModule, true); // 自动修正IMM
+                }
+
+                // 创建 STR 指令
+                if (MparamOp->isImm())
+                {
+                    MparamOp = MachineOperand::imm2VReg(MparamOp, machineModule);
+                }
+                MStorePtr str = MStore::get(curblk, MachineInst::STR, MparamOp, MachineOperand::createReg(13), offsetImm);
+                // 加入当前块
+                curblk->addInstBack(str);
+            }
+        }
+        // 加入 bl 跳转指令
+        bl->addDef(MachineOperand::createReg(0)); // 由于 r0-r3 不默认保护 认为调用时 都 def 了
+        bl->addDef(MachineOperand::createReg(1));
+        bl->addDef(MachineOperand::createReg(2));
+        bl->addDef(MachineOperand::createReg(3));
+        curblk->addInstBack(bl);
+        // 跳转调用完毕后 使用mov 指令将 r0存放的返回值取出
+        if (!(call->getType()->isVoidType()))
+        {
+            MMovInstPtr move_vreg_r0 = MMovInst::get(curblk, MachineInst::MOV, MachineOperand::get(call, machineModule), MachineOperand::createReg(0));
+            curblk->addInstBack(move_vreg_r0);
         }
     }
-    // 加入 bl 跳转指令
-    bl->addDef(MachineOperand::createReg(0)); // 由于 r0-r3 不默认保护 认为调用时 都 def 了
-    bl->addDef(MachineOperand::createReg(1));
-    bl->addDef(MachineOperand::createReg(2));
-    bl->addDef(MachineOperand::createReg(3));
-    curblk->addInstBack(bl);
-    // 跳转调用完毕后 使用mov 指令将 r0存放的返回值取出
-    if (!(call->getType()->isVoidType()))
-    {
-        MMovInstPtr move_vreg_r0 = MMovInst::get(curblk, MachineInst::MOV, MachineOperand::get(call, machineModule), MachineOperand::createReg(0));
-        curblk->addInstBack(move_vreg_r0);
-    }
-
     return true;
 }
 

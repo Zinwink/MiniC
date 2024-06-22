@@ -26,12 +26,24 @@ string GlobalVariable::toIRstr(GlobalVariPtr g, Counter *cnt)
     }
     else
     {
-        // 如果是 int类型
-        ConstantIntPtr conInt = std::static_pointer_cast<ConstantInt>(g->getInitilizer());
-        initiStr = std::to_string(conInt->getValue());
+        // 数组初始化列表类型
+        if (initi->isGlobInitilizerList())
+        {
+            globInitilizerPtr initCast = std::static_pointer_cast<globInitilizer>(initi);
+            initiStr = globInitilizer::toStr(initCast);
+        }
+        else
+        {
+            ConstantIntPtr conInt = std::static_pointer_cast<ConstantInt>(g->getInitilizer());
+            initiStr = std::to_string(conInt->getValue());
+        }
     }
-
-    string str = string("@") + g->getName() + string(" = global ") + g->getElemTy()->TypeStr() + string(" ") + initiStr;
+    string str = string("@") + g->getName() + string(" = global ");
+    if (!initi->isGlobInitList())
+    { // 由于获取globInitilizer 时多编写了一个类型字符串 因此在这里判断一下 防止重复
+        str += g->getElemTy()->TypeStr();
+    }
+    str += (string(" ") + initiStr);
     return str;
 }
 

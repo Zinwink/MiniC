@@ -12,6 +12,8 @@
 #pragma once
 #include <vector>
 #include "Function.h"
+#include "DerivedTypes.h"
+#include "Type.h"
 
 void initStdFunc(std::vector<FuncPtr> &stdFuns)
 {
@@ -77,6 +79,18 @@ void initStdFunc(std::vector<FuncPtr> &stdFuns)
         stdFuns.push_back(putarray);
     }
 
+    {
+        // llvm.memset.p0i8.i64(i8*,i8,i64,i1)
+        argTys.clear();
+        argTys.push_back(PointerType::get(Type::getIntNType(8)));
+        argTys.push_back(Type::getIntNType(8));
+        argTys.push_back(Type::getIntNType(64));
+        argTys.push_back(Type::getIntNType(1));
+        FunctionType *llvm_memset = FunctionType::get(Type::getVoidType(), argTys);
+        FuncPtr memset = Function::get(llvm_memset, "llvm.memset.p0i8.i64");
+        memset->setBuildInTag();
+        stdFuns.push_back(memset);
+    }
     // 获取库函数列表
     argTys.clear();
 }

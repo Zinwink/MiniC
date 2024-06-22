@@ -55,6 +55,9 @@ enum class Opcode
     // Zext 指令
     Zext,
 
+    // BitCast
+    BitCast,
+
     // PhiNode
     PhiNode,
 
@@ -249,7 +252,13 @@ string ZextInstStr(InstPtr zext, Counter *cnt);
 string PhiNodeStr(InstPtr phi, Counter *cnt);
 
 /// @brief 只用于打印查看  这是自己引入为了方便翻译的伪指令
-/// @param phiMov 
-/// @param cnt 
-/// @return 
+/// @param phiMov
+/// @param cnt
+/// @return
 string PhiElimMoveStr(InstPtr phiMov, Counter *cnt);
+
+/// @brief Bitcast指令对应的字符串
+/// @param bitcast
+/// @param cnt
+/// @return
+string BitcastStr(InstPtr bitcast, Counter *cnt);

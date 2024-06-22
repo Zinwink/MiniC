@@ -13,6 +13,7 @@
 #include "Module.h"
 #include "Instruction.h"
 #include "DerivedInst.h"
+#include "Constant.h"
 
 /// @brief User,Value中的属性形成了环，释放时需要先调用释放内部引用计数
 void Value::clear()
@@ -30,6 +31,21 @@ void Value::replaceAllUsesWith(ValPtr _self, ValPtr newVal)
         (*iter)->replaceUseWith(_self, newVal);
         // 替换User中操作数完成后 将User冲UserList中删除
         iter = _self->UserList.erase(iter);
+    }
+}
+
+/// @brief 判断是否是全局数组的初始化列表
+/// @return
+bool Value::isGlobInitilizerList()
+{
+    if (isConstant())
+    {
+        Constant *c = static_cast<Constant *>(this);
+        return c->isGlobInitList();
+    }
+    else
+    {
+        return false;
     }
 }
 
@@ -231,7 +247,7 @@ string getllvmID(ValPtr val, Counter *cnt)
             str = string("%L") + std::to_string(ord);
         }
     }
-    else if (val->getSubclassID() == Value::Constant)
+    else if (val->getSubclassID() == Value::ConstantV)
     {
         // 目前只有 int类型常量
         if (val->getType()->isIntegerType())

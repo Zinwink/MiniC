@@ -13,6 +13,7 @@
 #include "ActiveVariableAnalysis.h"
 #include <iostream>
 #include <fstream>
+#include "PlatformArm32.h"
 
 //********************************** interval ****************************************
 /// @brief 创建智能指针对象 并根据参数计算出start end
@@ -435,48 +436,6 @@ void LinearScan::computeIntervals(MFuncPtr fun)
         }
         interval->end = end;
     }
-    // bool change;
-    // change = true;
-    // while (change)
-    // {
-    //     change = false;
-    //     // std::vector<Interval *> t(intervals.begin(), intervals.end());
-    //     // for (size_t i = 0; i < intervals.size(); i++)
-    //     //     for (size_t j = i + 1; j < intervals.size(); j++)
-    //     for (auto it1 = intervals.begin(); it1 != intervals.end(); it1++)
-    //         for (auto it2 = std::next(it1); it2 != intervals.end(); it2++)
-    //         {
-    //             IntervalPtr w1 = *it1;
-    //             IntervalPtr w2 = *it2;
-
-    //             if (*(w1->def) == *(w2->def))
-    //             {
-    //                 std::set<MOperaPtr> temp;
-    //                 std::set_intersection(w1->uses.begin(), w1->uses.end(), w2->uses.begin(), w2->uses.end(), inserter(temp, temp.end()));
-    //                 if (!temp.empty())
-    //                 {
-    //                     change = true;
-    //                     // w1->defs.insert(w2->defs.begin(), w2->defs.end());
-    //                     // w1->uses.insert(w2->uses.begin(), w2->uses.end());
-    //                     // // w1->start = std::min(w1->start, w2->start);
-    //                     // // w1->end = std::max(w1->end, w2->end);
-    //                     // auto w1Min = std::min(w1->start, w1->end);
-    //                     // auto w1Max = std::max(w1->start, w1->end);
-    //                     // auto w2Min = std::min(w2->start, w2->end);
-    //                     // auto w2Max = std::max(w2->start, w2->end);
-    //                     // w1->start = std::min(w1Min, w2Min);
-    //                     // w1->end = std::max(w1Max, w2Max);
-    //                     // // auto it = std::find(intervals.begin(), intervals.end(), w2);
-    //                     // // if (it != intervals.end())
-    //                     // //     intervals.erase(it);
-    //                     // it2 = intervals.erase(it2);
-    //                     // it2--;
-    //                     std::cout << "检测到交汇值-----------------------------------" << std::endl;
-    //                     assert(0);
-    //                 }
-    //             }
-    //         }
-    // }
 
     // 根据起始位置排序
     sort(intervals.begin(), intervals.end(), Interval::cmpLtStart);
@@ -564,24 +523,52 @@ void LinearScan::genSpillCode(IntervalPtr interSpilled)
     {
         // 其他类型 则开辟空间
         MOperaPtr offsetImm = nullptr;
+        MBlockPtr &defBlock = defInst->getParent(); // def语句对应的块
         auto findIter = vregSpillOffset.find(def->getRegNo());
         if (findIter == vregSpillOffset.end())
         {
             // 没找到相关记录 则开辟溢出空间
             int offset = -(curFun->AllocaStack(4)); // 相对于fp的 偏移
             offsetImm = MachineOperand::get(MachineOperand::IMM, offset);
-            offsetImm = MachineOperand::AutoDealWithImm(offsetImm, machineModule, true);
             vregSpillOffset.emplace(def->getRegNo(), offsetImm); // 插入记录
+            if (!Arm32::isLegalDisp(offset))
+            {
+                // 如果不是合法偏移 则需要使用ldr伪指令
+                MOperaPtr vreg = MachineOperand::get(MachineOperand::VREG, curFun->genSpillLoadVregNo()); // 生成寄存器
+                MLoadInstPtr ldr = MLoadInst::get(defBlock, MachineInst::LDR, vreg, offsetImm);
+                defBlock->insertInstAfter(defInst, ldr);
+                MStorePtr str = MStore::get(defBlock, MachineInst::STR, MachineOperand::copy(def), MachineOperand::createReg(11), MachineOperand::copy(vreg));
+                defBlock->insertInstAfter(ldr, str);
+            }
+            else
+            {
+                // 是合法偏移
+                MStorePtr str = MStore::get(defBlock, MachineInst::STR, MachineOperand::copy(def), MachineOperand::createReg(11), offsetImm);
+                defBlock->insertInstAfter(defInst, str);
+            }
         }
         else
         {
             // 找到相关记录 复用空间
             offsetImm = MachineOperand::copy(findIter->second);
+            if (!Arm32::isLegalDisp(offsetImm->getVal()))
+            {
+                MOperaPtr vreg = MachineOperand::get(MachineOperand::VREG, curFun->genSpillLoadVregNo()); // 生成寄存器
+                MLoadInstPtr ldr = MLoadInst::get(defBlock, MachineInst::LDR, vreg, MachineOperand::copy(offsetImm));
+                defBlock->insertInstAfter(defInst, ldr);
+                MStorePtr str = MStore::get(defBlock, MachineInst::STR, MachineOperand::copy(def), MachineOperand::createReg(11), MachineOperand::copy(vreg));
+                defBlock->insertInstAfter(ldr, str);
+            }
+            else
+            {
+                // 偏移合法
+                MStorePtr str = MStore::get(defBlock, MachineInst::STR, MachineOperand::copy(def), MachineOperand::createReg(11), MachineOperand::copy(offsetImm));
+                defBlock->insertInstAfter(defInst, str);
+            }
         }
         // 在def 后插入 store指令
-        MBlockPtr &defBlock = defInst->getParent(); // def语句对应的块
-        MStorePtr str = MStore::get(defBlock, MachineInst::STR, MachineOperand::copy(def), MachineOperand::createReg(11), offsetImm);
-        defBlock->insertInstAfter(defInst, str);
+        // MStorePtr str = MStore::get(defBlock, MachineInst::STR, MachineOperand::copy(def), MachineOperand::createReg(11), offsetImm);
+        // defBlock->insertInstAfter(defInst, str);
         // 在每个 uses前插入 ldr
         for (auto &use : uses)
         {
@@ -590,12 +577,27 @@ void LinearScan::genSpillCode(IntervalPtr interSpilled)
             {
                 MBlockPtr &useBlk = atFront->getParent();
                 MOperaPtr dst = MachineOperand::copy(def);
-                MLoadInstPtr ldr = MLoadInst::get(useBlk, MachineInst::LDR, dst, MachineOperand::createReg(11), MachineOperand::copy(offsetImm));
-                useBlk->insertInstBefore(atFront, ldr);
-                std::cout << "插入溢出代码ldr: " << ldr->toStr() << std::endl;
-                record.insert(ldr);
+
+                if (!Arm32::isLegalDisp(offsetImm->getVal()))
+                {
+                    // 偏移非法
+                    MOperaPtr vreg = MachineOperand::get(MachineOperand::VREG, curFun->genSpillLoadVregNo()); // 生成寄存器
+                    MLoadInstPtr ldr1 = MLoadInst::get(useBlk, MachineInst::LDR, vreg, MachineOperand::copy(offsetImm));
+                    useBlk->insertInstBefore(atFront, ldr1);
+                    MLoadInstPtr ldr2 = MLoadInst::get(useBlk, MachineInst::LDR, dst, MachineOperand::createReg(11), MachineOperand::copy(vreg));
+                    useBlk->insertInstBefore(atFront, ldr2);
+                    record.insert(atFront);
+                }
+                else
+                {
+                    MLoadInstPtr ldr = MLoadInst::get(useBlk, MachineInst::LDR, dst, MachineOperand::createReg(11), MachineOperand::copy(offsetImm));
+                    useBlk->insertInstBefore(atFront, ldr);
+                    std::cout << "插入溢出代码ldr: " << ldr->toStr() << std::endl;
+                    record.insert(atFront);
+                }
             }
         }
+        std::cout << "----------------------------" << std::endl;
     }
 }
 

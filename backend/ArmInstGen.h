@@ -132,6 +132,11 @@ private:
     /// @return
     bool Zext2ArmInst(InstPtr zext);
 
+    /// @brief bitcast对应的翻译  不用翻译
+    /// @param bitcast
+    /// @return
+    bool BitCastArmInst(InstPtr bitcast) { return true; }
+
 public:
     /// @brief 构造函数
     /// @param _IRModule
@@ -157,6 +162,7 @@ public:
         IR2ArmInst_handers[Opcode::SHl] = &ArmInstGen::Shl2ArmInst;
         IR2ArmInst_handers[Opcode::ASHR] = &ArmInstGen::Ashr2ArmInst;
         IR2ArmInst_handers[Opcode::Zext] = &ArmInstGen::Zext2ArmInst;
+        IR2ArmInst_handers[Opcode::BitCast] = &ArmInstGen::BitCastArmInst;
     }
 
     /// @brief 智能指针对象

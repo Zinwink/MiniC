@@ -226,6 +226,10 @@ string Instruction::toIRstr(InstPtr inst, Counter *cnt)
     case Opcode::Zext:
         str = ZextInstStr(inst, cnt);
         break;
+    case Opcode::BitCast:
+        str = BitcastStr(inst, cnt);
+        break;
+
     case Opcode::PhiNode:
         str = PhiNodeStr(inst, cnt);
         break;
@@ -441,5 +445,21 @@ string PhiElimMoveStr(InstPtr phiMov, Counter *cnt)
     str += getllvmID(dst, cnt);
     str += ", ";
     str += getllvmID(src, cnt);
+    return str;
+}
+
+/// @brief Bitcast指令对应的字符串
+/// @param bitcast
+/// @param cnt
+/// @return
+string BitcastStr(InstPtr bitcast, Counter *cnt)
+{
+    string str = getllvmID(bitcast, cnt);
+    str += " = bitcast ";
+    str += bitcast->getOperand(0)->getType()->TypeStr();
+    str += " ";
+    str += getllvmID(bitcast->getOperand(0), cnt);
+    str += " to ";
+    str += bitcast->getType()->TypeStr();
     return str;
 }

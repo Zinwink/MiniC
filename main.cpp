@@ -18,6 +18,7 @@
 #include "LiveMemVariAnalysis.h"
 #include "CommSubExprElim.h"
 #include <iostream>
+#include "Mem2Reg.h"
 
 /// @brief 是否显示帮助信息
 bool gShowHelp = false;
@@ -229,11 +230,12 @@ int main(int argc, char *argv[])
         IRGenPtr codeGen = IRGen::get(ast_root, module);
         codeGen->run();
         free_ast(ast_root); // IR产生后释放 AST抽象语法树
+
         for (int i = 0; i < 2; i++)
         {
             ElimUseLessBBlock(module);   // 删除无用块
-            EasyPass(module);            // 简单局部优化
             LiveMemAnalysisPass(module); // 进一步优化 传播复用load，消减内存操作，传播复用公共表达式
+            EasyPass(module);            // 简单局部优化 并进行合并
             eraseModuleDeadInst(module); // 删除死指令
             ElimUseLessBBlock(module);   // 删除无用块
         }
@@ -277,7 +279,36 @@ int main(int argc, char *argv[])
 //     std::cout << "打印完毕" << std::endl;
 //     codeGen->run();
 //     std::cout << "打印完毕" << std::endl;
+//     free_ast(ast_root); // IR产生后释放 AST抽象语法树
+//     // for (int i = 0; i < 1; i++)
+//     // {
+//     //     std::cout << "打印完毕1111" << std::endl;
+//     //     ElimUseLessBBlock(module); // 删除无用块
+//     //     EasyPass(module);          // 简单局部优化
+//     //     LiveMemAnalysisPass(module);
+//     //     eraseModuleDeadInst(module); // 删除死指令
+//     //     ElimUseLessBBlock(module);   // 删除无用块
+//     //     std::cout << "打印完毕1111" << std::endl;
+//     // }
+//     // ElimUseLessBBlock(module); // 删除无用块
+//     // Mem2RegPass(module);
+//     // eraseModuleDeadInst(module); // 删除死指令
+//     // EasyPass(module);          // 简单局部优化
+//     // eraseModuleDeadInst(module);
+//     // EasyPass(module);            // 简单局部优化
+//     for (int i = 0; i < 1; i++)
+//     {
+//         std::cout << "打印完毕1111" << std::endl;
+//         ElimUseLessBBlock(module); // 删除无用块
+//         EasyPass(module);          // 简单局部优化
+//         LiveMemAnalysisPass(module);
+//         eraseModuleDeadInst(module); // 删除死指令
+//         ElimUseLessBBlock(module);   // 删除无用块
+//         std::cout << "打印完毕1111" << std::endl;
+//     }
 //     module->printIR("../tests/test2.ll");
+//     // genCFG(module->getFunc("deepWhileBr"), string("../tests/main.png"));
+//     // genCFG()
 //     // for (int i = 0; i < 2; i++)
 //     // {
 //     //     std::cout << "打印完毕1111" << std::endl;
@@ -288,16 +319,28 @@ int main(int argc, char *argv[])
 //     //     ElimUseLessBBlock(module);   // 删除无用块
 //     //     std::cout << "打印完毕1111" << std::endl;
 //     // }
-//     module->printIR("../tests/test2.ll");
 //     // std::cout << "打印完毕" << std::endl;
-//     // MModulePtr Mmodule = MachineModule::get();
-//     // ArmInstGenPtr ArmGen = ArmInstGen::get(module, Mmodule);
-//     // ArmGen->run();
-//     // LinearScanPtr linearscan = LinearScan::get(Mmodule);
-//     // linearscan->allocateReg(); // 分配寄存器
+//     MModulePtr Mmodule = MachineModule::get();
+//     ArmInstGenPtr ArmGen = ArmInstGen::get(module, Mmodule);
+//     ArmGen->run();
+//     LinearScanPtr linearscan = LinearScan::get(Mmodule);
+//     linearscan->allocateReg(); // 分配寄存器
 
-//     // Mmodule->printArm("../tests/test2.s");
+//     Mmodule->printArm("../tests/test2.s");
 //     // Mmodule->clear();
+//     // GVC_t *gv = gvContext();
+//     // Agraph_t *g = agopen((char *)"G", Agdirected, nullptr);
+//     // gvLayout(gv, g, "dot");
+//     // std::string fileType = "png";
+//     // std::string filePath = "output.png";
+
+//     // gvRenderFilename(gv, g, fileType.c_str(), filePath.c_str());
+
+//     // gvFreeLayout(gv, g);
+//     // agclose(g);
+//     // gvFreeContext(gv);
+
+//     // return 0;
 
 //     return 0;
 // }

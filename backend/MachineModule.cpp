@@ -174,6 +174,15 @@ void MachineModule::genGlobalVariDecl()
             else
             {
                 // 暂未编写 因为前端还不支持
+                globInitilizerPtr globInit = std::static_pointer_cast<globInitilizer>(g->getInitilizer());
+                std::vector<int> res;
+                globInitilizer::getFlattenDigit(res, globInit);
+                for (auto ind : res)
+                {
+                    str += "\t.long   " + std::to_string(ind) + "\n";
+                }
+                // 获取size 数组大小 字节数
+                str += "\t.size   " + g->getName() + ", " + std::to_string(g->byteSizes()) + "\n";
             }
             dataSection.push_back(str);
         }
