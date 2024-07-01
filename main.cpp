@@ -38,6 +38,12 @@ int gDirectRun = 0;
 /// @brief 输出中间IR，含汇编或者自定义IR等，默认输出线性IR
 int gShowSymbol = 0;
 
+/// @brief 输出控制流图
+int gShowCFG = 0;
+
+/// @brief 要输出CFG的函数名
+std::string gFuncName;
+
 /// @brief 输入源文件
 std::string gInputFile;
 
@@ -50,6 +56,7 @@ void showHelp(const std::string &exeName)
 {
     std::cout << exeName + " -S [-A | -D] [-a | -I] [-o output] source\n";
     std::cout << exeName + " -R [-A | -D] source\n";
+    std::cout << exeName + " -c functionName [-o funcName.png] source\n";
 }
 
 /// @brief 参数解析与有效性检查
@@ -60,8 +67,8 @@ int ArgsAnalysis(int argc, char *argv[])
 {
     int ch;
 
-    // 指定参数解析的选项，可识别-h、-o、-S、-a、-I、-R、-A、-D选项，并且-o要求必须要有附加参数
-    const char options[] = "ho:SaIRAD";
+    // 指定参数解析的选项，可识别-h、-o、-S、-c、-a、-I、-R、-A、-D选项，并且-o要求必须要有附加参数
+    const char options[] = "ho:c:SaIRAD";
 
     opterr = 1;
 
@@ -89,6 +96,10 @@ lb_check:
         case 'R':
             // 直接运行，默认运行
             gDirectRun = 1;
+            break;
+        case 'c':
+            gFuncName = optarg;
+            gShowCFG = 1;
             break;
         default:
             return -1;
@@ -129,7 +140,7 @@ lb_check:
     }
 
     // 这三者只能指定一个
-    int flag = gShowSymbol + gDirectRun;
+    int flag = gShowSymbol + gDirectRun + gShowCFG;
     if (flag != 1)
     {
         // 运行与中间IR只能同时选择一个
@@ -148,9 +159,16 @@ lb_check:
         }
         else if (flag != 1)
         {
-            // 线性中间IR、抽象语法树只能同时选择一个
+            // 线性中间IR、抽象语法树 只能同时选择一个
             return -1;
         }
+    }
+    else if (gShowCFG)
+    {
+        // 数据流图可视化
+        // 一定要指定函数名
+        if (gFuncName.empty())
+            return -1;
     }
     else
     {
@@ -172,6 +190,10 @@ lb_check:
         else if (gShowLineIR)
         {
             gOutputFile = "ir.ll";
+        }
+        else if (gShowCFG)
+        {
+            gOutputFile = gFuncName + ".png";
         }
         else
         {
@@ -244,6 +266,13 @@ int main(int argc, char *argv[])
         {
             module->printIR(gOutputFile);
             result = 0;
+            break;
+        }
+
+        // 输出优化后的IR的控制流图
+        if (gShowCFG)
+        {
+            genCFG(module->getFunc(gFuncName), gOutputFile);
             break;
         }
 
