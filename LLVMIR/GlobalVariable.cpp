@@ -39,7 +39,7 @@ string GlobalVariable::toIRstr(GlobalVariPtr g, Counter *cnt)
         }
     }
     string str = string("@") + g->getName() + string(" = global ");
-    if (!initi->isGlobInitList())
+    if (initi != nullptr && !initi->isGlobInitList())
     { // 由于获取globInitilizer 时多编写了一个类型字符串 因此在这里判断一下 防止重复
         str += g->getElemTy()->TypeStr();
     }
