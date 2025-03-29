@@ -1,4 +1,5 @@
 # MiniC
+A compiler course homework implementation, including the front-end and back-end as well as some simple optimizations.
 
 ## build environment
 Windows WSL2 Ubuntu22.04
